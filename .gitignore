@@ -1,0 +1,10 @@
+*.iml
+/.idea/workspace.xml
+/.idea/libraries
+.DS_Store
+
+## Revel
+test-results/
+tmp/
+routes/
+log/
