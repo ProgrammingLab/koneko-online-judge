@@ -4,6 +4,7 @@ import (
 	"github.com/revel/revel"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/gedorinku/koneko-online-judge/app/models"
 )
 
 var (
@@ -56,4 +57,6 @@ func InitDB() {
 		revel.AppLog.Fatal("DB Error", err.Error())
 	}
 	revel.AppLog.Info("DB Connected")
+
+	DB.AutoMigrate(&models.User{})
 }
