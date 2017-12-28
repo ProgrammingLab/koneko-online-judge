@@ -2,11 +2,12 @@
 
 .login-form {
     width: 350px;
-    margin: 100px auto 0;
+    margin: 100px auto;
 }
 
 .login-form-body {
     width: 350px;
+    margin-bottom: 15px;
     border-radius: 5px;
     padding: 20px;
     font-size: 14px;

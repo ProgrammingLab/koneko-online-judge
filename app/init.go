@@ -2,8 +2,7 @@ package app
 
 import (
 	"github.com/revel/revel"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
+
 	"github.com/gedorinku/koneko-online-judge/app/models"
 )
 
@@ -13,8 +12,6 @@ var (
 
 	// BuildTime revel app build-time (ldflags)
 	BuildTime string
-
-	DB *gorm.DB
 )
 
 func init() {
@@ -34,7 +31,7 @@ func init() {
 		revel.ActionInvoker,           // Invoke the action.
 	}
 
-	revel.OnAppStart(InitDB)
+	revel.OnAppStart(models.InitDB)
 }
 
 // HeaderFilter adds common security headers
@@ -46,17 +43,4 @@ var HeaderFilter = func(c *revel.Controller, fc []revel.Filter) {
 	c.Response.Out.Header().Add("X-Content-Type-Options", "nosniff")
 
 	fc[0](c, fc[1:]) // Execute the next filter stage.
-}
-
-func InitDB() {
-	driver, _ := revel.Config.String("db.driver")
-	spec, _ := revel.Config.String("db.spec")
-	var err error
-	DB, err = gorm.Open(driver, spec)
-	if err != nil {
-		revel.AppLog.Fatal("DB Error", err.Error())
-	}
-	revel.AppLog.Info("DB Connected")
-
-	DB.AutoMigrate(&models.User{})
 }

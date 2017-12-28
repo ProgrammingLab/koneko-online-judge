@@ -5,10 +5,10 @@
   <form action="/session/login" method="post">
     <div class="login-form-body">
       <label for="user-name" class="login-form-label">
-        ユーザー名またはメールアドレス
+        メールアドレス
       </label>
-      <input id="user-name" class="login-form-input input-sm" autofocus="autofocus" tabindex="1" type="text"
-             name="userName"/>
+      <input id="email" class="login-form-input input-sm" autofocus="autofocus" tabindex="1" type="text"
+             name="email"/>
       <label for="password" class="login-form-label">
         パスワード
       </label>
@@ -16,12 +16,12 @@
       <input class="btn btn-success btn-center" tabindex="3" type="submit" value="ログイン">
     </div>
   </form>
-</div>
 
-<div class="container">
-  <div class="row">
-    <div class="span6">
-    {{template "flash.html" .}}
+  <div class="container">
+    <div class="row">
+      <div class="span6">
+      {{template "flash.html" .}}
+      </div>
     </div>
   </div>
 </div>
