@@ -10,7 +10,6 @@ type User struct {
 	Authority   uint   `gorm:"not null"`
 	IsDeleted   bool   `gorm:"not null;default:'0'"`
 	PasswordDigest string `gorm:"not null"`
-	RememberTokenDigest string
 }
 
 const AUTHORITY_MEMBER = 0

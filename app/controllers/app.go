@@ -11,3 +11,7 @@ type App struct {
 func (c App) Index() revel.Result {
 	return c.Render()
 }
+
+func (c App) LoginPage() revel.Result {
+	return c.RenderTemplate("App/Login.html")
+}
