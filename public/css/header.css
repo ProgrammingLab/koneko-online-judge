@@ -1,0 +1,19 @@
+@charset "utf-8";
+
+header {
+    z-index: 1;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    background-color: #24292e;
+}
+
+header h1 {
+    font-size: 24px;
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+.HeaderNav {
+    display: block;
+    color: rgba(255, 255, 255, 0.75);
+}
