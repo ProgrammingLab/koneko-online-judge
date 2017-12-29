@@ -7,19 +7,17 @@ module:testrunner
 # module:jobs
 
 
-GET        /                        App.Index
+GET        /                         App.Index
 
-GET        /login                   App.LoginPage
+GET        /login                    App.LoginPage
 
-POST        /sessions/login         Session.Login
-
-POST        /sessions/logout        Session.Logout
+POST        /sessions/:method        Session.method
 
 # Ignore favicon requests
 GET        /favicon.ico             404
 
 # Map static resources from the /app/public folder to the /public path
-GET        /public/*filepath        Static.Serve("public")
+GET        /public/*filepath         Static.Serve("public")
 
 # Catch all, this will route any request into the controller path
 #
