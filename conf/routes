@@ -11,7 +11,7 @@ GET        /                         App.Index
 
 GET        /login                    App.LoginPage
 
-POST        /sessions/:method        Session.method
+POST        /sessions/:method        Session.:method
 
 # Ignore favicon requests
 GET        /favicon.ico             404
