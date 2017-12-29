@@ -61,7 +61,7 @@ func CheckLogin(userID uint, token string) *UserSession {
 		return nil
 	}
 
-	db.Model(session).Related(&session.User)
+	session.FetchUser()
 	return session
 }
 
@@ -77,4 +77,8 @@ func getSession(userID uint) *UserSession {
 func (s *UserSession) Delete() {
 	db.Delete(s)
 	s.TokenDigest = GenerateSecretToken(16)
+}
+
+func (s *UserSession) FetchUser() {
+	db.Model(s).Related(&s.User)
 }
