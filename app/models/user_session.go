@@ -61,6 +61,7 @@ func CheckLogin(userID uint, token string) *UserSession {
 		return nil
 	}
 
+	db.Model(session).Related(&session.User)
 	return session
 }
 
@@ -70,17 +71,10 @@ func getSession(userID uint) *UserSession {
 	if session.ID == 0 {
 		return nil
 	}
-	session.fetchUser()
 	return session
 }
 
 func (s *UserSession) Delete() {
 	db.Delete(s)
 	s.TokenDigest = GenerateSecretToken(16)
-}
-
-// gormの挙動があやしくて、これをしないと動かない(最悪)
-func (s *UserSession) fetchUser() {
-	s.User.ID = s.UserID
-	db.Where(&s.User).First(&s.User)
 }
