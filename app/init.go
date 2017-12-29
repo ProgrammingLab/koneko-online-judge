@@ -1,9 +1,11 @@
 package app
 
 import (
+	"strconv"
 	"github.com/revel/revel"
 
 	"github.com/gedorinku/koneko-online-judge/app/models"
+	"github.com/gedorinku/koneko-online-judge/app/controllers"
 )
 
 var (
@@ -32,6 +34,8 @@ func init() {
 	}
 
 	revel.OnAppStart(models.InitDB)
+
+	revel.InterceptFunc(checkLogin, revel.BEFORE, &controllers.App{})
 }
 
 // HeaderFilter adds common security headers
@@ -43,4 +47,18 @@ var HeaderFilter = func(c *revel.Controller, fc []revel.Filter) {
 	c.Response.Out.Header().Add("X-Content-Type-Options", "nosniff")
 
 	fc[0](c, fc[1:]) // Execute the next filter stage.
+}
+
+func checkLogin(c *revel.Controller) revel.Result {
+	if c.Request.GetPath() == "/login" {
+		return nil
+	}
+	userID, _ := strconv.Atoi(c.Session["userID"])
+	token := c.Session["sessionToken"]
+	if user := models.CheckLogin(uint(userID), token); user == nil {
+		c.Flash.Error("ログインしてください")
+		return c.Redirect(controllers.App.LoginPage)
+	}
+
+	return nil
 }

@@ -3,14 +3,16 @@ package models
 import (
 	"errors"
 	"time"
-	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserSession struct {
-	gorm.Model
-	TokenDigest   string `gorm:"not null"`
-	LifetimeTicks int64  `gorm:"not null"`
+	ID          uint   `gorm:"primary_key"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	User        User
+	UserID      uint   `gorm:"not null"`
+	TokenDigest string `gorm:"not null"`
 }
 
 var (
@@ -19,25 +21,54 @@ var (
 	lifetimeTicks = time.Duration(24 * time.Hour)
 )
 
-func NewSession(email, password string) (*UserSession, error) {
+// emailとpasswordが正しければ新しいUserSessionとTokenを返す
+func NewSession(email, password string) (*UserSession, string, error) {
 	user := &User{Email: email}
 	db.Where(user).First(user)
 
-	if user.ID == 0 {
-		return nil, errorLogin
-	}
-	if !user.IsCorrectPassword(password) {
-		return nil, errorLogin
+	if user.ID == 0 || !user.IsCorrectPassword(password) {
+		return nil, "", errorLogin
 	}
 
 	token := []byte(GenerateSecretToken(32))
 	digest, _ := bcrypt.GenerateFromPassword(token, GetBcryptCost())
 
+	oldSession := getSession(user.ID)
+	if oldSession != nil {
+		db.Delete(oldSession)
+	}
 	session := &UserSession{
-		TokenDigest:   string(digest),
-		LifetimeTicks: int64(lifetimeTicks),
+		User:        *user,
+		TokenDigest: string(digest),
 	}
 	db.Create(session)
 
-	return session, nil
+	return session, string(token), nil
+}
+
+func CheckLogin(userID uint, token string) *User {
+	session := getSession(userID)
+	if session == nil {
+		return nil
+	}
+	duration := session.CreatedAt.Sub(time.Now())
+	if lifetimeTicks < duration {
+		return nil
+	}
+
+	err := bcrypt.CompareHashAndPassword([]byte(session.TokenDigest), []byte(token))
+	if err != nil {
+		return nil
+	}
+
+	return &session.User
+}
+
+func getSession(userID uint) *UserSession {
+	session := &UserSession{UserID: userID}
+	db.Where(session).First(session)
+	if session.ID == 0 {
+		return nil
+	}
+	return session
 }

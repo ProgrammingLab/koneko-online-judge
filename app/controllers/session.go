@@ -3,6 +3,7 @@ package controllers
 import (
 	"github.com/revel/revel"
 	"github.com/gedorinku/koneko-online-judge/app/models"
+	"strconv"
 )
 
 type Session struct {
@@ -12,10 +13,14 @@ type Session struct {
 func (c Session) Login(email, password string) revel.Result {
 	const message = "メールアドレスまたはパスワードが違います。"
 	c.Validation.Email(email).Message(message)
-	revel.AppLog.Info(password)
 
+	var (
+		session *models.UserSession
+		token   string
+	)
 	if !c.Validation.HasErrors() {
-		_, err := models.NewSession(email, password)
+		var err error
+		session, token, err = models.NewSession(email, password)
 		if err != nil {
 			c.Validation.Error(message)
 		}
@@ -26,6 +31,9 @@ func (c Session) Login(email, password string) revel.Result {
 		c.FlashParams()
 		return c.Redirect(App.LoginPage)
 	}
+
+	c.Session["userID"] = strconv.Itoa(int(session.User.ID))
+	c.Session["sessionToken"] = token
 
 	return c.Redirect(App.Index)
 }

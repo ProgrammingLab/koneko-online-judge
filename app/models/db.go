@@ -21,6 +21,7 @@ func InitDB() {
 
 	db.AutoMigrate(&User{})
 	db.AutoMigrate(&UserSession{})
+	db.Model(&UserSession{}).AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
 
 	seed()
 }
