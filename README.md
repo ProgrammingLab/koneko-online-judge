@@ -1,15 +1,24 @@
-# Welcome to Revel
+# Koneko Online Judge (=^ - ^=)
 
-A high-productivity web framework for the [Go language](http://www.golang.org/).
+### Setup:
+```
+   go get github.com/revel/revel
+   go get github.com/revel/cmd/revel
+   go get github.com/gedorinku/koneko-online-judge
+```
 
+### Set environment variables:
+```
+    export KOJ_SECRET="pJLzyoiDe17L36mytqC912j81PfTiolHm1veQK6Grn1En3YFdB5lvEHVTwFEaWvj"
+    export KOJ_DB_DRIVER="mysql"
+    export KOJ_DB_SPEC="user:password@/dbName?charset=utf8&parseTime=True"
+```
 
 ### Start the web server:
-
-   revel run myapp
-
-### Go to http://localhost:9000/ and you'll see:
-
-    "It works"
+```
+   revel run github.com/gedorinku/koneko-online-judge
+   # Go to http://localhost:9000/
+```
 
 ## Code Layout
 
@@ -23,6 +32,7 @@ The directory structure of a generated Revel application:
         init.go       Interceptor registration
         controllers/  App controllers go here
         views/        Templates directory
+        models/
 
     messages/         Message files
 
@@ -32,12 +42,3 @@ The directory structure of a generated Revel application:
         images/       Image files
 
     tests/            Test suites
-
-
-## Help
-
-* The [Getting Started with Revel](http://revel.github.io/tutorial/gettingstarted.html).
-* The [Revel guides](http://revel.github.io/manual/index.html).
-* The [Revel sample apps](http://revel.github.io/examples/index.html).
-* The [API documentation](https://godoc.org/github.com/revel/revel).
-
