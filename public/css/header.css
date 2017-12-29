@@ -1,19 +1,11 @@
 @charset "utf-8";
 
-header {
-    z-index: 1;
-    padding-top: 6px;
-    padding-bottom: 6px;
-    background-color: #24292e;
+.logout-form {
+    display: inline;
+    float: right;
+    margin-right: 15px;
 }
 
-header h1 {
-    font-size: 24px;
-    padding-left: 12px;
-    padding-right: 12px;
-}
-
-.HeaderNav {
-    display: block;
-    color: rgba(255, 255, 255, 0.75);
+.logout-button {
+    width: 100px;
 }

@@ -2,18 +2,18 @@
 {{template "header.html" .}}
 
 <div class="login-form">
-  <form action="/session/login" method="post">
+  <form accept-charset="UTF-8" action="/session/login" method="post">
     <div class="login-form-body">
-      <label for="user-name" class="login-form-label">
+      <label for="email" class="login-form-label">
         メールアドレス
       </label>
-      <input id="email" class="login-form-input input-sm" autofocus="autofocus" tabindex="1" type="text"
+      <input id="email" class="form-control mr-sm-2 login-form-input" autofocus="autofocus" tabindex="1" type="text"
              name="email"/>
       <label for="password" class="login-form-label">
         パスワード
       </label>
-      <input id="password" class="login-form-input" tabindex="2" type="password" name="password"/>
-      <input class="btn btn-success btn-center" tabindex="3" type="submit" value="ログイン">
+      <input id="password" class="form-control mr-sm-2 login-form-input" tabindex="2" type="password" name="password"/>
+      <input class="btn btn-outline-success btn-block" tabindex="3" type="submit" value="ログイン">
     </div>
   </form>
 

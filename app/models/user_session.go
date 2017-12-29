@@ -70,5 +70,12 @@ func getSession(userID uint) *UserSession {
 	if session.ID == 0 {
 		return nil
 	}
+	session.fetchUser()
 	return session
+}
+
+// gormの挙動があやしくて、これをしないと動かない(最悪)
+func (s *UserSession) fetchUser() {
+	s.User.ID = s.UserID
+	db.Where(&s.User).First(&s.User)
 }

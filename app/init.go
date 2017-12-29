@@ -53,8 +53,8 @@ func checkLogin(c *revel.Controller) revel.Result {
 	if c.Request.GetPath() == "/login" {
 		return nil
 	}
-	userID, _ := strconv.Atoi(c.Session["userID"])
-	token := c.Session["sessionToken"]
+	userID, _ := strconv.Atoi(c.Session[controllers.SessionUserIDKey])
+	token := c.Session[controllers.SessionTokenKey]
 	if user := models.CheckLogin(uint(userID), token); user == nil {
 		c.Flash.Error("ログインしてください")
 		return c.Redirect(controllers.App.LoginPage)
