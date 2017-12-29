@@ -29,8 +29,6 @@ func createTables() {
 	db.Model(&UserSession{}).AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
 
 	db.AutoMigrate(&Sample{})
-
-	db.AutoMigrate()
 }
 
 func seed() {
