@@ -19,11 +19,18 @@ func InitDB() {
 	}
 	revel.AppLog.Info("DB Connected")
 
+	createTables()
+	seed()
+}
+
+func createTables() {
 	db.AutoMigrate(&User{})
 	db.AutoMigrate(&UserSession{})
 	db.Model(&UserSession{}).AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
 
-	seed()
+	db.AutoMigrate(&Sample{})
+
+	db.AutoMigrate()
 }
 
 func seed() {
