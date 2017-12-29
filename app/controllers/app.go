@@ -16,8 +16,8 @@ type App struct {
 }
 
 func (c App) Index() revel.Result {
-	user := getUser(c.Session)
-	return c.Render(user)
+	initNavigationBar(&c.ViewArgs, c.Session)
+	return c.Render()
 }
 
 func (c App) LoginPage() revel.Result {
@@ -34,4 +34,10 @@ func getUserSession(session revel.Session) *models.UserSession {
 
 func getUser(session revel.Session) *models.User {
 	return &getUserSession(session).User
+}
+
+// ViewArgsとSessionを渡すとnavigationに渡す値を入れてくれる
+func initNavigationBar(out *map[string]interface{}, session revel.Session) {
+	user := getUser(session)
+	(*out)["user"] = user
 }

@@ -1,0 +1,27 @@
+{{set . "title" "問題を編集 - KOJ"}}
+{{template "navigation.html" .}}
+
+<form>
+  <div class="form-group">
+    <label for="titleInput">タイトル:</label>
+    <input name="title" type="text" class="form-control" id="titleInput">
+  </div>
+  <div class="form-group">
+    <label for="timeLimitInput">時間制限(秒):</label>
+    <input name="timeLimit" type="number" class="form-control" id="timeLimitInput" value="1">
+  </div>
+  <div class="form-group">
+    <label for="memorySelect">メモリ制限(MiB):</label>
+    <select name="memoryLimit" class="form-control" id="memorySelect">
+      <option>128</option>
+      <option>256</option>
+      <option>512</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label for="bodyTextArea">問題文:</label>
+    <textarea name="body" class="form-control" id="bodyTextArea" rows="15"></textarea>
+  </div>
+</form>
+
+{{template "footer.html" .}}

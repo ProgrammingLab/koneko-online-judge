@@ -29,6 +29,7 @@ func createTables() {
 	db.Model(&UserSession{}).AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
 
 	db.AutoMigrate(&Problem{})
+	db.Model(&Problem{}).AddForeignKey("writer_id", "users(id)", "RESTRICT", "RESTRICT")
 	db.AutoMigrate(&Sample{})
 	db.Model(&Sample{}).AddForeignKey("problem_id", "problems(id)", "RESTRICT", "RESTRICT")
 }

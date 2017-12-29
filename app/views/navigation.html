@@ -16,12 +16,22 @@
           <a class="nav-link" href="#">コンテスト<span class="sr-only">(current)</span></a>
         </li>
       </ul>
+
       <ul class="navbar-nav mr-0">
+        <li class="nav-item">
+          <form name="newForm" accept-charset="UTF-8" action="/problems/new" method="post">
+            <a class="nav-link" href="javascript:newForm.submit()">
+              新しい問題
+            </a>
+          </form>
+        </li>
+
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink"
              data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            {{.user.Name}}
+          {{.user.Name}}
           </a>
+
           <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
             <a class="dropdown-item" href="#">プロフィール</a>
             <div class="dropdown-divider"></div>

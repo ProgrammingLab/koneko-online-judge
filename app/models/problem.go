@@ -4,6 +4,8 @@ import "time"
 
 type Problem struct {
 	ID              uint          `gorm:"primary_key"`
+	WriterID        uint          `gorm:"not null"`
+	Writer          User
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 	Title           string        `gorm:"not null"`
@@ -24,6 +26,20 @@ const (
 	JudgeTypeSpecial = 2
 )
 
+func NewProblem(user *User) *Problem {
+	problem := &Problem{
+		WriterID:user.ID,
+		TimeLimit:time.Second,
+		MemoryLimit:256,
+	}
+	db.Create(problem)
+	return problem
+}
+
 func (p *Problem) FetchSamples() {
 	db.Model(p).Related(&p.Samples)
+}
+
+func (p *Problem) FetchWriter() {
+	db.Model(p).Related(&p.Writer)
 }
