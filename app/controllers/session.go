@@ -37,3 +37,12 @@ func (c Session) Login(email, password string) revel.Result {
 
 	return c.Redirect(App.Index)
 }
+
+func (c Session) Logout() revel.Result {
+	userSession := getUserSession(c.Session)
+	if userSession != nil {
+		userSession.Delete()
+	}
+
+	return c.Redirect(App.LoginPage)
+}

@@ -46,7 +46,7 @@ func NewSession(email, password string) (*UserSession, string, error) {
 	return session, string(token), nil
 }
 
-func CheckLogin(userID uint, token string) *User {
+func CheckLogin(userID uint, token string) *UserSession {
 	session := getSession(userID)
 	if session == nil {
 		return nil
@@ -61,7 +61,7 @@ func CheckLogin(userID uint, token string) *User {
 		return nil
 	}
 
-	return &session.User
+	return session
 }
 
 func getSession(userID uint) *UserSession {
@@ -72,6 +72,11 @@ func getSession(userID uint) *UserSession {
 	}
 	session.fetchUser()
 	return session
+}
+
+func (s *UserSession) Delete() {
+	db.Delete(s)
+	s.TokenDigest = GenerateSecretToken(16)
 }
 
 // gormの挙動があやしくて、これをしないと動かない(最悪)

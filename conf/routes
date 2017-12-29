@@ -13,6 +13,8 @@ GET        /login                   App.LoginPage
 
 POST        /session/login          Session.Login
 
+POST        /session/logout         Session.Logout
+
 # Ignore favicon requests
 GET        /favicon.ico             404
 

@@ -17,7 +17,6 @@ type App struct {
 
 func (c App) Index() revel.Result {
 	user := getUser(c.Session)
-	revel.AppLog.Info(user.Name)
 	return c.Render(user)
 }
 
@@ -25,14 +24,14 @@ func (c App) LoginPage() revel.Result {
 	return c.RenderTemplate("App/Login.html")
 }
 
-func getUser(session revel.Session) *models.User {
+func getUserSession(session revel.Session) *models.UserSession {
 	userID, _ := strconv.Atoi(session[SessionUserIDKey])
 	token := session[SessionTokenKey]
-	user := models.CheckLogin(uint(userID), token)
-	if user == nil {
-		// この時点でログインできてないのは多分バグ
-		revel.AppLog.Fatal("多分バグ: getUser == nil")
-	}
+	userSession := models.CheckLogin(uint(userID), token)
 
-	return user
+	return userSession
+}
+
+func getUser(session revel.Session) *models.User {
+	return &getUserSession(session).User
 }
