@@ -68,7 +68,7 @@ func (c Problem) Update(id uint, request *ProblemRequest) revel.Result {
 		Range(request.MemoryLimit, 128, 512).
 		Message("メモリ制限は128MiB以上512MiB以下である必要があります。")
 	c.Validation.
-		Range(len(request.Body), 0, 60000).
+		Max(len(request.Body), 60000).
 		Message("問題文はUTF-8で60,000bytes以下である必要があります。")
 
 	if c.Validation.HasErrors() {
