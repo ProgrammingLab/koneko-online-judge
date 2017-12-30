@@ -55,10 +55,26 @@ func (p *Problem) Update(request *Problem) {
 	db.Save(p)
 }
 
+func (p *Problem) ReplaceTestCases(archive []byte) error {
+	oldCases := p.FetchCaseSets()
+	for _, c := range oldCases {
+		c.Delete()
+	}
+
+	_, err := newCaseSets(p, archive)
+	return err
+}
+
 func (p *Problem) FetchSamples() {
 	db.Model(p).Related(&p.Samples)
 }
 
 func (p *Problem) FetchWriter() {
 	db.Model(p).Related(&p.Writer)
+}
+
+func (p *Problem) FetchCaseSets() []CaseSet {
+	c := make([]CaseSet, 0)
+	db.Model(p).Related(&c)
+	return c
 }

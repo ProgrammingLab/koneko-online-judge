@@ -44,7 +44,7 @@ func (c Problem) Edit(id uint) revel.Result {
 	return c.Render(problem)
 }
 
-func (c Problem) Update(id uint, request *ProblemRequest) revel.Result {
+func (c Problem) Update(id uint, request *ProblemRequest, caseArchive []byte) revel.Result {
 	problem := models.GetProblem(id)
 	if problem == nil {
 		return c.NotFound(problemNotFoundMessage)
@@ -68,14 +68,11 @@ func (c Problem) Update(id uint, request *ProblemRequest) revel.Result {
 		Range(request.MemoryLimit, 128, 512).
 		Message("メモリ制限は128MiB以上512MiB以下である必要があります。")
 	c.Validation.
+		Max(len(caseArchive), 1024*1024*50).
+		Message("テストケースは50MiB以下である必要があります。")
+	c.Validation.
 		Max(len(request.Body), 60000).
 		Message("問題文はUTF-8で60,000bytes以下である必要があります。")
-
-	if c.Validation.HasErrors() {
-		c.Validation.Keep()
-		c.FlashParams()
-		return c.Redirect(Problem.Edit, id)
-	}
 
 	tmp := &models.Problem{
 		Title:       request.Title,
@@ -85,6 +82,19 @@ func (c Problem) Update(id uint, request *ProblemRequest) revel.Result {
 	}
 
 	problem.Update(tmp)
+
+	if len(caseArchive) != 0 {
+		err := problem.ReplaceTestCases(caseArchive[:])
+		if err != nil {
+			c.Validation.Error(err.Error())
+		}
+	}
+
+	if c.Validation.HasErrors() {
+		c.Validation.Keep()
+		c.FlashParams()
+		return c.Redirect(Problem.Edit, id)
+	}
 	c.Flash.Success("保存しました。")
 	c.FlashParams()
 	return c.Redirect(Problem.Edit, id)
