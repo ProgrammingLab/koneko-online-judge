@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type Problem struct {
 	ID              uint          `gorm:"primary_key"`
@@ -28,12 +30,29 @@ const (
 
 func NewProblem(user *User) *Problem {
 	problem := &Problem{
-		WriterID:user.ID,
-		TimeLimit:time.Second,
-		MemoryLimit:256,
+		WriterID:    user.ID,
+		TimeLimit:   time.Second,
+		MemoryLimit: 128,
 	}
 	db.Create(problem)
 	return problem
+}
+
+func GetProblem(id uint) *Problem {
+	problem := &Problem{}
+	db.Where(id).First(problem)
+	if problem.ID == 0 {
+		return nil
+	}
+	return problem
+}
+
+func (p *Problem) Update(request *Problem) {
+	p.Title = request.Title
+	p.TimeLimit = request.TimeLimit
+	p.MemoryLimit = request.MemoryLimit
+	p.Body = request.Body
+	db.Save(p)
 }
 
 func (p *Problem) FetchSamples() {
