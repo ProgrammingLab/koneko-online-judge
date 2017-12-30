@@ -18,18 +18,17 @@ func (c Session) Login(email, password string) revel.Result {
 		session *models.UserSession
 		token   string
 	)
-	if !c.Validation.HasErrors() {
-		var err error
-		session, token, err = models.NewSession(email, password)
-		if err != nil {
-			c.Validation.Error(message)
-		}
-	}
 
 	if c.Validation.HasErrors() {
 		c.Validation.Keep()
 		c.FlashParams()
 		return c.Redirect(App.LoginPage)
+	}
+
+	var err error
+	session, token, err = models.NewSession(email, password)
+	if err != nil {
+		c.Validation.Error(message)
 	}
 
 	c.Session["userID"] = strconv.Itoa(int(session.User.ID))
