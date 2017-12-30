@@ -12,6 +12,9 @@ type Problem struct {
 	UpdatedAt       time.Time
 	Title           string        `gorm:"not null"`
 	Body            string        `gorm:"type:text; not null"`
+	InputFormat     string        `gorm:"type:text"`
+	OutputFormat    string        `gorm:"type:text"`
+	Constraints     string        `gorm:"type:text"`
 	Samples         []Sample
 	TimeLimit       time.Duration `gorm:"not null"`
 	MemoryLimit     int           `gorm:"not null"`
