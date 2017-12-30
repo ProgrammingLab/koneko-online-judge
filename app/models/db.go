@@ -32,6 +32,11 @@ func createTables() {
 	db.Model(&Problem{}).AddForeignKey("writer_id", "users(id)", "RESTRICT", "RESTRICT")
 	db.AutoMigrate(&Sample{})
 	db.Model(&Sample{}).AddForeignKey("problem_id", "problems(id)", "RESTRICT", "RESTRICT")
+
+	db.AutoMigrate(&CaseSet{})
+	db.Model(&CaseSet{}).AddForeignKey("problem_id", "problems(id)", "RESTRICT", "RESTRICT")
+	db.AutoMigrate(&TestCase{})
+	db.Model(&TestCase{}).AddForeignKey("case_set_id", "case_sets(id)", "RESTRICT", "RESTRICT")
 }
 
 func seed() {
