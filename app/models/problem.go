@@ -17,6 +17,7 @@ type Problem struct {
 	MemoryLimit     int           `gorm:"not null"`
 	JudgeType       int           `gorm:"not null; default:'0'"`
 	JudgeSourceCode string        `gorm:"type:text"`
+	CaseSets        []CaseSet
 }
 
 const (
@@ -56,8 +57,8 @@ func (p *Problem) Update(request *Problem) {
 }
 
 func (p *Problem) ReplaceTestCases(archive []byte) error {
-	oldCases := p.FetchCaseSets()
-	for _, c := range oldCases {
+	p.FetchCaseSets()
+	for _, c := range p.CaseSets {
 		c.Delete()
 	}
 
@@ -73,8 +74,6 @@ func (p *Problem) FetchWriter() {
 	db.Model(p).Related(&p.Writer)
 }
 
-func (p *Problem) FetchCaseSets() []CaseSet {
-	c := make([]CaseSet, 0)
-	db.Model(p).Related(&c)
-	return c
+func (p *Problem) FetchCaseSets() {
+	db.Model(p).Related(&p.CaseSets)
 }
