@@ -36,6 +36,7 @@ func init() {
 	revel.OnAppStart(models.InitDB)
 
 	revel.InterceptFunc(checkLogin, revel.BEFORE, &controllers.App{})
+	revel.InterceptFunc(checkLogin, revel.BEFORE, &controllers.Problem{})
 }
 
 // HeaderFilter adds common security headers
