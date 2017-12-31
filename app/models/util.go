@@ -1,10 +1,13 @@
 package models
 
 import (
+	"archive/zip"
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"github.com/revel/revel"
 	"golang.org/x/crypto/bcrypt"
+	"github.com/pkg/errors"
 )
 
 func GetBcryptCost() int {
@@ -24,4 +27,34 @@ func GenerateSecretToken(length int) string {
 	}
 
 	return base64.StdEncoding.EncodeToString(bytes)
+}
+
+func checkValidZip(reader *zip.Reader) error {
+	const (
+		mb           = 1024 * 1024
+		maxSize      = 10
+		maxTotalSize = 100
+		maxFileCount = 500
+	)
+
+	var total uint64
+
+	if maxFileCount < len(reader.File) {
+		return errors.New(fmt.Sprintf("ファイルの数は%v個以下にしてください。", maxFileCount))
+	}
+
+	for _, f := range reader.File {
+		if f.UncompressedSize64 <= maxSize*mb {
+			total += f.UncompressedSize64 / mb
+			continue
+		}
+
+		return errors.New(fmt.Sprintf("展開後の各ファイルのサイズは%vMiB以下にしてください。", maxSize))
+	}
+
+	if maxTotalSize < total {
+		return errors.New(fmt.Sprintf("展開後の合計ファイルサイズは%vMiB以下にしてください。", maxTotalSize))
+	}
+
+	return nil
 }

@@ -38,6 +38,11 @@ func newCaseSets(problem *Problem, archive []byte) ([]*CaseSet, error) {
 		return nil, err
 	}
 
+	err = checkValidZip(r)
+	if err != nil {
+		return nil, err
+	}
+
 	inputs, outputs := getCaseFilese(r)
 	if inputs == nil || outputs == nil {
 		return nil, errors.New("ファイルの命名かディレクトリの構造が正しくありません。")
