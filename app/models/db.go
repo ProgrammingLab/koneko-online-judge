@@ -27,6 +27,7 @@ func InitDB() {
 }
 
 func createTables() {
+	// リファレンス通りにやってもforeign keyにならなかったので、自分でAddForeignKeyしてる
 	db.AutoMigrate(&User{})
 	db.AutoMigrate(&UserSession{})
 	db.Model(&UserSession{}).AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
@@ -45,6 +46,13 @@ func createTables() {
 	db.AutoMigrate(&Submission{})
 	db.Model(&Submission{}).AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
 	db.Model(&Submission{}).AddForeignKey("language_id", "languages(id)", "RESTRICT", "RESTRICT")
+
+	db.AutoMigrate(&JudgeSetResult{})
+	db.AutoMigrate(&JudgeResult{})
+	db.Model(&JudgeSetResult{}).AddForeignKey("submission_id", "submissions(id)", "RESTRICT", "RESTRICT")
+	db.Model(&JudgeSetResult{}).AddForeignKey("case_set_id", "case_sets(id)", "RESTRICT", "RESTRICT")
+	db.Model(&JudgeResult{}).AddForeignKey("judge_set_result_id", "judge_set_results(id)", "RESTRICT", "RESTRICT")
+	db.Model(&JudgeResult{}).AddForeignKey("test_case_id", "test_cases(id)", "RESTRICT", "RESTRICT")
 }
 
 func seedDebug() {

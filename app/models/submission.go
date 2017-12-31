@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 	"github.com/pkg/errors"
+	"github.com/gedorinku/koneko-online-judge/app/deamon"
 )
 
 type Submission struct {
@@ -22,18 +23,18 @@ type Submission struct {
 	CodeBytes   uint
 }
 
-type SubmissionStatus int
+type JudgementStatus int
 
 const (
-	InQueue           SubmissionStatus = 0
-	Judging           SubmissionStatus = 1
-	Accepted          SubmissionStatus = 2
-	PresentationError SubmissionStatus = 3
-	WrongAnswer       SubmissionStatus = 4
-	TimeLimitExceeded SubmissionStatus = 5
-	RuntimeError      SubmissionStatus = 6
-	CompileError      SubmissionStatus = 7
-	UnknownError      SubmissionStatus = 8
+	InQueue           JudgementStatus = 0
+	Judging           JudgementStatus = 1
+	Accepted          JudgementStatus = 2
+	PresentationError JudgementStatus = 3
+	WrongAnswer       JudgementStatus = 4
+	TimeLimitExceeded JudgementStatus = 5
+	RuntimeError      JudgementStatus = 6
+	CompileError      JudgementStatus = 7
+	UnknownError      JudgementStatus = 8
 )
 
 func Submit(submission *Submission) error {
@@ -45,5 +46,13 @@ func Submit(submission *Submission) error {
 		return errors.New("something wrong")
 	}
 
+	deamon.Judge(submission.ID)
+
 	return nil
+}
+
+func GetSubmission(submissionID uint) *Submission {
+	submission := &Submission{ID: submissionID,}
+	db.Where(submission).First(submission)
+	return submission
 }
