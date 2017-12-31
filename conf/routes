@@ -4,7 +4,7 @@
 #
 
 module:testrunner
-# module:jobs
+module:jobs
 
 
 GET        /                            App.Index

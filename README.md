@@ -4,6 +4,7 @@
 ```
    go get github.com/revel/revel
    go get github.com/revel/cmd/revel
+   go get github.com/revel/cron
    go get github.com/gedorinku/koneko-online-judge
 ```
 
@@ -33,6 +34,7 @@ The directory structure of a generated Revel application:
         controllers/  App controllers go here
         views/        Templates directory
         models/
+        jobs/
 
     messages/         Message files
 
