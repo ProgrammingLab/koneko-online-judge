@@ -23,13 +23,15 @@ type Problem struct {
 	CaseSets        []CaseSet
 }
 
+type JudgeType int
+
 const (
 	// inputとoutputが1対1の普通のジャッジ
-	JudgeTypeNormal = 0
+	Normal JudgeType = 0
 	// 誤差許容
-	JudgeTypePrecision = 1
+	Precision JudgeType = 1
 	// 特別なoutputの評価器が必要なジャッジ
-	JudgeTypeSpecial = 2
+	Special JudgeType = 2
 )
 
 func NewProblem(user *User) *Problem {
