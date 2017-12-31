@@ -93,6 +93,8 @@ func (s *CaseSet) Delete() {
 	for _, c := range s.TestCases {
 		c.Delete()
 	}
+
+	db.Delete(s)
 }
 
 func (s *CaseSet) FetchTestCases() {
