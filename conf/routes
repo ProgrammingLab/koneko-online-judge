@@ -17,6 +17,9 @@ POST        /problems/new               Problem.New
 GET        /problems/:id/edit           Problem.Edit
 POST        /problems/:id/update        Problem.Update
 
+GET        /submissions/submit          Submission.SubmitPage
+POST        /submissions/submit          Submission.Submit
+
 # Ignore favicon requests
 GET        /favicon.ico             404
 

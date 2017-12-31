@@ -82,3 +82,11 @@ func (p *Problem) FetchWriter() {
 func (p *Problem) FetchCaseSets() {
 	db.Model(p).Related(&p.CaseSets)
 }
+
+func (p *Problem) CanView(user *User) bool {
+	if user == nil {
+		return false
+	}
+	// TODO コンテストの問題だったらその辺を考える
+	return true
+}

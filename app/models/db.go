@@ -20,7 +20,10 @@ func InitDB() {
 	revel.AppLog.Info("DB Connected")
 
 	createTables()
-	seed()
+	if revel.DevMode {
+		seedDebug()
+	}
+	seedLanguages()
 }
 
 func createTables() {
@@ -44,7 +47,7 @@ func createTables() {
 	db.Model(&Submission{}).AddForeignKey("language_id", "languages(id)", "RESTRICT", "RESTRICT")
 }
 
-func seed() {
+func seedDebug() {
 	password := "hoge"
 	digest, _ := bcrypt.GenerateFromPassword([]byte(password), GetBcryptCost())
 	user := &User{
@@ -54,5 +57,28 @@ func seed() {
 		Authority:      authorityMember,
 		PasswordDigest: string(digest),
 	}
-	db.Create(user)
+	db.Save(user)
+}
+
+func seedLanguages() {
+	languages := []*Language{
+		{
+			Name:           "c",
+			DisplayName:    "C",
+			FileName:       "main.c",
+			CompileCommand: "gcc -lm -std=gnu11 -O2 -o main.o main.c",
+			ExecCommand:    "./main.o",
+		},
+		{
+			Name:           "cpp",
+			DisplayName:    "C++",
+			FileName:       "main.cpp",
+			CompileCommand: "g++ -lm -std=gnu++1z -O2 -o main.o main.cpp",
+			ExecCommand:    "./main.o",
+		},
+	}
+
+	for _, l := range languages {
+		db.Save(l)
+	}
 }

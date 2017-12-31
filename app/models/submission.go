@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"time"
+	"github.com/pkg/errors"
+)
 
 type Submission struct {
 	ID          uint    `gorm:"primary_key"`
@@ -32,3 +35,15 @@ const (
 	CompileError      SubmissionStatus = 7
 	UnknownError      SubmissionStatus = 8
 )
+
+func Submit(submission *Submission) error {
+	submission.CodeBytes = uint(len(submission.SourceCode))
+	submission.ID = 0
+	db.Create(submission)
+
+	if submission.ID == 0 {
+		return errors.New("something wrong")
+	}
+
+	return nil
+}
