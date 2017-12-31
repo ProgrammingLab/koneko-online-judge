@@ -14,16 +14,25 @@
       <input name="request.Title" type="text" class="form-control" id="titleInput" minlength="1" maxlength="40"
              value="{{.problem.Title}}">
     </div>
+
     <div class="form-group">
-      <label for="timeLimitInput">時間制限(秒):</label>
-      <input name="request.TimeLimitSeconds" type="number" class="form-control" id="timeLimitInput" min="1" max="60"
-             value="{{.problem.TimeLimit.Seconds}}">
+      <label for="timeLimitInput">時間制限:</label>
+      <div class="input-group">
+        <input name="request.TimeLimitSeconds" type="number" class="form-control" id="timeLimitInput" min="1" max="60"
+               value="{{.problem.TimeLimit.Seconds}}">
+        <span class="input-group-addon">秒</span>
+      </div>
     </div>
+
     <div class="form-group">
-      <label for="memoryLimitInput">メモリ制限(MiB):</label>
-      <input name="request.MemoryLimit" type="number" class="form-control" id="memoryLimitInput" min="128" max="512"
-             value="{{.problem.MemoryLimit}}">
+      <label for="memoryLimitInput">メモリ制限:</label>
+      <div class="input-group">
+        <input name="request.MemoryLimit" type="number" class="form-control" id="memoryLimitInput" min="128" max="512"
+               value="{{.problem.MemoryLimit}}">
+        <span class="input-group-addon">MiB</span>
+      </div>
     </div>
+
     <div class="form-group">
       <label for="bodyTextArea">問題文:</label>
       <textarea name="request.Body" class="form-control" id="bodyTextArea" rows="15">{{.problem.Body}}</textarea>
@@ -36,6 +45,7 @@
         例)input8-10.txt
       </small>
     </div>
+
     <button type="submit" class="btn btn-secondary">保存</button>
   </form>
 </div>
