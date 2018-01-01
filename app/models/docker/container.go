@@ -22,6 +22,7 @@ type Container struct {
 const (
 	workspace        = "/tmp/koj-workspace"
 	timeCommand      = "/usr/bin/time"
+	timeOutCommand   = "timeout"
 	createArgsFormat = "create -i --net none --cpuset-cpus 0 --memory %vm -w " + workspace + " %v"
 	imageNamePrefix  = "koneko-online-judge-image-"
 	inputFileName    = "input.txt"
@@ -36,6 +37,7 @@ func CreateContainer(imageSuffix string, memoryLimit int, sourceFileName string)
 	imageName := imageNamePrefix + imageSuffix
 	options := fmt.Sprintf(createArgsFormat, memoryLimit, imageName)
 	cmd := exec.Command("docker", strings.Split(options, " ")...)
+	revel.AppLog.Debugf(cmd.Path, cmd.Args)
 	id, err := cmd.Output()
 	if err != nil {
 		return nil
@@ -55,8 +57,9 @@ func (c *Container) Start(sourceCode, input *string) error {
 		return err
 	}
 
-	startArgs := []string{"start", "-i", c.ID}
+	startArgs := []string{"start", c.ID}
 	c.cmd = exec.Command("docker", startArgs...)
+	revel.AppLog.Debugf(c.cmd.Path, c.cmd.Args)
 	if err := c.cmd.Start(); err != nil {
 		return err
 	}
@@ -67,8 +70,9 @@ func (c *Container) Start(sourceCode, input *string) error {
 // exit code, stderrを返す
 func (c *Container) Compile(command string) (int, string) {
 	revel.AppLog.Info("compile")
-	args := strings.Split("exec"+timeCommand+" 5 "+command, " ")
+	args := strings.Split("exec -i "+c.ID+" "+timeOutCommand+" 5 "+command, " ")
 	cmd := exec.Command("docker", args...)
+	revel.AppLog.Debugf(cmd.Path, cmd.Args)
 	stderr, _ := cmd.StderrPipe()
 	defer stderr.Close()
 
@@ -105,7 +109,14 @@ func (c *Container) writeFileToTempDirectory(name string, text *string) error {
 }
 
 func makeTempDirectory() error {
-	return os.Mkdir(workspace, os.ModePerm)
+	p, _ := os.Getwd()
+	revel.AppLog.Debug(p)
+	_, err := os.Stat(workspace)
+	if err != nil {
+		return os.Mkdir(workspace, os.ModePerm)
+	}
+
+	return nil
 }
 
 func generateRandomPassword() string {

@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/revel/modules/jobs/app/jobs"
 	"github.com/gedorinku/koneko-online-judge/app/models/docker"
+	"github.com/revel/revel"
 )
 
 type judgementJob struct {
@@ -65,14 +66,24 @@ func judgeTestCase(result *JudgeResult, submission *Submission) JudgementStatus 
 
 	result.FetchTestCase()
 	language := &submission.Language
-	container := docker.CreateContainer(language.ImageName, submission.Problem.MemoryLimit, result.TestCase.Input)
+	container := docker.CreateContainer(language.ImageName, submission.Problem.MemoryLimit, language.FileName)
 	if container == nil {
 		result.Status = UnknownError
 		return result.Status
 	}
 
-	code, _ := container.Compile(language.CompileCommand)
+	result.FetchTestCase()
+	testCase := &result.TestCase
+
+	if err := container.Start(&submission.SourceCode, &testCase.Input); err != nil {
+		revel.AppLog.Error(err.Error())
+		result.Status = UnknownError
+		return result.Status
+	}
+
+	code, err := container.Compile(language.CompileCommand)
 	if code != 0 {
+		revel.AppLog.Debugf("compile error:%v", err)
 		result.Status = CompileError
 		return result.Status
 	}
