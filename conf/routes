@@ -11,14 +11,15 @@ GET        /                            App.Index
 
 GET        /login                       App.LoginPage
 
-POST        /sessions/:method           Session.:method
+POST        /sessions/login             Session.Login
+POST        /sessions/logout            Session.Logout
 
 POST        /problems/new               Problem.New
 GET        /problems/:id/edit           Problem.Edit
 POST        /problems/:id/update        Problem.Update
 
 GET        /submissions/submit          Submission.SubmitPage
-POST        /submissions/submit          Submission.Submit
+POST        /submissions/submit         Submission.Submit
 
 # Ignore favicon requests
 GET        /favicon.ico             404
