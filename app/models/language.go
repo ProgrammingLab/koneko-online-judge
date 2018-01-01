@@ -6,7 +6,7 @@ type Language struct {
 	ID             uint   `gorm:"primary_key"`
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
-	Name           string `gorm:"not null; unique_index"`
+	ImageName      string `gorm:"not null"`
 	DisplayName    string `gorm:"not null; unique_index"`
 	FileName       string `gorm:"not null"`
 	CompileCommand string `gorm:"not null"`
@@ -20,7 +20,7 @@ func GetAllLanguages() []*Language {
 }
 
 func GetLanguageByDisplayName(displayName string) *Language {
-	result := &Language{DisplayName:displayName}
+	result := &Language{DisplayName: displayName}
 	db.Where(result).First(result)
 	return result
 }

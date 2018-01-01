@@ -31,8 +31,8 @@ func GetBcryptCost() int {
 	return 12
 }
 
-// length bytesのランダムなBase64エンコードされたトークンを返す
-func GenerateSecretToken(length int) string {
+// length bytesのランダムなBase64エンコードされた文字列を返す
+func GenerateRandomBase64String(length int) string {
 	bytes := make([]byte, length)
 	_, err := rand.Read(bytes)
 	if err != nil {

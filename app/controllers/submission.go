@@ -47,6 +47,7 @@ func (c Submission) Submit(request *SubmissionRequest) revel.Result {
 	} else {
 		submission := &models.Submission{
 			UserID:     user.ID,
+			ProblemID:  problem.ID,
 			LanguageID: language.ID,
 			SourceCode: request.SourceCode,
 		}

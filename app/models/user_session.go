@@ -30,7 +30,7 @@ func NewSession(email, password string) (*UserSession, string, error) {
 		return nil, "", errorLogin
 	}
 
-	token := []byte(GenerateSecretToken(32))
+	token := []byte(GenerateRandomBase64String(32))
 	digest, _ := bcrypt.GenerateFromPassword(token, GetBcryptCost())
 
 	oldSession := getSession(user.ID)
@@ -76,7 +76,7 @@ func getSession(userID uint) *UserSession {
 
 func (s *UserSession) Delete() {
 	db.Delete(s)
-	s.TokenDigest = GenerateSecretToken(16)
+	s.TokenDigest = GenerateRandomBase64String(16)
 }
 
 func (s *UserSession) FetchUser() {

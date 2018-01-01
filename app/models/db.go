@@ -46,6 +46,7 @@ func createTables() {
 	db.AutoMigrate(&Submission{})
 	db.Model(&Submission{}).AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
 	db.Model(&Submission{}).AddForeignKey("language_id", "languages(id)", "RESTRICT", "RESTRICT")
+	db.Model(&Submission{}).AddForeignKey("problem_id", "problems(id)", "RESTRICT", "RESTRICT")
 
 	db.AutoMigrate(&JudgeSetResult{})
 	db.AutoMigrate(&JudgeResult{})
@@ -71,17 +72,17 @@ func seedDebug() {
 func seedLanguages() {
 	languages := []*Language{
 		{
-			Name:           "c",
+			ImageName:      "cpp",
 			DisplayName:    "C",
 			FileName:       "main.c",
-			CompileCommand: "gcc -lm -std=gnu11 -O2 -o main.o main.c",
+			CompileCommand: "gcc -w -lm -std=gnu11 -O2 -o main.o main.c",
 			ExecCommand:    "./main.o",
 		},
 		{
-			Name:           "cpp",
+			ImageName:      "cpp",
 			DisplayName:    "C++",
 			FileName:       "main.cpp",
-			CompileCommand: "g++ -lm -std=gnu++1z -O2 -o main.o main.cpp",
+			CompileCommand: "g++ -w -lm -std=gnu++17 -O2 -o main.o main.cpp",
 			ExecCommand:    "./main.o",
 		},
 	}

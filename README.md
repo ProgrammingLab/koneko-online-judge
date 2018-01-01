@@ -34,7 +34,7 @@ The directory structure of a generated Revel application:
         controllers/  App controllers go here
         views/        Templates directory
         models/
-        jobs/
+        deamon/
 
     messages/         Message files
 
