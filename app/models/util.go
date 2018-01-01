@@ -10,6 +10,19 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	mb                  = 1024 * 1024
+	maxCaseFileSize     = 10
+	maxCaseZipTotalSize = 100
+	maxCaseFileCount    = 500
+)
+
+var (
+	caseFileCountLimitExceeded     = errors.New(fmt.Sprintf("ファイルの数は%v個以下にしてください。", maxCaseFileCount))
+	caseFileSizeLimitExceeded      = errors.New(fmt.Sprintf("展開後の各ファイルのサイズは%vMiB以下にしてください。", maxCaseFileSize))
+	totalCaseFileSizeLimitExceeded = errors.New(fmt.Sprintf("展開後の合計ファイルサイズは%vMiB以下にしてください。", maxCaseZipTotalSize))
+)
+
 func GetBcryptCost() int {
 	if revel.DevMode {
 		return bcrypt.DefaultCost
@@ -30,30 +43,23 @@ func GenerateSecretToken(length int) string {
 }
 
 func checkValidZip(reader *zip.Reader) error {
-	const (
-		mb           = 1024 * 1024
-		maxSize      = 10
-		maxTotalSize = 100
-		maxFileCount = 500
-	)
-
 	var total uint64
 
-	if maxFileCount < len(reader.File) {
-		return errors.New(fmt.Sprintf("ファイルの数は%v個以下にしてください。", maxFileCount))
+	if maxCaseFileCount < len(reader.File) {
+		return caseFileCountLimitExceeded
 	}
 
 	for _, f := range reader.File {
-		if f.UncompressedSize64 <= maxSize*mb {
+		if f.UncompressedSize64 <= maxCaseFileSize*mb {
 			total += f.UncompressedSize64 / mb
 			continue
 		}
 
-		return errors.New(fmt.Sprintf("展開後の各ファイルのサイズは%vMiB以下にしてください。", maxSize))
+		return caseFileSizeLimitExceeded
 	}
 
-	if maxTotalSize < total {
-		return errors.New(fmt.Sprintf("展開後の合計ファイルサイズは%vMiB以下にしてください。", maxTotalSize))
+	if maxCaseZipTotalSize < total {
+		return totalCaseFileSizeLimitExceeded
 	}
 
 	return nil
