@@ -3,7 +3,6 @@ package models
 import (
 	"github.com/revel/modules/jobs/app/jobs"
 	"github.com/gedorinku/koneko-online-judge/app/models/docker"
-	"github.com/revel/revel"
 )
 
 type judgementJob struct {
@@ -34,8 +33,7 @@ func (j judgementJob) Run() {
 
 	submission.Point = point
 	submission.Status = finalStatus
-	revel.AppLog.Infof("job %v %v", point, finalStatus)
-	db.Save(submission)
+	db.Model(&Submission{ID: submission.ID}).Updates(map[string]interface{}{"point": point, "status": finalStatus})
 }
 
 func judgeCaseSet(result *JudgeSetResult, submission *Submission) JudgementStatus {
@@ -55,14 +53,15 @@ func judgeCaseSet(result *JudgeSetResult, submission *Submission) JudgementStatu
 	}
 
 	result.Status = setStatus
-	revel.AppLog.Infof("update %v", result.Status)
-	db.Save(result)
+	db.Model(&JudgeSetResult{ID: result.ID}).Updates(map[string]interface{}{"point": result.Point, "status": result.Status})
 
 	return setStatus
 }
 
 func judgeTestCase(result *JudgeResult, submission *Submission) JudgementStatus {
-	defer db.Model(result).Updates(JudgeResult{Status: result.Status})
+	defer func() {
+		db.Model(&JudgeResult{ID: result.ID}).Update("status", result.Status)
+	}()
 
 	result.FetchTestCase()
 	language := &submission.Language

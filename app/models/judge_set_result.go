@@ -2,7 +2,6 @@ package models
 
 import (
 	"time"
-	"github.com/revel/revel"
 )
 
 type JudgeSetResult struct {
@@ -21,7 +20,6 @@ func initJudgeSetResults(submission *Submission) {
 	submission.FetchProblem()
 	problem := &submission.Problem
 	problem.FetchCaseSets()
-	revel.AppLog.Infof("cases", problem)
 
 	for _, s := range problem.CaseSets {
 		newJudgeSetResult(&s, submission)

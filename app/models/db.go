@@ -22,6 +22,7 @@ func InitDB() {
 	createTables()
 	if revel.DevMode {
 		seedDebug()
+		db.LogMode(true)
 	}
 	seedLanguages()
 }
