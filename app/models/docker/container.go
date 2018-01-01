@@ -90,6 +90,13 @@ func (c *Container) Compile(command string) (int, string) {
 	panic(WaitStatusIsUnimplementedErr)
 }
 
+func (c *Container) Remove() error {
+	args := strings.Split("rm -f "+c.ID, " ")
+	cmd := exec.Command("docker", args...)
+	revel.AppLog.Debugf(cmd.Path, cmd.Args)
+	return cmd.Run()
+}
+
 func (c *Container) writeFileToTempDirectory(name string, text *string) error {
 	if err := makeTempDirectory(); err != nil {
 		return err

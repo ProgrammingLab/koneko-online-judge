@@ -72,6 +72,12 @@ func judgeTestCase(result *JudgeResult, submission *Submission) JudgementStatus 
 		return result.Status
 	}
 
+	defer func() {
+		if err := container.Remove(); err != nil {
+			revel.AppLog.Errorf("docker rm error:", err)
+		}
+	}()
+
 	result.FetchTestCase()
 	testCase := &result.TestCase
 
