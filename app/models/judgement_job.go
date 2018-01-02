@@ -2,7 +2,7 @@ package models
 
 import (
 	"github.com/revel/modules/jobs/app/jobs"
-	"github.com/gedorinku/koneko-online-judge/app/models/docker"
+	"github.com/gedorinku/koneko-online-judge/app/models/workers"
 	"github.com/revel/revel"
 )
 
@@ -66,30 +66,30 @@ func judgeTestCase(result *JudgeResult, submission *Submission) JudgementStatus 
 
 	result.FetchTestCase()
 	language := &submission.Language
-	container := docker.CreateContainer(language.ImageName, submission.Problem.MemoryLimit, language.FileName)
-	if container == nil {
+	w, err := workers.NewJudgementWorker(language.ImageName, submission.Problem.MemoryLimit)
+	if err != nil {
 		result.Status = UnknownError
 		return result.Status
 	}
 
 	defer func() {
-		if err := container.Remove(); err != nil {
-			revel.AppLog.Errorf("docker rm error:", err)
-		}
+		//if err := w.Remove(); err != nil {
+		//	revel.AppLog.Errorf("docker rm error:", err)
+		//}
 	}()
 
 	result.FetchTestCase()
 	testCase := &result.TestCase
 
-	if err := container.Start(&submission.SourceCode, &testCase.Input); err != nil {
+	if err := w.Start(language.FileName, &submission.SourceCode, &testCase.Input); err != nil {
 		revel.AppLog.Error(err.Error())
 		result.Status = UnknownError
 		return result.Status
 	}
 
-	code, err := container.Compile(language.CompileCommand)
+	code, log := w.Compile(language.CompileCommand)
 	if code != 0 {
-		revel.AppLog.Debugf("compile error:%v", err)
+		revel.AppLog.Debugf("compile error:%v", log)
 		result.Status = CompileError
 		return result.Status
 	}
