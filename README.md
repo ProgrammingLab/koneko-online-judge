@@ -4,7 +4,6 @@
 ```
    go get github.com/revel/revel
    go get github.com/revel/cmd/revel
-   go get github.com/revel/cron
    go get github.com/gedorinku/koneko-online-judge
 ```
 
