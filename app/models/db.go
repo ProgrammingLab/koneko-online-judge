@@ -12,8 +12,7 @@ var db *gorm.DB
 func InitDB() {
 	driver, _ := revel.Config.String("db.driver")
 	spec, _ := revel.Config.String("db.spec")
-	var err error
-	db, err = gorm.Open(driver, spec)
+	db, err := gorm.Open(driver, spec)
 	if err != nil {
 		revel.AppLog.Fatal("DB Error", err.Error())
 	}

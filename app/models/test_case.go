@@ -16,17 +16,12 @@ type TestCase struct {
 }
 
 func newTestCase(set *CaseSet, input *zip.File, output *zip.File) (*TestCase, error) {
-	var (
-		err     error
-		in, out *string
-	)
-
-	in, err = readStringFull(input)
+	in, err := readStringFull(input)
 	if err != nil {
 		return nil, err
 	}
 
-	out, err = readStringFull(output)
+	out, err := readStringFull(output)
 	if err != nil {
 		return nil, err
 	}

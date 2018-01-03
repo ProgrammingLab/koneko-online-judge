@@ -14,19 +14,13 @@ func (c Session) Login(email, password string) revel.Result {
 	const message = "メールアドレスまたはパスワードが違います。"
 	c.Validation.Email(email).Message(message)
 
-	var (
-		session *models.UserSession
-		token   string
-	)
-
 	if c.Validation.HasErrors() {
 		c.Validation.Keep()
 		c.FlashParams()
 		return c.Redirect(App.LoginPage)
 	}
 
-	var err error
-	session, token, err = models.NewSession(email, password)
+	session, token, err := models.NewSession(email, password)
 	if err != nil {
 		c.Validation.Error(message)
 	}
