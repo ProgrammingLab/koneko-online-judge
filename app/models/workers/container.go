@@ -50,6 +50,8 @@ func NewJudgementWorker(imageSuffix string, memoryLimit int) (*JudgementWorker, 
 		AttachStdin:  true,
 		AttachStdout: true,
 		AttachStderr: true,
+		OpenStdin:    true,
+		StdinOnce:    false,
 		WorkingDir:   workspace,
 	}, &container.HostConfig{
 		Resources: container.Resources{
@@ -71,6 +73,16 @@ func (w *JudgementWorker) Start(sourceFileName string, sourceCode, input *string
 		return err
 	}
 
+	hijacked, err := w.client.ContainerAttach(w.context, w.ID, types.ContainerAttachOptions{
+		Stream: true,
+		Stderr: true,
+		Stdin:  true,
+		Stdout: true,
+	})
+	if err != nil {
+		return err
+	}
+
 	return w.client.ContainerStart(w.context, w.ID, types.ContainerStartOptions{})
 }
 
@@ -82,7 +94,9 @@ func (w *JudgementWorker) Compile(command string) (int, string) {
 		Cmd:          strings.Split(timeOutCommand+" 5 "+command, " "),
 	})
 	revel.AppLog.Debugf(timeOutCommand + " 5 " + command)
-	resp, err := w.client.ContainerExecAttach(w.context, id.ID, types.ExecStartCheck{})
+	resp, err := w.client.ContainerExecAttach(w.context, id.ID, types.ExecStartCheck{
+		Tty: true,
+	})
 	if err != nil {
 		revel.AppLog.Errorf("docker exec", err)
 	}

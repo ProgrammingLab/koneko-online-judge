@@ -87,12 +87,14 @@ func judgeTestCase(result *JudgeResult, submission *Submission) JudgementStatus 
 		return result.Status
 	}
 
+	/*
 	code, log := w.Compile(language.CompileCommand)
 	if code != 0 {
 		revel.AppLog.Debugf("compile error:%v", log)
 		result.Status = CompileError
 		return result.Status
 	}
+	*/
 
 	result.Status = Accepted
 	return result.Status
