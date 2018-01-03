@@ -34,10 +34,11 @@ const (
 	PresentationError   JudgementStatus = 3
 	WrongAnswer         JudgementStatus = 4
 	TimeLimitExceeded   JudgementStatus = 5
-	RuntimeError        JudgementStatus = 6
-	CompileError        JudgementStatus = 7
-	OutputLimitExceeded JudgementStatus = 8
-	UnknownError        JudgementStatus = 9
+	MemoryLimitExceeded JudgementStatus = 6
+	RuntimeError        JudgementStatus = 7
+	CompileError        JudgementStatus = 8
+	OutputLimitExceeded JudgementStatus = 9
+	UnknownError        JudgementStatus = 10
 )
 
 func Submit(submission *Submission) error {

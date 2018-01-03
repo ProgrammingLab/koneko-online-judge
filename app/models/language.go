@@ -9,6 +9,7 @@ type Language struct {
 	ImageName      string `gorm:"not null"`
 	DisplayName    string `gorm:"not null; unique_index"`
 	FileName       string `gorm:"not null"`
+	ExeFileName    string `gorm:"not null"`
 	CompileCommand string `gorm:"not null"`
 	ExecCommand    string `gorm:"not null"`
 }

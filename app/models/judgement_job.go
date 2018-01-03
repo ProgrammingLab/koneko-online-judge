@@ -4,11 +4,14 @@ import (
 	"github.com/revel/modules/jobs/app/jobs"
 	"github.com/gedorinku/koneko-online-judge/app/models/workers"
 	"github.com/revel/revel"
+	"strings"
 )
 
 type judgementJob struct {
 	SubmissionID uint
 }
+
+const imageNamePrefix = "koneko-online-judge-image-"
 
 func judge(submissionID uint) {
 	jobs.Now(judgementJob{
@@ -65,37 +68,85 @@ func judgeTestCase(result *JudgeResult, submission *Submission) JudgementStatus 
 	}()
 
 	result.FetchTestCase()
-	language := &submission.Language
-	w, err := workers.NewJudgementWorker(language.ImageName, submission.Problem.MemoryLimit)
-	if err != nil {
-		result.Status = UnknownError
-		return result.Status
-	}
-
-	defer func() {
-		//if err := w.Remove(); err != nil {
-		//	revel.AppLog.Errorf("docker rm error:", err)
-		//}
-	}()
-
-	result.FetchTestCase()
 	testCase := &result.TestCase
-
-	if err := w.Start(language.FileName, &submission.SourceCode, &testCase.Input); err != nil {
-		revel.AppLog.Error(err.Error())
+	// TODO コンパイル結果のキャッシュ
+	compileWorker, compileRes := compile(submission)
+	if compileWorker == nil || compileRes == nil {
 		result.Status = UnknownError
 		return result.Status
 	}
-
-	/*
-	code, log := w.Compile(language.CompileCommand)
-	if code != 0 {
-		revel.AppLog.Debugf("compile error:%v", log)
+	if compileRes.Status != workers.StatusFinished {
 		result.Status = CompileError
 		return result.Status
 	}
-	*/
+	defer compileWorker.Remove()
 
-	result.Status = Accepted
+	res := execSubmission(submission, testCase, compileWorker)
+	result.Status = toJudgementStatus(res, testCase)
+
 	return result.Status
+}
+
+func compile(submission *Submission) (*workers.Worker, *workers.ExecResult) {
+	problem := &submission.Problem
+	language := &submission.Language
+	cmd := strings.Split(language.CompileCommand, " ")
+	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, int64(problem.TimeLimit*1000), int64(problem.MemoryLimit*1000), cmd)
+	if err != nil {
+		revel.AppLog.Errorf("compile: container create error", err)
+		return nil, nil
+	}
+
+	res, err := w.Run("")
+	if err != nil {
+		revel.AppLog.Errorf("compile: container attach error", err)
+	}
+
+	return w, res
+}
+
+func execSubmission(submission *Submission, testCase *TestCase, compiled *workers.Worker) *workers.ExecResult {
+	problem := &submission.Problem
+	language := &submission.Language
+	cmd := strings.Split(language.CompileCommand, " ")
+	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, int64(problem.TimeLimit*1000), int64(problem.MemoryLimit*1000), cmd)
+	if err != nil {
+		revel.AppLog.Errorf("exec: container create error", err)
+		return nil
+	}
+
+	path := "/tmp/" + language.ExeFileName
+	err = compiled.CopyTo(path, path, w.ID)
+	if err != nil {
+		revel.AppLog.Errorf("exec: docker cp error", err)
+		return nil
+	}
+
+	res, err := w.Run(testCase.Input[:])
+	if err != nil {
+		revel.AppLog.Errorf("exec: container attach error", err)
+	}
+	return res
+}
+
+func toJudgementStatus(res *workers.ExecResult, testCase *TestCase) JudgementStatus {
+	if res == nil {
+		return UnknownError
+	}
+
+	switch res.Status {
+	case workers.StatusMemoryLimitExceeded:
+		return MemoryLimitExceeded
+	case workers.StatusTimeLimitExceeded:
+		return TimeLimitExceeded
+	case workers.StatusRuntimeError:
+		return RuntimeError
+	case workers.StatusFinished:
+		if res.Stdout == testCase.Output {
+			return Accepted
+		}
+		return WrongAnswer
+	default:
+		return UnknownError
+	}
 }

@@ -15,6 +15,7 @@ func InitDB() {
 	db, err := gorm.Open(driver, spec)
 	if err != nil {
 		revel.AppLog.Fatal("DB Error", err.Error())
+		panic(err)
 	}
 	revel.AppLog.Info("DB Connected")
 
@@ -75,6 +76,7 @@ func seedLanguages() {
 			ImageName:      "cpp",
 			DisplayName:    "C",
 			FileName:       "main.c",
+			ExeFileName:    "main.o",
 			CompileCommand: "gcc -w -lm -std=gnu11 -O2 -o main.o main.c",
 			ExecCommand:    "./main.o",
 		},
@@ -82,6 +84,7 @@ func seedLanguages() {
 			ImageName:      "cpp",
 			DisplayName:    "C++",
 			FileName:       "main.cpp",
+			ExeFileName:    "main.o",
 			CompileCommand: "g++ -w -lm -std=gnu++17 -O2 -o main.o main.cpp",
 			ExecCommand:    "./main.o",
 		},
