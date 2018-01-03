@@ -14,6 +14,8 @@ import (
 	"github.com/revel/revel"
 	"github.com/pkg/errors"
 	"bytes"
+	"github.com/docker/docker/api/types/network"
+	"io"
 )
 
 type Worker struct {
@@ -88,8 +90,9 @@ func NewWorker(img string, timeLimit int64, memoryLimit int64, cmd []string) (*W
 	}
 
 	var res container.ContainerCreateCreatedBody
-	res, err = cli.ContainerCreate(ctx, cfg, hcfg, nil, "")
+	res, err = cli.ContainerCreate(ctx, cfg, hcfg, &network.NetworkingConfig{}, "")
 	if err != nil {
+		revel.AppLog.Errorf("error %v", img, err)
 		return nil, err
 	}
 
@@ -112,23 +115,27 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	}
 	hijacked, err := w.cli.ContainerAttach(ctx, w.ID, opt)
 	if err != nil {
+		revel.AppLog.Errorf("error", err)
 		return nil, err
 	}
 	defer hijacked.Close()
 
 	err = w.cli.ContainerStart(ctx, w.ID, types.ContainerStartOptions{})
 	if err != nil {
+		revel.AppLog.Errorf("error", err)
 		return nil, err
 	}
 
 	stdout, err := ioutil.TempFile("", "stdout")
 	if err != nil {
+		revel.AppLog.Errorf("error", err)
 		return nil, err
 	}
 	defer removeTempFile(stdout)
 
 	stderr, err := ioutil.TempFile("", "stderr")
 	if err != nil {
+		revel.AppLog.Errorf("error", err)
 		return nil, err
 	}
 	defer removeTempFile(stderr)
@@ -142,7 +149,7 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 			return
 		}
 
-		hijacked.Close()
+		hijacked.CloseWrite()
 
 		_, err = stdcopy.StdCopy(stdout, stderr, hijacked.Reader)
 		streamErrChan <- err
@@ -150,29 +157,39 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 
 	err = w.cli.ContainerStart(ctx, w.ID, types.ContainerStartOptions{})
 	if err != nil {
+		revel.AppLog.Errorf("error", err)
 		return nil, err
 	}
 
 	if err := <-streamErrChan; err != nil {
+		revel.AppLog.Errorf("error", err)
 		return nil, err
 	}
 
-	timeText, err := w.getFromContainer("/tmp/time.txt", 128)
+	timeText, err := w.getFromContainer(Workspace+"time.txt", 128)
 	if err != nil {
+		revel.AppLog.Errorf("error", err)
 		return nil, err
 	}
 
 	timeMillis, memoryUsage, err := parseTimeText(string(timeText))
 	if err != nil {
+		revel.AppLog.Errorf("error: %v", string(timeText), err)
 		return nil, err
 	}
 
 	stdoutBuf := make([]byte, outputLimit)
-	_, err = stdout.Read(stdoutBuf)
-	if err != nil {
+	n, err := stdout.Read(stdoutBuf)
+	if err != nil && err != io.EOF {
+		revel.AppLog.Errorf("error", err)
 		return nil, err
 	}
-	stderrString, err := w.getFromContainer("/tmp/error.txt", errorOutputLimit)
+	stdoutBuf = stdoutBuf[0:n]
+	stderrString, err := w.getFromContainer(Workspace+"error.txt", errorOutputLimit)
+	if err != nil {
+		revel.AppLog.Errorf("error", err)
+		return nil, err
+	}
 
 	var status ExecStatus
 	switch checkRuntimeError(stderr) {
@@ -181,7 +198,7 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	case nil:
 		break
 	default:
-		return nil, err
+		return nil, nil
 	}
 
 	switch {
@@ -226,7 +243,7 @@ func (w Worker) PutFileTo(content []byte, name string) error {
 	writer.Close()
 
 	ctx := context.Background()
-	return w.cli.CopyToContainer(ctx, w.ID, Workspace+name, buf, types.CopyToContainerOptions{})
+	return w.cli.CopyToContainer(ctx, w.ID, name, buf, types.CopyToContainerOptions{})
 }
 
 func (w Worker) Remove() error {
@@ -249,31 +266,36 @@ func (w Worker) getFromContainer(path string, limit int64) ([]byte, error) {
 	r := tar.NewReader(f)
 	r.Next()
 	buf := make([]byte, limit)
-	_, err = r.Read(buf)
+	n, err := r.Read(buf)
 	if err != nil {
 		return nil, err
 	}
 
-	return buf, err
+	return buf[0:n], err
 }
 
 func removeTempFile(file *os.File) {
+	file.Close()
 	err := os.Remove(file.Name())
-	revel.AppLog.Errorf("temp file remove fail:", err)
+	if err != nil {
+		revel.AppLog.Errorf("temp file remove fail:", err)
+	}
 }
 
 func parseTimeText(time string) (int64, int64, error) {
-	args := strings.Split(time, " ")
+	args := strings.Split(strings.TrimSpace(time), " ")
 	if len(args) < 2 {
 		return 0, 0, TimeTextParseError
 	}
 	t, err := strconv.ParseFloat(args[0], 64)
 	if err != nil {
+		revel.AppLog.Errorf("parse error", err)
 		return 0, 0, TimeTextParseError
 	}
 
 	m, err := strconv.ParseFloat(args[1], 64)
 	if err != nil {
+		revel.AppLog.Errorf("parse error", err)
 		return 0, 0, TimeTextParseError
 	}
 
