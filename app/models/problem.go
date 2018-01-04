@@ -56,7 +56,7 @@ func GetProblem(id uint) *Problem {
 
 func GetNoContestProblems() []Problem {
 	problems := make([]Problem, 0)
-	db.Find(&problems)
+	db.Order("id ASC").Find(&problems)
 	return problems
 }
 
