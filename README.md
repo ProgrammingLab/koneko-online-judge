@@ -5,6 +5,7 @@
    go get github.com/revel/revel
    go get github.com/revel/cmd/revel
    go get github.com/gedorinku/koneko-online-judge
+   docker build -t koneko-online-judge-image-cpp $GOPATH/src/github.com/gedorinku/koneko-online-judge/container/cpp/
 ```
 
 ### Set environment variables:
