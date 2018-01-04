@@ -123,7 +123,7 @@ func execSubmission(submission *Submission, testCase *TestCase, compiled *worker
 		return nil
 	}
 
-	err = compiled.CopyTo(language.ExeFileName, w.ID)
+	err = compiled.CopyTo(language.ExeFileName, w)
 	if err != nil {
 		revel.AppLog.Errorf("exec: docker cp error", err)
 		return nil

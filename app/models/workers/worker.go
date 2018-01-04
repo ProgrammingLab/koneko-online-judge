@@ -6,16 +6,16 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"io"
 	"golang.org/x/net/context"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/pkg/archive"
 	"github.com/revel/revel"
 	"github.com/pkg/errors"
-	"github.com/docker/docker/api/types/network"
-	"io"
-	"github.com/docker/docker/pkg/archive"
 )
 
 type Worker struct {
@@ -226,14 +226,15 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	}, nil
 }
 
-func (w Worker) CopyTo(srcPath, container string) error {
-	ctx := context.Background()
-	r, _, err := w.cli.CopyFromContainer(ctx, w.ID, Workspace+srcPath)
+func (w Worker) CopyTo(basename string, dist *Worker) error {
+	const limit = 10 * 1024 * 1024
+	name := Workspace + basename
+	content, err := w.getFromContainer(name, limit)
 	if err != nil {
 		revel.AppLog.Errorf("", err)
 		return err
 	}
-	return w.cli.CopyToContainer(ctx, w.ID, Workspace, r, types.CopyToContainerOptions{})
+	return dist.CopyContentToContainer(content, basename)
 }
 
 func (w Worker) CopyContentToContainer(content []byte, name string) error {
@@ -245,6 +246,11 @@ func (w Worker) CopyContentToContainer(content []byte, name string) error {
 	}
 	f.Write(content)
 	f.Close()
+	err = os.Chmod(f.Name(), 0777)
+	if err != nil {
+		revel.AppLog.Errorf("could not change temp file mode", err)
+		return err
+	}
 	defer removeTempFile(f)
 
 	srcInfo, err := archive.CopyInfoSourcePath(f.Name(), false)
