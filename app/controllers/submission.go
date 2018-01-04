@@ -20,10 +20,11 @@ func (c Submission) List(problemID, contestID uint) revel.Result {
 		submissions []models.Submission
 		query       string
 	)
+	user := getUser(c.Session)
 	switch {
 	case problemID != 0:
 		problem := models.GetProblem(problemID)
-		if problem == nil {
+		if problem == nil || problem.CanView(user) {
 			return c.NotFound(problemNotFoundMessage)
 		}
 		problem.FetchSubmissions()
