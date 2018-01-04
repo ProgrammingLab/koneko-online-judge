@@ -22,6 +22,7 @@ func judge(submissionID uint) {
 func (j judgementJob) Run() {
 	submission := GetSubmission(j.SubmissionID)
 	submission.FetchLanguage()
+	submission.FetchProblem()
 	submission.FetchJudgeSetResults()
 
 	point := 0
@@ -77,10 +78,10 @@ func judgeTestCase(result *JudgeResult, submission *Submission) JudgementStatus 
 	}
 	if compileRes.Status != workers.StatusFinished {
 		result.Status = CompileError
-		revel.AppLog.Debugf("compile error", compileRes.Stderr)
+		revel.AppLog.Debugf("compile error: worker status %v", compileRes.Status, compileRes.Stderr)
 		return result.Status
 	}
-	defer compileWorker.Remove()
+	//defer compileWorker.Remove()
 
 	res := execSubmission(submission, testCase, compileWorker)
 	result.Status = toJudgementStatus(res, testCase)
@@ -92,13 +93,13 @@ func compile(submission *Submission) (*workers.Worker, *workers.ExecResult) {
 	problem := &submission.Problem
 	language := &submission.Language
 	cmd := strings.Split(language.CompileCommand, " ")
-	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, int64(problem.TimeLimit*1000), int64(problem.MemoryLimit*1000), cmd)
+	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, int64(problem.TimeLimit*1000), int64(problem.MemoryLimit*1024*1024), cmd)
 	if err != nil {
 		revel.AppLog.Errorf("compile: container create error", err)
 		return nil, nil
 	}
 
-	err = w.PutFileTo([]byte(submission.SourceCode), workers.Workspace+language.FileName)
+	err = w.CopyContentToContainer([]byte(submission.SourceCode), language.FileName)
 	if err != nil {
 		revel.AppLog.Errorf("compile: docker cp", err)
 		return nil, nil
@@ -115,15 +116,14 @@ func compile(submission *Submission) (*workers.Worker, *workers.ExecResult) {
 func execSubmission(submission *Submission, testCase *TestCase, compiled *workers.Worker) *workers.ExecResult {
 	problem := &submission.Problem
 	language := &submission.Language
-	cmd := strings.Split(language.CompileCommand, " ")
-	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, int64(problem.TimeLimit*1000), int64(problem.MemoryLimit*1000), cmd)
+	cmd := strings.Split(language.ExecCommand, " ")
+	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, int64(problem.TimeLimit*1000), int64(problem.MemoryLimit*1024*1024), cmd)
 	if err != nil {
 		revel.AppLog.Errorf("exec: container create error", err)
 		return nil
 	}
 
-	path := workers.Workspace + language.ExeFileName
-	err = compiled.CopyTo(path, path, w.ID)
+	err = compiled.CopyTo(language.ExeFileName, w.ID)
 	if err != nil {
 		revel.AppLog.Errorf("exec: docker cp error", err)
 		return nil
@@ -152,6 +152,9 @@ func toJudgementStatus(res *workers.ExecResult, testCase *TestCase) JudgementSta
 		if res.Stdout == testCase.Output {
 			return Accepted
 		}
+		revel.AppLog.Debug(res.Stdout)
+		revel.AppLog.Debug(res.Stderr)
+		revel.AppLog.Debug(testCase.Output)
 		return WrongAnswer
 	default:
 		return UnknownError

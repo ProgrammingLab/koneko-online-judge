@@ -13,9 +13,9 @@ import (
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/revel/revel"
 	"github.com/pkg/errors"
-	"bytes"
 	"github.com/docker/docker/api/types/network"
 	"io"
+	"github.com/docker/docker/pkg/archive"
 )
 
 type Worker struct {
@@ -178,6 +178,11 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		return nil, err
 	}
 
+	_, err = stdout.Seek(0, 0)
+	if err != nil {
+		revel.AppLog.Errorf("error", err)
+		return nil, err
+	}
 	stdoutBuf := make([]byte, outputLimit)
 	n, err := stdout.Read(stdoutBuf)
 	if err != nil && err != io.EOF {
@@ -186,7 +191,7 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	}
 	stdoutBuf = stdoutBuf[0:n]
 	stderrString, err := w.getFromContainer(Workspace+"error.txt", errorOutputLimit)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		revel.AppLog.Errorf("error", err)
 		return nil, err
 	}
@@ -204,8 +209,10 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	switch {
 	case w.TimeLimit < timeMillis:
 		status = StatusTimeLimitExceeded
+		revel.AppLog.Debugf("time limit(%v) exceeded:%v", w.TimeLimit, timeMillis)
 	case w.MemoryLimit < memoryUsage:
 		status = StatusMemoryLimitExceeded
+		revel.AppLog.Debugf("memory limit(%v) exceeded:%v", w.MemoryLimit, memoryUsage)
 	default:
 		status = StatusFinished
 	}
@@ -219,31 +226,50 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	}, nil
 }
 
-func (w Worker) CopyTo(srcPath, distPath string, container string) error {
+func (w Worker) CopyTo(srcPath, container string) error {
 	ctx := context.Background()
-	r, _, err := w.cli.CopyFromContainer(ctx, w.ID, srcPath)
+	r, _, err := w.cli.CopyFromContainer(ctx, w.ID, Workspace+srcPath)
 	if err != nil {
+		revel.AppLog.Errorf("", err)
 		return err
 	}
-	return w.cli.CopyToContainer(ctx, w.ID, distPath, r, types.CopyToContainerOptions{})
+	return w.cli.CopyToContainer(ctx, w.ID, Workspace, r, types.CopyToContainerOptions{})
 }
 
-func (w Worker) PutFileTo(content []byte, name string) error {
-	const (
-		headerSize = 512
-		binaryZero = 1024
-	)
-	buf := bytes.NewBuffer(make([]byte, headerSize+len(content)+binaryZero))
-	writer := tar.NewWriter(buf)
-	writer.WriteHeader(&tar.Header{
-		Name: name,
-		Size: int64(len(content)),
-	})
-	writer.Write(content)
-	writer.Close()
+func (w Worker) CopyContentToContainer(content []byte, name string) error {
+	createTempDir()
+	f, err := os.Create(Workspace + name)
+	if err != nil {
+		revel.AppLog.Errorf("could not create temp file", err)
+		return err
+	}
+	f.Write(content)
+	f.Close()
+	defer removeTempFile(f)
+
+	srcInfo, err := archive.CopyInfoSourcePath(f.Name(), false)
+	if err != nil {
+		revel.AppLog.Errorf("", err)
+		return err
+	}
+
+	srcArchive, err := archive.TarResource(srcInfo)
+	if err != nil {
+		revel.AppLog.Errorf("", err)
+		return err
+	}
+	defer srcArchive.Close()
+
+	// 最後に`/`をつけてはいけない
+	dstInfo := archive.CopyInfo{Path: Workspace + name}
+	dstDir, preparedArchive, err := archive.PrepareArchiveCopy(srcArchive, srcInfo, dstInfo)
+	if err != nil {
+		revel.AppLog.Errorf("", err)
+		return err
+	}
 
 	ctx := context.Background()
-	return w.cli.CopyToContainer(ctx, w.ID, name, buf, types.CopyToContainerOptions{})
+	return w.cli.CopyToContainer(ctx, w.ID, dstDir, preparedArchive, types.CopyToContainerOptions{})
 }
 
 func (w Worker) Remove() error {
@@ -313,4 +339,13 @@ func checkRuntimeError(stderr *os.File) error {
 		return nil
 	}
 	return runtimeError
+}
+
+func createTempDir() error {
+	_, err := os.Stat(Workspace)
+	if err != nil {
+		return os.Mkdir(Workspace, os.ModePerm)
+	}
+
+	return nil
 }
