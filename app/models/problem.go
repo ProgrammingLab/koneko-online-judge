@@ -47,8 +47,8 @@ func NewProblem(user *User) *Problem {
 
 func GetProblem(id uint) *Problem {
 	problem := &Problem{}
-	db.Where(id).First(problem)
-	if problem.ID == 0 {
+	notFound := db.Where(id).First(problem).RecordNotFound()
+	if notFound {
 		return nil
 	}
 	return problem

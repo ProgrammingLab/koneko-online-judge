@@ -59,7 +59,10 @@ func Submit(submission *Submission) error {
 
 func GetSubmission(submissionID uint) *Submission {
 	submission := &Submission{ID: submissionID}
-	db.Where(submission).First(submission)
+	notFound := db.Where(submission).First(submission).RecordNotFound()
+	if notFound {
+		return nil
+	}
 	return submission
 }
 

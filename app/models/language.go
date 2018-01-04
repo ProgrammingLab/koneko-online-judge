@@ -22,6 +22,9 @@ func GetAllLanguages() []*Language {
 
 func GetLanguageByDisplayName(displayName string) *Language {
 	result := &Language{DisplayName: displayName}
-	db.Where(result).First(result)
+	notFound := db.Where(result).First(result).RecordNotFound()
+	if notFound {
+		return nil
+	}
 	return result
 }

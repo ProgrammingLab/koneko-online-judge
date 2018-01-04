@@ -25,9 +25,9 @@ var (
 // emailとpasswordが正しければ新しいUserSessionとTokenを返す
 func NewSession(email, password string) (*UserSession, string, error) {
 	user := &User{Email: email}
-	db.Where(user).First(user)
+	notFound := db.Where(user).First(user).RecordNotFound()
 
-	if user.ID == 0 || !user.IsCorrectPassword(password) {
+	if notFound || !user.IsCorrectPassword(password) {
 		return nil, "", errorLogin
 	}
 
@@ -68,8 +68,8 @@ func CheckLogin(userID uint, token string) *UserSession {
 
 func getSession(userID uint) *UserSession {
 	session := &UserSession{UserID: userID}
-	db.Where(session).First(session)
-	if session.ID == 0 {
+	notFound := db.Where(session).First(session).RecordNotFound()
+	if notFound {
 		return nil
 	}
 	return session
