@@ -153,9 +153,9 @@ func toJudgementStatus(res *workers.ExecResult, testCase *TestCase) JudgementSta
 		if res.Stdout == testCase.Output {
 			return Accepted
 		}
-		revel.AppLog.Debug(res.Stdout)
-		revel.AppLog.Debug(res.Stderr)
-		revel.AppLog.Debug(testCase.Output)
+		if strings.TrimSpace(res.Stdout) == strings.TrimSpace(testCase.Output) {
+			return PresentationError
+		}
 		return WrongAnswer
 	default:
 		return UnknownError
