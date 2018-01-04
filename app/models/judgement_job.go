@@ -77,12 +77,12 @@ func judgeTestCase(result *JudgeResult, submission *Submission) JudgementStatus 
 		result.Status = UnknownError
 		return result.Status
 	}
+	defer compileWorker.Remove()
 	if compileRes.Status != workers.StatusFinished {
 		result.Status = CompileError
 		revel.AppLog.Debugf("compile error: worker status %v", compileRes.Status, compileRes.Stderr)
 		return result.Status
 	}
-	//defer compileWorker.Remove()
 
 	res := execSubmission(submission, testCase, compileWorker)
 	result.Status = toJudgementStatus(res, testCase)
@@ -123,6 +123,7 @@ func execSubmission(submission *Submission, testCase *TestCase, compiled *worker
 		revel.AppLog.Errorf("exec: container create error", err)
 		return nil
 	}
+	defer w.Remove()
 
 	err = compiled.CopyTo(language.ExeFileName, w)
 	if err != nil {
