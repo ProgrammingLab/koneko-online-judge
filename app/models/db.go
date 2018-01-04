@@ -75,18 +75,26 @@ func seedLanguages() {
 	languages := []*Language{
 		{
 			ImageName:      "cpp",
-			DisplayName:    "C",
-			FileName:       "main.c",
+			DisplayName:    "C++17 (GCC 7.2.0)",
+			FileName:       "main.cpp",
 			ExeFileName:    "main.o",
-			CompileCommand: "gcc -w -lm -std=gnu11 -O2 -o main.o main.c",
+			CompileCommand: "g++ -w -lm -std=gnu++17 -O2 -o main.o main.cpp",
 			ExecCommand:    "./main.o",
 		},
 		{
 			ImageName:      "cpp",
-			DisplayName:    "C++",
+			DisplayName:    "C++11 (GCC 7.2.0)",
 			FileName:       "main.cpp",
 			ExeFileName:    "main.o",
-			CompileCommand: "g++ -w -lm -std=gnu++17 -O2 -o main.o main.cpp",
+			CompileCommand: "g++ -w -lm -std=gnu++11 -O2 -o main.o main.cpp",
+			ExecCommand:    "./main.o",
+		},
+		{
+			ImageName:      "cpp",
+			DisplayName:    "C11 (GCC 7.2.0)",
+			FileName:       "main.c",
+			ExeFileName:    "main.o",
+			CompileCommand: "gcc -w -lm -std=gnu11 -O2 -o main.o main.c",
 			ExecCommand:    "./main.o",
 		},
 	}
