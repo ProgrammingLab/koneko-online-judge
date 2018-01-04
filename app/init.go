@@ -2,10 +2,11 @@ package app
 
 import (
 	"strconv"
+
 	"github.com/revel/revel"
 
-	"github.com/gedorinku/koneko-online-judge/app/models"
 	"github.com/gedorinku/koneko-online-judge/app/controllers"
+	"github.com/gedorinku/koneko-online-judge/app/models"
 )
 
 var (

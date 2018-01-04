@@ -3,7 +3,7 @@ package models
 import "time"
 
 type Language struct {
-	ID             uint   `gorm:"primary_key"`
+	ID             uint `gorm:"primary_key"`
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 	ImageName      string `gorm:"not null"`

@@ -1,10 +1,11 @@
 package controllers
 
 import (
-	"unicode/utf8"
 	"time"
-	"github.com/revel/revel"
+	"unicode/utf8"
+
 	"github.com/gedorinku/koneko-online-judge/app/models"
+	"github.com/revel/revel"
 )
 
 type Problem struct {

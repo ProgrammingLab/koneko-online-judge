@@ -1,13 +1,13 @@
 package models
 
 import (
-	"time"
 	"archive/zip"
 	"io"
+	"time"
 )
 
 type TestCase struct {
-	ID        uint   `gorm:"primary_key"`
+	ID        uint `gorm:"primary_key"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	CaseSetID uint   `gorm:"not null"`

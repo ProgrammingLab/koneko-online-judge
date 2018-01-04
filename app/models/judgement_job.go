@@ -1,10 +1,11 @@
 package models
 
 import (
-	"github.com/revel/modules/jobs/app/jobs"
-	"github.com/gedorinku/koneko-online-judge/app/models/workers"
-	"github.com/revel/revel"
 	"strings"
+
+	"github.com/gedorinku/koneko-online-judge/app/models/workers"
+	"github.com/revel/modules/jobs/app/jobs"
+	"github.com/revel/revel"
 )
 
 type judgementJob struct {

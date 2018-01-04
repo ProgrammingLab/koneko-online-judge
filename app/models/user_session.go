@@ -3,11 +3,12 @@ package models
 import (
 	"errors"
 	"time"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserSession struct {
-	ID          uint   `gorm:"primary_key"`
+	ID          uint `gorm:"primary_key"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	User        User

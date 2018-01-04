@@ -5,12 +5,12 @@ import (
 )
 
 type JudgeSetResult struct {
-	ID           uint            `gorm:"primary_key"`
+	ID           uint `gorm:"primary_key"`
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
-	SubmissionID uint            `gorm:"not null"`
+	SubmissionID uint `gorm:"not null"`
 	CaseSet      CaseSet
-	CaseSetID    uint            `gorm:"not null"`
+	CaseSetID    uint `gorm:"not null"`
 	Point        int
 	Status       JudgementStatus `gorm:"not null; default:'0'"`
 	JudgeResults []JudgeResult

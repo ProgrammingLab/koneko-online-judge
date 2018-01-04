@@ -3,10 +3,11 @@ package models
 import (
 	"archive/zip"
 	"bytes"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
-	"regexp"
+
 	"github.com/pkg/errors"
 )
 
@@ -158,6 +159,6 @@ func parseCaseFileName(name string, prefix string) (int, int) {
 	hyphen := strings.IndexByte(name, '-')
 	dot := strings.IndexByte(name, '.')
 	i, _ := strconv.Atoi(name[len(prefix):hyphen])
-	j, _ := strconv.Atoi(name[hyphen+1:dot])
+	j, _ := strconv.Atoi(name[hyphen+1 : dot])
 	return i, j
 }

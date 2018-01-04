@@ -5,9 +5,10 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+
+	"github.com/pkg/errors"
 	"github.com/revel/revel"
 	"golang.org/x/crypto/bcrypt"
-	"github.com/pkg/errors"
 )
 
 const (

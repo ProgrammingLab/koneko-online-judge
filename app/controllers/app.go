@@ -1,9 +1,10 @@
 package controllers
 
 import (
-	"github.com/revel/revel"
-	"github.com/gedorinku/koneko-online-judge/app/models"
 	"strconv"
+
+	"github.com/gedorinku/koneko-online-judge/app/models"
+	"github.com/revel/revel"
 )
 
 const (

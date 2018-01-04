@@ -2,20 +2,21 @@ package workers
 
 import (
 	"archive/tar"
-	"strconv"
+	"io"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
-	"io"
-	"golang.org/x/net/context"
-	"github.com/docker/docker/client"
-	"github.com/docker/docker/api/types/container"
+
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
-	"github.com/revel/revel"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/pkg/errors"
+	"github.com/revel/revel"
+	"golang.org/x/net/context"
 )
 
 type Worker struct {

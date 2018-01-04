@@ -2,20 +2,21 @@ package models
 
 import (
 	"time"
+
 	"github.com/pkg/errors"
 )
 
 type Submission struct {
-	ID              uint            `gorm:"primary_key"`
+	ID              uint `gorm:"primary_key"`
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
-	UserID          uint            `gorm:"not null"`
+	UserID          uint `gorm:"not null"`
 	User            User
-	ProblemID       uint            `gorm:"not null"`
+	ProblemID       uint `gorm:"not null"`
 	Problem         Problem
-	LanguageID      uint            `gorm:"not null"`
+	LanguageID      uint `gorm:"not null"`
 	Language        Language
-	SourceCode      string          `gorm:"type:text; not null"`
+	SourceCode      string `gorm:"type:text; not null"`
 	Point           int
 	Status          JudgementStatus `gorm:"default:'0'"`
 	ErrorLog        string          `gorm:"type:text"`
@@ -57,7 +58,7 @@ func Submit(submission *Submission) error {
 }
 
 func GetSubmission(submissionID uint) *Submission {
-	submission := &Submission{ID: submissionID,}
+	submission := &Submission{ID: submissionID}
 	db.Where(submission).First(submission)
 	return submission
 }
