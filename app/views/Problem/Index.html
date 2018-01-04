@@ -1,0 +1,26 @@
+{{template "navigation.html" .}}
+
+<div class="container mt-5 mb-5">
+  <div class="row">
+    <div class="span6">
+    {{template "flash.html" .}}
+    </div>
+  </div>
+
+  <h1 class="h1">{{.problem.Title}}</h1>
+  <div>
+    実行時間制限:{{.problem.TimeLimit}} / メモリ制限:{{.problem.MemoryLimit}}MiB
+  </div>
+
+  <div class="mt-5">
+    <h2 class="h3">問題文</h2>
+    <p>{{.problem.Body}}</p>
+  </div>
+
+  <div class="mt-5">
+    <a class="btn btn-secondary" href="{{url "Submission.Submit"}}?problemID={{.problem.ID}}">提出</a>
+  </div>
+
+</div>
+
+{{template "footer.html" .}}

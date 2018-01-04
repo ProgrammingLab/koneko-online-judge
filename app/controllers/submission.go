@@ -26,6 +26,7 @@ func (c Submission) SubmitPage(problemID uint) revel.Result {
 	}
 
 	languages := models.GetAllLanguages()
+	initNavigationBar(&c.ViewArgs, c.Session)
 
 	return c.Render(problem, languages)
 }

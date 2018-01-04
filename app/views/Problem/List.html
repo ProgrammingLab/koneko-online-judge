@@ -23,7 +23,7 @@
     {{range .problems}}
     <tr>
       <td>{{.ID}}</td>
-      <td>{{.Title}}</td>
+      <td><a href="..{{url "Problem.Index" .ID}}">{{.Title}}</a></td>
       <td>{{.Writer.DisplayName}}</td>
       <td>{{.TimeLimit}}</td>
       <td>{{.MemoryLimit}}MiB</td>

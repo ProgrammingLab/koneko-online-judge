@@ -24,6 +24,19 @@ var (
 	problemEditForbiddenMessage = "editing is not allowed"
 )
 
+func (c Problem) Index(id uint) revel.Result {
+	problem := models.GetProblem(id)
+	if problem == nil {
+		return c.NotFound(problemNotFoundMessage, id)
+	}
+	problem.FetchWriter()
+	title := problem.Title + " - KOJ"
+
+	initNavigationBar(&c.ViewArgs, c.Session)
+
+	return c.Render(problem, title)
+}
+
 func (c Problem) New() revel.Result {
 	user := getUser(c.Session)
 	problem := models.NewProblem(user)

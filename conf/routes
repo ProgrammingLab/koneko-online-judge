@@ -18,6 +18,7 @@ POST        /problems/new               Problem.New
 GET        /problems/list               Problem.List
 GET        /problems/:id/edit           Problem.Edit
 POST        /problems/:id/update        Problem.Update
+GET        /problems/:id/index          Problem.Index
 
 GET        /submissions/submit          Submission.SubmitPage
 POST        /submissions/submit         Submission.Submit
