@@ -20,6 +20,7 @@ GET        /problems/:id/edit           Problem.Edit
 POST        /problems/:id/update        Problem.Update
 GET        /problems/:id/index          Problem.Index
 
+GET        /submissions/list            Submission.List
 GET        /submissions/submit          Submission.SubmitPage
 POST        /submissions/submit         Submission.Submit
 

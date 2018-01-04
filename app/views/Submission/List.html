@@ -1,0 +1,44 @@
+{{set . "title" "提出一覧 - KOJ"}}
+{{template "navigation.html" .}}
+
+<div class="container mt-5 mb-5">
+  <div class="row">
+    <div class="span6">
+    {{template "flash.html" .}}
+    </div>
+  </div>
+
+  <h1 class="h1">提出{{.query}}</h1>
+  <table class="table table-bordered table-striped table-responsive">
+    <thead>
+    <tr>
+      <th>ID</th>
+      <th class="w-25">日時</th>
+      <th class="w-25">問題</th>
+      <th class="no-break">ユーザー</th>
+      <th class="no-break">結果</th>
+      <th class="no-break">実行時間</th>
+      <th class="no-break">メモリ</th>
+      <th class="no-break">コード長</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{range .submissions}}
+    <tr>
+      <td>{{.ID}}</td>
+      <td>{{datetime .CreatedAt}}</td>
+      <td><a href="..{{url "Problem.Index" .ID}}">{{.Problem.Title}}</a></td>
+      <td>{{.User.DisplayName}}</td>
+      <td>
+        <label class="badge {{$.Converter.GetStatusBadgeStyle .Status}}">{{$.Converter.GetStatusBadge .Status}}</label>
+      </td>
+      <td>{{.ExecTime}}</td>
+      <td>{{.MemoryUsage}}MiB</td>
+      <td>{{.CodeBytes}}</td>
+    </tr>
+    {{end}}
+    </tbody>
+  </table>
+</div>
+
+{{template "footer.html" .}}

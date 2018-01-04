@@ -15,6 +15,34 @@ type SubmissionRequest struct {
 	SourceCode string
 }
 
+func (c Submission) List(problemID, contestID uint) revel.Result {
+	var (
+		submissions []models.Submission
+		query       string
+	)
+	switch {
+	case problemID != 0:
+		problem := models.GetProblem(problemID)
+		if problem == nil {
+			return c.NotFound(problemNotFoundMessage)
+		}
+		problem.FetchSubmissions()
+		submissions = problem.Submissions
+		query = " - " + problem.Title
+	default:
+		return c.NotFound(problemNotFoundMessage)
+	}
+
+	for i := range submissions {
+		submissions[i].FetchProblem()
+		submissions[i].FetchUser()
+	}
+
+	initNavigationBar(&c.ViewArgs, c.Session)
+
+	return c.Render(submissions, query, Converter)
+}
+
 func (c Submission) SubmitPage(problemID uint) revel.Result {
 	problem := models.GetProblem(problemID)
 	c.Validation.Required(problem).Message("問題が存在しないか権限がありません 問題ID:%v", problemID)

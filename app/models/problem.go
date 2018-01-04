@@ -21,6 +21,7 @@ type Problem struct {
 	JudgeType       int           `gorm:"not null; default:'0'"`
 	JudgeSourceCode string        `gorm:"type:text"`
 	CaseSets        []CaseSet
+	Submissions     []Submission
 }
 
 type JudgeType int
@@ -87,6 +88,10 @@ func (p *Problem) FetchWriter() {
 
 func (p *Problem) FetchCaseSets() {
 	db.Model(p).Related(&p.CaseSets)
+}
+
+func (p *Problem) FetchSubmissions() {
+	db.Model(p).Related(&p.Submissions)
 }
 
 func (p *Problem) CanView(user *User) bool {
