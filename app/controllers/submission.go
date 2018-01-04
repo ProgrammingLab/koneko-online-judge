@@ -15,6 +15,25 @@ type SubmissionRequest struct {
 	SourceCode string
 }
 
+const submissionNotFoundMessage = "submission not found"
+
+func (c Submission) Index(id uint) revel.Result {
+	submission := models.GetSubmission(id)
+	if submission == nil {
+		return c.NotFound(submissionNotFoundMessage)
+	}
+	submission.FetchUser()
+	submission.FetchProblem()
+	user := &submission.User
+	problem := &submission.Problem
+	if !problem.CanView(user) {
+		return c.NotFound(submissionNotFoundMessage)
+	}
+
+	initNavigationBar(&c.ViewArgs, c.Session)
+	return c.Render(submission, user, problem, Converter)
+}
+
 func (c Submission) List(problemID, contestID uint) revel.Result {
 	var (
 		submissions []models.Submission

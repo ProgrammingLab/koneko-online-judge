@@ -1,0 +1,51 @@
+{{set . "title" "結果 - KOJ"}}
+{{template "navigation.html" .}}
+
+<div class="container mt-5 mb-5">
+  <div class="row">
+    <div class="span6">
+    {{template "flash.html" .}}
+    </div>
+  </div>
+
+  <h1 class="h1">提出</h1>
+  <div class="mt-4">
+    <h2 class="h3">ソースコード</h2>
+    <pre>{{.submission.SourceCode}}</pre>
+  </div>
+  <div class="mt-4">
+    <h2 class="h3">詳細</h2>
+    <table class="table table-bordered table-striped">
+      <tr>
+        <td>日時</td>
+        <td>{{datetime .submission.CreatedAt}}</td>
+      </tr>
+      <tr>
+        <td>問題</td>
+        <td>{{.problem.Title}}</td>
+      </tr>
+      <tr>
+        <td>ユーザー</td>
+        <td>{{.user.DisplayName}}</td>
+      </tr>
+      <tr>
+        <td>結果</td>
+        <td>
+          <label class="badge {{.Converter.GetStatusBadgeStyle .submission.Status}}">
+          {{.Converter.GetStatusBadge .submission.Status}}
+          </label>
+        </td>
+      </tr>
+      <tr>
+        <td>メモリ</td>
+        <td>{{.submission.MemoryUsage}}</td>
+      </tr>
+      <tr>
+        <td>コード長</td>
+        <td>{{.submission.CodeBytes}}</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+{{template "footer.html" .}}

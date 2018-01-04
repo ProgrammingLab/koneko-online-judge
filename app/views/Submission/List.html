@@ -25,7 +25,7 @@
     <tbody>
     {{range .submissions}}
     <tr>
-      <td>{{.ID}}</td>
+      <td><a href="./{{.ID}}">{{.ID}}</a></td>
       <td>{{datetime .CreatedAt}}</td>
       <td><a href="..{{url "Problem.Index" .ID}}">{{.Problem.Title}}</a></td>
       <td>{{.User.DisplayName}}</td>
