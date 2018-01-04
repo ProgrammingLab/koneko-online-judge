@@ -3,13 +3,12 @@ package models
 import (
 	"archive/zip"
 	"io"
-	"time"
+
+	"github.com/jinzhu/gorm"
 )
 
 type TestCase struct {
-	ID        uint `gorm:"primary_key"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	gorm.Model
 	CaseSetID uint   `gorm:"not null"`
 	Input     string `gorm:"type:longtext; not null"`
 	Output    string `gorm:"type:longtext; not null"`
