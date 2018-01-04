@@ -68,7 +68,7 @@ func NewWorker(img string, timeLimit int64, memoryLimit int64, cmd []string) (*W
 		"/usr/bin/sudo", "-u", "nobody",
 		"/bin/sh", "-c", strings.Join(cmd, " ") + " 2>error.txt || echo " + errorString + " 1>&2",
 	}
-	runCmd = append(runCmd, cmd...)
+	revel.AppLog.Debugf("run command", runCmd)
 
 	cfg := &container.Config{
 		Image:        img,

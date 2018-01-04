@@ -117,7 +117,7 @@ func execSubmission(submission *Submission, testCase *TestCase, compiled *worker
 	problem := &submission.Problem
 	language := &submission.Language
 	cmd := strings.Split(language.ExecCommand, " ")
-	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, int64(problem.TimeLimit*1000), int64(problem.MemoryLimit*1024*1024), cmd)
+	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, int64(problem.TimeLimit.Seconds()*1000), int64(problem.MemoryLimit*1024*1024), cmd)
 	if err != nil {
 		revel.AppLog.Errorf("exec: container create error", err)
 		return nil
