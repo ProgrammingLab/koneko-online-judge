@@ -101,6 +101,15 @@ func (c Problem) Update(id uint, request *ProblemRequest, caseArchive []byte) re
 	return c.Redirect(Problem.Edit, id)
 }
 
+func (c Problem) List() revel.Result {
+	problems := models.GetNoContestProblems()
+	for i := range problems {
+		problems[i].FetchWriter()
+	}
+	initNavigationBar(&c.ViewArgs, c.Session)
+	return c.Render(problems)
+}
+
 func getProblemEditUser(session revel.Session, problem *models.Problem) *models.User {
 	user := getUser(session)
 	if user.ID != problem.WriterID {

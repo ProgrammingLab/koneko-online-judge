@@ -15,6 +15,7 @@ POST        /sessions/login             Session.Login
 POST        /sessions/logout            Session.Logout
 
 POST        /problems/new               Problem.New
+GET        /problems/list               Problem.List
 GET        /problems/:id/edit           Problem.Edit
 POST        /problems/:id/update        Problem.Update
 

@@ -53,6 +53,12 @@ func GetProblem(id uint) *Problem {
 	return problem
 }
 
+func GetNoContestProblems() []Problem {
+	problems := make([]Problem, 0)
+	db.Find(&problems)
+	return problems
+}
+
 func (p *Problem) Update(request *Problem) {
 	p.Title = request.Title
 	p.TimeLimit = request.TimeLimit
