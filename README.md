@@ -12,7 +12,7 @@
 ```
     export KOJ_SECRET="pJLzyoiDe17L36mytqC912j81PfTiolHm1veQK6Grn1En3YFdB5lvEHVTwFEaWvj"
     export KOJ_DB_DRIVER="mysql"
-    export KOJ_DB_SPEC="user:password@/dbName?charset=utf8&parseTime=True"
+    export KOJ_DB_SPEC="user:password@/dbName?charset=utf8&parseTime=True&loc=Local"
 ```
 
 ### Start the web server:
