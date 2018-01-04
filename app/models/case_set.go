@@ -26,13 +26,16 @@ const (
 )
 
 var (
+	NilArgumentError                    = errors.New("nil argument(s)")
+	InvalidFileNameOrDirectoryStructure = errors.New("ファイルの命名かディレクトリの構造が正しくありません。")
+
 	inputFileRegex  = regexp.MustCompile(inputFilePrefix + `(\d+)-(\d+)\.txt`)
 	outputFileRegex = regexp.MustCompile(outputFilePrefix + `(\d+)-(\d+)\.txt`)
 )
 
 func newCaseSets(problem *Problem, archive []byte) ([]*CaseSet, error) {
 	if problem == nil {
-		return nil, errors.New("problemがnilです。")
+		return nil, NilArgumentError
 	}
 	r, err := zip.NewReader(bytes.NewReader(archive), int64(len(archive)))
 	if err != nil {
@@ -44,20 +47,20 @@ func newCaseSets(problem *Problem, archive []byte) ([]*CaseSet, error) {
 		return nil, err
 	}
 
-	inputs, outputs := getCaseFilese(r)
+	inputs, outputs := getCaseFiles(r)
 	if inputs == nil || outputs == nil {
-		return nil, errors.New("ファイルの命名かディレクトリの構造が正しくありません。")
+		return nil, InvalidFileNameOrDirectoryStructure
 	}
 
 	inputSets := checkCaseFileNaming(inputs, inputFilePrefix)
 	outputSets := checkCaseFileNaming(outputs, outputFilePrefix)
 	if inputSets == nil || outputSets == nil {
-		return nil, errors.New("ファイルの命名が正しくありません。")
+		return nil, InvalidFileNameOrDirectoryStructure
 	}
 
 	c := len(inputSets)
 	if c != len(outputSets) {
-		return nil, errors.New("ファイルの命名が正しくありません。")
+		return nil, InvalidFileNameOrDirectoryStructure
 	}
 
 	result := make([]*CaseSet, c)
@@ -74,7 +77,7 @@ func newCaseSets(problem *Problem, archive []byte) ([]*CaseSet, error) {
 func newCaseSet(problem *Problem, inputs map[int]*zip.File, outputs map[int]*zip.File) (*CaseSet, error) {
 	c := len(inputs)
 	if c != len(outputs) {
-		return nil, errors.New("ファイルの命名が正しくありません。")
+		return nil, InvalidFileNameOrDirectoryStructure
 	}
 
 	caseSet := &CaseSet{ProblemID: problem.ID}
@@ -137,7 +140,7 @@ func checkCaseFileNaming(files []*zip.File, prefix string) map[int]map[int]*zip.
 	return result
 }
 
-func getCaseFilese(reader *zip.Reader) ([]*zip.File, []*zip.File) {
+func getCaseFiles(reader *zip.Reader) ([]*zip.File, []*zip.File) {
 	inputs := make([]*zip.File, 0, len(reader.File)/2)
 	outputs := make([]*zip.File, 0, len(reader.File)/2)
 	for _, f := range reader.File {
