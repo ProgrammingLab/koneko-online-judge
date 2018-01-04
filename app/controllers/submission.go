@@ -24,11 +24,10 @@ func (c Submission) List(problemID, contestID uint) revel.Result {
 	switch {
 	case problemID != 0:
 		problem := models.GetProblem(problemID)
-		if problem == nil || problem.CanView(user) {
+		if problem == nil || !problem.CanView(user) {
 			return c.NotFound(problemNotFoundMessage)
 		}
-		problem.FetchSubmissions()
-		submissions = problem.Submissions
+		submissions = problem.GetSubmissionsReversed()
 		query = " - " + problem.Title
 	default:
 		return c.NotFound(problemNotFoundMessage)

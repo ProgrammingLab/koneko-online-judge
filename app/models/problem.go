@@ -94,6 +94,12 @@ func (p *Problem) FetchSubmissions() {
 	db.Model(p).Related(&p.Submissions)
 }
 
+func (p *Problem) GetSubmissionsReversed() []Submission {
+	submissions := make([]Submission, 0)
+	db.Order("id DESC", false).Find(&submissions)
+	return submissions
+}
+
 func (p *Problem) CanView(user *User) bool {
 	if user == nil {
 		return false
