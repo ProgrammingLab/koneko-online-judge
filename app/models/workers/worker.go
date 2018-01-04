@@ -64,8 +64,8 @@ func NewWorker(img string, timeLimit int64, memoryLimit int64, cmd []string) (*W
 	// 下のやつ、echo $?したら必ず0になってよくわからず
 	runCmd := []string{
 		"/usr/bin/time", "-f", "%e %M", "-o", "time.txt",
-		"timeout", strconv.FormatInt(timeLimit/1000, 10),
-		"/usr/bin/sudo", "-u", "nobody",
+		"timeout", strconv.FormatFloat(float64(timeLimit/1000)+0.1, 'f', 4, 64),
+		"/usr/bin/sudo", "-u", "nobody", "--",
 		"/bin/sh", "-c", strings.Join(cmd, " ") + " 2>error.txt || echo " + errorString + " 1>&2",
 	}
 	revel.AppLog.Debugf("run command", runCmd)
@@ -167,18 +167,6 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		return nil, err
 	}
 
-	timeText, err := w.getFromContainer(Workspace+"time.txt", 128)
-	if err != nil {
-		revel.AppLog.Errorf("error", err)
-		return nil, err
-	}
-
-	timeMillis, memoryUsage, err := parseTimeText(string(timeText))
-	if err != nil {
-		revel.AppLog.Errorf("error: %v", string(timeText), err)
-		return nil, err
-	}
-
 	_, err = stdout.Seek(0, 0)
 	if err != nil {
 		revel.AppLog.Errorf("error", err)
@@ -197,6 +185,18 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		return nil, err
 	}
 
+	timeText, err := w.getFromContainer(Workspace+"time.txt", 128)
+	if err != nil {
+		revel.AppLog.Errorf("error", err)
+		return nil, err
+	}
+
+	timeMillis, memoryUsage, err := parseTimeText(string(timeText))
+	if err != nil {
+		revel.AppLog.Errorf("error: %v", string(timeText), err)
+		return nil, err
+	}
+
 	var status ExecStatus
 	switch checkRuntimeError(stderr) {
 	case runtimeError:
@@ -208,10 +208,10 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	}
 
 	switch {
-	case w.TimeLimit < timeMillis:
+	case w.TimeLimit <= timeMillis:
 		status = StatusTimeLimitExceeded
 		revel.AppLog.Debugf("time limit(%v) exceeded:%v", w.TimeLimit, timeMillis)
-	case w.MemoryLimit < memoryUsage:
+	case w.MemoryLimit <= memoryUsage:
 		status = StatusMemoryLimitExceeded
 		revel.AppLog.Debugf("memory limit(%v) exceeded:%v", w.MemoryLimit, memoryUsage)
 	default:
@@ -316,6 +316,13 @@ func removeTempFile(file *os.File) {
 }
 
 func parseTimeText(time string) (int64, int64, error) {
+	time = strings.TrimSpace(time)
+	lines := strings.Split(time, "\n")
+	if i := strings.Index(lines[0], "Command"); i != -1 {
+		time = lines[1]
+	} else {
+		time = lines[0]
+	}
 	args := strings.Split(strings.TrimSpace(time), " ")
 	if len(args) < 2 {
 		return 0, 0, TimeTextParseError
@@ -332,7 +339,7 @@ func parseTimeText(time string) (int64, int64, error) {
 		return 0, 0, TimeTextParseError
 	}
 
-	return int64(t), int64(m), nil
+	return int64(t * 1000), int64(m), nil
 }
 
 func checkRuntimeError(stderr *os.File) error {
