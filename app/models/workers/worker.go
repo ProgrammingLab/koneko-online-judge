@@ -202,20 +202,18 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	case runtimeError:
 		status = StatusRuntimeError
 	case nil:
-		break
+		switch {
+		case w.TimeLimit <= timeMillis:
+			status = StatusTimeLimitExceeded
+			revel.AppLog.Debugf("time limit(%v) exceeded:%v", w.TimeLimit, timeMillis)
+		case w.MemoryLimit <= memoryUsage:
+			status = StatusMemoryLimitExceeded
+			revel.AppLog.Debugf("memory limit(%v) exceeded:%v", w.MemoryLimit, memoryUsage)
+		default:
+			status = StatusFinished
+		}
 	default:
 		return nil, nil
-	}
-
-	switch {
-	case w.TimeLimit <= timeMillis:
-		status = StatusTimeLimitExceeded
-		revel.AppLog.Debugf("time limit(%v) exceeded:%v", w.TimeLimit, timeMillis)
-	case w.MemoryLimit <= memoryUsage:
-		status = StatusMemoryLimitExceeded
-		revel.AppLog.Debugf("memory limit(%v) exceeded:%v", w.MemoryLimit, memoryUsage)
-	default:
-		status = StatusFinished
 	}
 
 	return &ExecResult{
@@ -343,6 +341,11 @@ func parseTimeText(time string) (int64, int64, error) {
 }
 
 func checkRuntimeError(stderr *os.File) error {
+	_, err := stderr.Seek(0, 0)
+	if err != nil {
+		revel.AppLog.Errorf("error", err)
+		return err
+	}
 	stderrString, err := ioutil.ReadAll(stderr)
 	if err != nil {
 		return err

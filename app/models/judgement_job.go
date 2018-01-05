@@ -27,22 +27,37 @@ func (j judgementJob) Run() {
 	submission.FetchLanguage()
 	submission.FetchProblem()
 	submission.FetchJudgeSetResults()
-
-	point := 0
-	finalStatus := Accepted
 	var (
 		execTime    time.Duration
 		memoryUsage int64
+		point       int
+		finalStatus = Accepted
 	)
-	for _, r := range submission.JudgeSetResults {
-		status, t, m := judgeCaseSet(&r, submission)
-		execTime = MaxDuration(execTime, t)
-		memoryUsage = MaxLong(memoryUsage, m)
-		point += r.Point
-		if status == Accepted {
-			continue
+
+	compileWorker, compileRes := compile(submission)
+	if compileWorker == nil || compileRes == nil {
+		finalStatus = UnknownError
+		markAs(submission.JudgeSetResults, finalStatus)
+	} else {
+		defer compileWorker.Remove()
+		revel.AppLog.Debugf("%v %v", compileRes.Status, compileRes.Stderr)
+
+		if compileRes.Status != workers.StatusFinished {
+			finalStatus = CompileError
+			markAs(submission.JudgeSetResults, finalStatus)
+			revel.AppLog.Debugf("compile error: worker status %v", compileRes.Status, compileRes.Stderr)
+		} else {
+			for _, r := range submission.JudgeSetResults {
+				status, t, m := judgeCaseSet(&r, submission, compileWorker)
+				execTime = MaxDuration(execTime, t)
+				memoryUsage = MaxLong(memoryUsage, m)
+				point += r.Point
+				if status == Accepted {
+					continue
+				}
+				finalStatus = status
+			}
 		}
-		finalStatus = status
 	}
 
 	submission.Point = point
@@ -58,7 +73,17 @@ func (j judgementJob) Run() {
 	db.Model(&Submission{ID: submission.ID}).Updates(query)
 }
 
-func judgeCaseSet(result *JudgeSetResult, submission *Submission) (JudgementStatus, time.Duration, int64) {
+func markAs(setResults []JudgeSetResult, status JudgementStatus) {
+	for _, s := range setResults {
+		s.FetchJudgeResults()
+		db.Model(s).Update("status", status)
+		for _, r := range s.JudgeResults {
+			db.Model(r).Update("status", status)
+		}
+	}
+}
+
+func judgeCaseSet(result *JudgeSetResult, submission *Submission, compileWorker *workers.Worker) (JudgementStatus, time.Duration, int64) {
 	result.FetchCaseSet()
 	result.FetchJudgeResults()
 
@@ -68,7 +93,7 @@ func judgeCaseSet(result *JudgeSetResult, submission *Submission) (JudgementStat
 		memoryUsage int64
 	)
 	for _, r := range result.JudgeResults {
-		status, t, m := judgeTestCase(&r, submission)
+		status, t, m := judgeTestCase(&r, submission, compileWorker)
 		execTime = MaxDuration(execTime, t)
 		memoryUsage = MaxLong(memoryUsage, m)
 		if status != Accepted {
@@ -94,36 +119,23 @@ func judgeCaseSet(result *JudgeSetResult, submission *Submission) (JudgementStat
 	return setStatus, execTime, memoryUsage
 }
 
-func judgeTestCase(result *JudgeResult, submission *Submission) (JudgementStatus, time.Duration, int64) {
-	defer func() {
-		query := map[string]interface{}{
-			"status":       result.Status,
-			"exec_time":    result.ExecTime,
-			"memory_usage": result.MemoryUsage,
-		}
-		db.Model(&JudgeResult{ID: result.ID}).Updates(query)
-	}()
-
+func judgeTestCase(result *JudgeResult, submission *Submission, compileWorker *workers.Worker) (JudgementStatus, time.Duration, int64) {
+	result.Status = Judging
+	db.Model(result).Update("status", result.Status)
 	result.FetchTestCase()
 	testCase := &result.TestCase
-	// TODO コンパイル結果のキャッシュ
-	compileWorker, compileRes := compile(submission)
-	if compileWorker == nil || compileRes == nil {
-		result.Status = UnknownError
-		return result.Status, 0, 0
-	}
-	defer compileWorker.Remove()
-	if compileRes.Status != workers.StatusFinished {
-		result.Status = CompileError
-		revel.AppLog.Debugf("compile error: worker status %v", compileRes.Status, compileRes.Stderr)
-		return result.Status, 0, 0
-	}
 
 	res := execSubmission(submission, testCase, compileWorker)
 	result.Status = toJudgementStatus(res, testCase)
 	result.ExecTime = time.Millisecond * time.Duration(res.ExecTime)
 	result.MemoryUsage = res.MemoryUsage / 1024
 
+	query := map[string]interface{}{
+		"status":       result.Status,
+		"exec_time":    result.ExecTime,
+		"memory_usage": result.MemoryUsage,
+	}
+	db.Model(&JudgeResult{ID: result.ID}).Updates(query)
 	return result.Status, result.ExecTime, result.MemoryUsage
 }
 

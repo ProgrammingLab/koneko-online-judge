@@ -12,7 +12,7 @@ type BadgeConverter struct{}
 var (
 	badges = map[models.JudgementStatus]badge{
 		models.InQueue:             {"badge-default", "WJ"},
-		models.Judging:             {"badge-info", "Run"},
+		models.Judging:             {"badge-info", "Judging"},
 		models.Accepted:            {"badge-success", "AC"},
 		models.PresentationError:   {"badge-warning", "PE"},
 		models.WrongAnswer:         {"badge-danger", "WA"},
