@@ -10,6 +10,8 @@ type JudgeResult struct {
 	TestCase         TestCase
 	TestCaseID       uint            `gorm:"not null"`
 	Status           JudgementStatus `gorm:"not null; default:'0'"`
+	ExecTime         time.Duration
+	MemoryUsage      int64
 }
 
 func newJudgeResult(testCase *TestCase, setResult *JudgeSetResult) {

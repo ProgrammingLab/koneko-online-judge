@@ -42,11 +42,11 @@
       </tr>
       <tr>
         <td>メモリ</td>
-        <td>{{.submission.MemoryUsage}}</td>
+        <td>{{.submission.MemoryUsage}}KiB</td>
       </tr>
       <tr>
         <td>コード長</td>
-        <td>{{.submission.CodeBytes}}</td>
+        <td>{{.submission.CodeBytes}}byte</td>
       </tr>
     </table>
   </div>
@@ -76,8 +76,8 @@
         <td><label
             class="badge {{$.Converter.GetStatusBadgeStyle $r.Status}}">{{$.Converter.GetStatusBadge $r.Status}}</label>
         </td>
-        <td>TODO</td>
-        <td>TODO</td>
+        <td>{{$r.ExecTime}}</td>
+        <td>{{$r.MemoryUsage}}KiB</td>
       </tr>
       {{end}}
       {{end}}

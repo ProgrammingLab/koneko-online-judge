@@ -33,8 +33,8 @@
         <label class="badge {{$.Converter.GetStatusBadgeStyle .Status}}">{{$.Converter.GetStatusBadge .Status}}</label>
       </td>
       <td>{{.ExecTime}}</td>
-      <td>{{.MemoryUsage}}MiB</td>
-      <td>{{.CodeBytes}}</td>
+      <td>{{.MemoryUsage}}KiB</td>
+      <td>{{.CodeBytes}}byte</td>
     </tr>
     {{end}}
     </tbody>

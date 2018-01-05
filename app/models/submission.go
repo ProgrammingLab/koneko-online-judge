@@ -20,8 +20,8 @@ type Submission struct {
 	Point           int
 	Status          JudgementStatus `gorm:"default:'0'"`
 	ErrorLog        string          `gorm:"type:text"`
-	ExecTime        float32         `gorm:"type:float"`
-	MemoryUsage     uint
+	ExecTime        time.Duration
+	MemoryUsage     int64
 	CodeBytes       uint
 	JudgeSetResults []JudgeSetResult
 }

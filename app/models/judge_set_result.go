@@ -14,6 +14,8 @@ type JudgeSetResult struct {
 	Point        int
 	Status       JudgementStatus `gorm:"not null; default:'0'"`
 	JudgeResults []JudgeResult
+	ExecTime     time.Duration
+	MemoryUsage  int64
 }
 
 func initJudgeSetResults(submission *Submission) {

@@ -3,6 +3,8 @@ package models
 import (
 	"strings"
 
+	"time"
+
 	"github.com/gedorinku/koneko-online-judge/app/models/workers"
 	"github.com/revel/modules/jobs/app/jobs"
 	"github.com/revel/revel"
@@ -28,8 +30,14 @@ func (j judgementJob) Run() {
 
 	point := 0
 	finalStatus := Accepted
+	var (
+		execTime    time.Duration
+		memoryUsage int64
+	)
 	for _, r := range submission.JudgeSetResults {
-		status := judgeCaseSet(&r, submission)
+		status, t, m := judgeCaseSet(&r, submission)
+		execTime = MaxDuration(execTime, t)
+		memoryUsage = MaxLong(memoryUsage, m)
 		point += r.Point
 		if status == Accepted {
 			continue
@@ -39,16 +47,30 @@ func (j judgementJob) Run() {
 
 	submission.Point = point
 	submission.Status = finalStatus
-	db.Model(&Submission{ID: submission.ID}).Updates(map[string]interface{}{"point": point, "status": finalStatus})
+	submission.ExecTime = execTime
+	submission.MemoryUsage = memoryUsage
+	query := map[string]interface{}{
+		"point":        point,
+		"status":       finalStatus,
+		"exec_time":    execTime,
+		"memory_usage": memoryUsage,
+	}
+	db.Model(&Submission{ID: submission.ID}).Updates(query)
 }
 
-func judgeCaseSet(result *JudgeSetResult, submission *Submission) JudgementStatus {
+func judgeCaseSet(result *JudgeSetResult, submission *Submission) (JudgementStatus, time.Duration, int64) {
 	result.FetchCaseSet()
 	result.FetchJudgeResults()
 
 	setStatus := Accepted
+	var (
+		execTime    time.Duration
+		memoryUsage int64
+	)
 	for _, r := range result.JudgeResults {
-		status := judgeTestCase(&r, submission)
+		status, t, m := judgeTestCase(&r, submission)
+		execTime = MaxDuration(execTime, t)
+		memoryUsage = MaxLong(memoryUsage, m)
 		if status != Accepted {
 			setStatus = status
 		}
@@ -59,14 +81,27 @@ func judgeCaseSet(result *JudgeSetResult, submission *Submission) JudgementStatu
 	}
 
 	result.Status = setStatus
-	db.Model(&JudgeSetResult{ID: result.ID}).Updates(map[string]interface{}{"point": result.Point, "status": result.Status})
+	result.ExecTime = execTime
+	result.MemoryUsage = memoryUsage
+	query := map[string]interface{}{
+		"point":        result.Point,
+		"status":       setStatus,
+		"exec_time":    execTime,
+		"memory_usage": memoryUsage,
+	}
+	db.Model(&JudgeSetResult{ID: result.ID}).Updates(query)
 
-	return setStatus
+	return setStatus, execTime, memoryUsage
 }
 
-func judgeTestCase(result *JudgeResult, submission *Submission) JudgementStatus {
+func judgeTestCase(result *JudgeResult, submission *Submission) (JudgementStatus, time.Duration, int64) {
 	defer func() {
-		db.Model(&JudgeResult{ID: result.ID}).Update("status", result.Status)
+		query := map[string]interface{}{
+			"status":       result.Status,
+			"exec_time":    result.ExecTime,
+			"memory_usage": result.MemoryUsage,
+		}
+		db.Model(&JudgeResult{ID: result.ID}).Updates(query)
 	}()
 
 	result.FetchTestCase()
@@ -75,19 +110,21 @@ func judgeTestCase(result *JudgeResult, submission *Submission) JudgementStatus 
 	compileWorker, compileRes := compile(submission)
 	if compileWorker == nil || compileRes == nil {
 		result.Status = UnknownError
-		return result.Status
+		return result.Status, 0, 0
 	}
 	defer compileWorker.Remove()
 	if compileRes.Status != workers.StatusFinished {
 		result.Status = CompileError
 		revel.AppLog.Debugf("compile error: worker status %v", compileRes.Status, compileRes.Stderr)
-		return result.Status
+		return result.Status, 0, 0
 	}
 
 	res := execSubmission(submission, testCase, compileWorker)
 	result.Status = toJudgementStatus(res, testCase)
+	result.ExecTime = time.Millisecond * time.Duration(res.ExecTime)
+	result.MemoryUsage = res.MemoryUsage / 1024
 
-	return result.Status
+	return result.Status, result.ExecTime, result.MemoryUsage
 }
 
 func compile(submission *Submission) (*workers.Worker, *workers.ExecResult) {
