@@ -31,7 +31,7 @@ func GetBcryptCost() int {
 		return bcrypt.DefaultCost
 	}
 	//適当に調整する
-	return 12
+	return 14
 }
 
 // length bytesのランダムなBase64エンコードされた文字列を返す
