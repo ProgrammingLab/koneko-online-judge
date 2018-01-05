@@ -32,7 +32,7 @@ func NewSession(email, password string) (*UserSession, string, error) {
 	}
 
 	token := []byte(GenerateRandomBase64String(32))
-	digest, _ := bcrypt.GenerateFromPassword(token, GetBcryptCost())
+	digest, _ := bcrypt.GenerateFromPassword(token, bcrypt.DefaultCost)
 
 	oldSession := getSession(user.ID)
 	if oldSession != nil {
