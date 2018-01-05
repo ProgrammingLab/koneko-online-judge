@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/koneko/koneko.iml" filepath="$PROJECT_DIR$/koneko/koneko.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/koneko-online-judge.iml" filepath="$PROJECT_DIR$/.idea/koneko-online-judge.iml" />
     </modules>
   </component>
