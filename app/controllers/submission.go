@@ -29,9 +29,14 @@ func (c Submission) Index(id uint) revel.Result {
 	if !problem.CanView(user) {
 		return c.NotFound(submissionNotFoundMessage)
 	}
+	setResults := submission.GetJudgeSetResultsSorted()
+	for i := range setResults {
+		setResults[i].FetchCaseSet()
+		setResults[i].JudgeResults = setResults[i].GetJudgeResultsSorted()
+	}
 
 	initNavigationBar(&c.ViewArgs, c.Session)
-	return c.Render(submission, user, problem, Converter)
+	return c.Render(submission, user, problem, setResults, Converter)
 }
 
 func (c Submission) List(problemID, contestID uint) revel.Result {
@@ -48,6 +53,7 @@ func (c Submission) List(problemID, contestID uint) revel.Result {
 		}
 		submissions = problem.GetSubmissionsReversed()
 		query = " - " + problem.Title
+		problem.FetchSubmissions()
 	default:
 		return c.NotFound(problemNotFoundMessage)
 	}
@@ -111,5 +117,5 @@ func (c Submission) Submit(request *SubmissionRequest) revel.Result {
 		c.FlashParams()
 		return c.Redirect(App.Index)
 	}
-	return c.Redirect(App.Index)
+	return c.Redirect(Submission.List, problem.ID, 0)
 }

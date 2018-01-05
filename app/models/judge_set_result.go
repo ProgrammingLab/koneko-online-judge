@@ -46,3 +46,9 @@ func (r *JudgeSetResult) FetchCaseSet() {
 func (r *JudgeSetResult) FetchJudgeResults() {
 	db.Model(r).Related(&r.JudgeResults)
 }
+
+func (r *JudgeSetResult) GetJudgeResultsSorted() []JudgeResult {
+	results := make([]JudgeResult, 0)
+	db.Order("id ASC").Model(r).Related(&results)
+	return results
+}

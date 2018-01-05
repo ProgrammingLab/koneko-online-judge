@@ -96,7 +96,7 @@ func (p *Problem) FetchSubmissions() {
 
 func (p *Problem) GetSubmissionsReversed() []Submission {
 	submissions := make([]Submission, 0)
-	db.Order("id DESC", false).Find(&submissions)
+	db.Order("id DESC", false).Model(p).Related(&submissions)
 	return submissions
 }
 

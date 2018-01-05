@@ -22,7 +22,7 @@
       </tr>
       <tr>
         <td>問題</td>
-        <td>{{.problem.Title}}</td>
+        <td><a href="..{{url "Problem.Index" .problem.ID}}">{{.problem.Title}}</a></td>
       </tr>
       <tr>
         <td>ユーザー</td>
@@ -37,6 +37,10 @@
         </td>
       </tr>
       <tr>
+        <td>実行時間</td>
+        <td>{{.submission.ExecTime}}</td>
+      </tr>
+      <tr>
         <td>メモリ</td>
         <td>{{.submission.MemoryUsage}}</td>
       </tr>
@@ -44,6 +48,40 @@
         <td>コード長</td>
         <td>{{.submission.CodeBytes}}</td>
       </tr>
+    </table>
+  </div>
+  <div class="mt-4">
+    <h2 class="h3">テストケース</h2>
+    <table class="table table-bordered table-striped">
+      <thead>
+      <tr>
+        <td>セット</td>
+        <td>得点 / 配点</td>
+        <td>ケース</td>
+        <td>結果</td>
+        <td>実行時間</td>
+        <td>メモリ</td>
+      </tr>
+      </thead>
+      <tbody>
+      {{range $i, $s := .setResults}}
+      {{ $length := len $s.JudgeResults }}
+      {{range $j, $r := $s.JudgeResults}}
+      <tr>
+      {{if eq $j 0}}
+        <td rowspan="{{$length}}">{{$s.CaseSetID}}</td>
+        <td rowspan="{{$length}}">{{$s.Point}} / {{$s.CaseSet.Point}}</td>
+      {{end}}
+        <td>{{$r.TestCaseID}}</td>
+        <td><label
+            class="badge {{$.Converter.GetStatusBadgeStyle $r.Status}}">{{$.Converter.GetStatusBadge $r.Status}}</label>
+        </td>
+        <td>TODO</td>
+        <td>TODO</td>
+      </tr>
+      {{end}}
+      {{end}}
+      </tbody>
     </table>
   </div>
 </div>

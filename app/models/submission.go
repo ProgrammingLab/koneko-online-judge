@@ -81,3 +81,9 @@ func (s *Submission) FetchProblem() {
 func (s *Submission) FetchJudgeSetResults() {
 	db.Model(s).Related(&s.JudgeSetResults)
 }
+
+func (s *Submission) GetJudgeSetResultsSorted() []JudgeSetResult {
+	results := make([]JudgeSetResult, 0)
+	db.Order("id ASC").Model(s).Related(&results)
+	return results
+}
