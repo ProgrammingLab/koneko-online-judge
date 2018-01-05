@@ -1,10 +1,13 @@
 package main
 
 import (
+	"crypto/rand"
 	"flag"
 	"fmt"
 	"os"
 	"syscall"
+
+	"math/big"
 
 	"github.com/labstack/gommon/log"
 	"golang.org/x/crypto/bcrypt"
@@ -12,7 +15,21 @@ import (
 )
 
 func generateSecret() {
+	const (
+		alphaNumeric = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+		length       = 64
+	)
+	maxRand := int64(len(alphaNumeric))
+	chars := make([]byte, length)
+	for i := 0; i < length; i++ {
+		n, err := rand.Int(rand.Reader, big.NewInt(maxRand))
+		if err != nil {
+			log.Fatal(err)
+		}
+		chars[i] = alphaNumeric[n.Int64()]
+	}
 
+	fmt.Println(string(chars))
 }
 
 func passwordDigest(cost int) {
