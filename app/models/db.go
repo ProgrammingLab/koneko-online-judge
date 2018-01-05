@@ -4,7 +4,6 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/revel/revel"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var db *gorm.DB
@@ -19,13 +18,13 @@ func InitDB() {
 		panic(err)
 	}
 	revel.AppLog.Info("DB Connected")
-
-	createTables()
 	if revel.DevMode {
-		seedDebug()
 		db.LogMode(true)
 	}
+
+	createTables()
 	seedLanguages()
+	insertAdmin()
 }
 
 func createTables() {
@@ -58,19 +57,6 @@ func createTables() {
 	db.Model(&JudgeResult{}).AddForeignKey("test_case_id", "test_cases(id)", "RESTRICT", "RESTRICT")
 }
 
-func seedDebug() {
-	password := "hoge"
-	digest, _ := bcrypt.GenerateFromPassword([]byte(password), GetBcryptCost())
-	user := &User{
-		Name:           "test",
-		DisplayName:    "test",
-		Email:          "hoge@example.com",
-		Authority:      authorityMember,
-		PasswordDigest: string(digest),
-	}
-	db.Save(user)
-}
-
 func seedLanguages() {
 	languages := []*Language{
 		{
@@ -101,5 +87,23 @@ func seedLanguages() {
 
 	for _, l := range languages {
 		db.Save(l)
+	}
+}
+
+func insertAdmin() {
+	admin := &User{
+		Name:           "admin",
+		DisplayName:    "admin",
+		Email:          "admin@judge.kurume-nct.com",
+		Authority:      authorityAdmin,
+		PasswordDigest: GenerateRandomBase64String(64),
+	}
+	insertUserIfNonExisting(admin)
+}
+
+func insertUserIfNonExisting(user *User) {
+	existing := &User{}
+	if db.Where("name = ?", user.Name).First(existing).RecordNotFound() {
+		db.Save(user)
 	}
 }
