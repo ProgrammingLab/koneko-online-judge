@@ -16,7 +16,7 @@ import (
 const (
 	mb                  = 1024 * 1024
 	maxCaseFileSize     = 10
-	maxCaseZipTotalSize = 100
+	maxCaseZipTotalSize = 50
 	maxCaseFileCount    = 500
 )
 
