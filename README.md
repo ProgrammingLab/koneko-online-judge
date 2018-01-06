@@ -13,6 +13,9 @@
     export KOJ_SECRET="pJLzyoiDe17L36mytqC912j81PfTiolHm1veQK6Grn1En3YFdB5lvEHVTwFEaWvj"
     export KOJ_DB_DRIVER="mysql"
     export KOJ_DB_SPEC="user:password@/dbName?charset=utf8&parseTime=True&loc=Local"
+    # DOCKER_API_VERSIONにはインストールされているバージョンを指定
+    # 指定しないと'client version 1.36 is too new.'とか怒られる
+    export DOCKER_API_VERSION="1.35"
 ```
 
 ### Start the web server:
