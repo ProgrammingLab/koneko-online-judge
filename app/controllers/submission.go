@@ -36,7 +36,7 @@ func (c Submission) Index(id uint) revel.Result {
 	}
 
 	initNavigationBar(&c.ViewArgs, c.Session)
-	return c.Render(submission, user, problem, setResults, Converter)
+	return c.Render(submission, user, problem, setResults, converter)
 }
 
 func (c Submission) List(problemID, contestID uint) revel.Result {
@@ -65,7 +65,7 @@ func (c Submission) List(problemID, contestID uint) revel.Result {
 
 	initNavigationBar(&c.ViewArgs, c.Session)
 
-	return c.Render(submissions, query, Converter)
+	return c.Render(submissions, query, converter)
 }
 
 func (c Submission) SubmitPage(problemID uint) revel.Result {

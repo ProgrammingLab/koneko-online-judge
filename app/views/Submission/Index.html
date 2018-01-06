@@ -31,8 +31,8 @@
       <tr>
         <td>結果</td>
         <td>
-          <label class="badge {{.Converter.GetStatusBadgeStyle .submission.Status}}">
-          {{.Converter.GetStatusBadge .submission.Status}}
+          <label class="badge {{.converter.GetStatusBadgeStyle .submission.Status}}">
+          {{.converter.GetStatusBadge .submission.Status}}
           </label>
         </td>
       </tr>
@@ -74,7 +74,7 @@
       {{end}}
         <td>{{$r.TestCaseID}}</td>
         <td><label
-            class="badge {{$.Converter.GetStatusBadgeStyle $r.Status}}">{{$.Converter.GetStatusBadge $r.Status}}</label>
+            class="badge {{$.converter.GetStatusBadgeStyle $r.Status}}">{{$.converter.GetStatusBadge $r.Status}}</label>
         </td>
         <td>{{$r.ExecTime}}</td>
         <td>{{$r.MemoryUsage}}KiB</td>

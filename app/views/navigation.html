@@ -22,8 +22,13 @@
 
       <ul class="navbar-nav mr-0">
         <li class="nav-item">
-          <form name="newForm" accept-charset="UTF-8" action="/problems/new" method="post">
-            <a class="nav-link" href="javascript:newForm.submit()">
+          <a class="nav-link" href="{{url "Contest.Edit" 0}}">
+            新しいコンテスト
+          </a>
+        </li>
+        <li class="nav-item">
+          <form name="newProblemForm" accept-charset="UTF-8" action="/problems/new" method="post">
+            <a class="nav-link" href="javascript:newProblemForm.submit()">
               新しい問題
             </a>
           </form>

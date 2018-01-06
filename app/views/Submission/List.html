@@ -30,7 +30,7 @@
       <td><a href="..{{url "Problem.Index" .Problem.ID}}">{{.Problem.Title}}</a></td>
       <td>{{.User.DisplayName}}</td>
       <td>
-        <label class="badge {{$.Converter.GetStatusBadgeStyle .Status}}">{{$.Converter.GetStatusBadge .Status}}</label>
+        <label class="badge {{$.converter.GetStatusBadgeStyle .Status}}">{{$.converter.GetStatusBadge .Status}}</label>
       </td>
       <td>{{.ExecTime}}</td>
       <td>{{.MemoryUsage}}KiB</td>

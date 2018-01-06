@@ -22,6 +22,8 @@ type Problem struct {
 	JudgeSourceCode string        `gorm:"type:text"`
 	CaseSets        []CaseSet
 	Submissions     []Submission
+	Contest         *Contest
+	ContestID       *uint
 }
 
 type JudgeType int
@@ -92,6 +94,10 @@ func (p *Problem) FetchCaseSets() {
 
 func (p *Problem) FetchSubmissions() {
 	db.Model(p).Related(&p.Submissions)
+}
+
+func (p *Problem) FetchContest() {
+	db.Model(p).Related(&p.Contest)
 }
 
 func (p *Problem) GetSubmissionsReversed() []Submission {

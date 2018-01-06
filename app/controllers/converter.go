@@ -1,13 +1,17 @@
 package controllers
 
-import "github.com/gedorinku/koneko-online-judge/app/models"
+import (
+	"time"
+
+	"github.com/gedorinku/koneko-online-judge/app/models"
+)
 
 type badge struct {
 	Style string
 	Text  string
 }
 
-type BadgeConverter struct{}
+type Converter struct{}
 
 var (
 	badges = map[models.JudgementStatus]badge{
@@ -24,13 +28,19 @@ var (
 		models.UnknownError:        {"badge-primary", "UE"},
 	}
 
-	Converter = &BadgeConverter{}
+	htmlDateTimeLayout = "2006-01-02T15:04:05"
+
+	converter = &Converter{}
 )
 
-func (BadgeConverter) GetStatusBadgeStyle(status models.JudgementStatus) string {
+func (Converter) GetStatusBadgeStyle(status models.JudgementStatus) string {
 	return badges[status].Style
 }
 
-func (BadgeConverter) GetStatusBadge(status models.JudgementStatus) string {
+func (Converter) GetStatusBadge(status models.JudgementStatus) string {
 	return badges[status].Text
+}
+
+func (Converter) DateTime(t time.Time) string {
+	return t.Format(htmlDateTimeLayout)
 }
