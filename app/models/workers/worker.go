@@ -335,7 +335,9 @@ func parseTimeText(time string) (int64, int64, error) {
 		return 0, 0, TimeTextParseError
 	}
 
-	return int64(t * 1000), int64(m), nil
+	// GNU Timeにはメモリ使用量が4倍に表示されるバグがある。
+	// https://bugzilla.redhat.com/show_bug.cgi?id=702826
+	return int64(t * 1000), int64(m / 4), nil
 }
 
 func checkRuntimeError(stderr *os.File) error {
