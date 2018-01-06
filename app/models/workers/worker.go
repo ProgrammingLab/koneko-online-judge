@@ -90,8 +90,7 @@ func NewWorker(img string, timeLimit int64, memoryLimit int64, cmd []string) (*W
 		NetworkMode: "none",
 	}
 
-	var res container.ContainerCreateCreatedBody
-	res, err = cli.ContainerCreate(ctx, cfg, hcfg, &network.NetworkingConfig{}, "")
+	res, err := cli.ContainerCreate(ctx, cfg, hcfg, &network.NetworkingConfig{}, "")
 	if err != nil {
 		revel.AppLog.Errorf("error %v", img, err)
 		return nil, err
@@ -265,7 +264,6 @@ func (w Worker) CopyContentToContainer(content []byte, name string) error {
 	}
 	defer srcArchive.Close()
 
-	// 最後に`/`をつけてはいけない
 	dstInfo := archive.CopyInfo{Path: Workspace + name}
 	dstDir, preparedArchive, err := archive.PrepareArchiveCopy(srcArchive, srcInfo, dstInfo)
 	if err != nil {
