@@ -24,6 +24,8 @@ func judge(submissionID uint) {
 
 func (j judgementJob) Run() {
 	submission := GetSubmission(j.SubmissionID)
+	submission.Status = Judging
+	db.Model(submission).Update("status", submission.Status)
 	submission.FetchLanguage()
 	submission.FetchProblem()
 	submission.FetchJudgeSetResults()
