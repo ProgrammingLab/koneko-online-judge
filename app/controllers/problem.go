@@ -21,7 +21,7 @@ type ProblemRequest struct {
 
 var (
 	problemNotFoundMessage      = "problem not found: id %v"
-	problemEditForbiddenMessage = "editing is not allowed"
+	problemEditForbiddenMessage = "編集する権限がありません"
 )
 
 func (c Problem) Index(id uint) revel.Result {
