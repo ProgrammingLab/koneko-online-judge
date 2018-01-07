@@ -9,8 +9,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/revel/revel"
-	"golang.org/x/crypto/bcrypt"
 )
 
 const (
@@ -27,9 +25,6 @@ var (
 )
 
 func GetBcryptCost() int {
-	if revel.DevMode {
-		return bcrypt.DefaultCost
-	}
 	//適当に調整する
 	return 14
 }

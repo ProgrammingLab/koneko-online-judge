@@ -5,9 +5,9 @@ import (
 
 	"time"
 
-	"github.com/gedorinku/koneko-online-judge/app/models/workers"
-	"github.com/revel/modules/jobs/app/jobs"
-	"github.com/revel/revel"
+	"github.com/gedorinku/koneko-online-judge/server/logger"
+	"github.com/gedorinku/koneko-online-judge/server/models/workers"
+	"github.com/gedorinku/koneko-online-judge/server/modules/jobs"
 )
 
 type judgementJob struct {
@@ -42,12 +42,12 @@ func (j judgementJob) Run() {
 		markAs(submission.JudgeSetResults, finalStatus)
 	} else {
 		defer compileWorker.Remove()
-		revel.AppLog.Debugf("%v %v", compileRes.Status, compileRes.Stderr)
+		logger.AppLog.Debugf("%v %v", compileRes.Status, compileRes.Stderr)
 
 		if compileRes.Status != workers.StatusFinished {
 			finalStatus = CompileError
 			markAs(submission.JudgeSetResults, finalStatus)
-			revel.AppLog.Debugf("compile error: worker status %v", compileRes.Status, compileRes.Stderr)
+			logger.AppLog.Debugf("compile error: worker status %v", compileRes.Status, compileRes.Stderr)
 		} else {
 			for _, r := range submission.JudgeSetResults {
 				status, t, m := judgeCaseSet(&r, submission, compileWorker)
@@ -146,19 +146,19 @@ func compile(submission *Submission) (*workers.Worker, *workers.ExecResult) {
 	cmd := strings.Split(language.CompileCommand, " ")
 	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, int64(5*1000), int64(256*1024*1024), cmd)
 	if err != nil {
-		revel.AppLog.Errorf("compile: container create error", err)
+		logger.AppLog.Errorf("compile: container create error", err)
 		return nil, nil
 	}
 
 	err = w.CopyContentToContainer([]byte(submission.SourceCode), language.FileName)
 	if err != nil {
-		revel.AppLog.Errorf("compile: docker cp", err)
+		logger.AppLog.Errorf("compile: docker cp", err)
 		return nil, nil
 	}
 
 	res, err := w.Run("")
 	if err != nil {
-		revel.AppLog.Errorf("compile: container attach error", err)
+		logger.AppLog.Errorf("compile: container attach error", err)
 	}
 
 	return w, res
@@ -170,20 +170,20 @@ func execSubmission(submission *Submission, testCase *TestCase, compiled *worker
 	cmd := strings.Split(language.ExecCommand, " ")
 	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, int64(problem.TimeLimit.Seconds()*1000), int64(problem.MemoryLimit*1024*1024), cmd)
 	if err != nil {
-		revel.AppLog.Errorf("exec: container create error", err)
+		logger.AppLog.Errorf("exec: container create error", err)
 		return nil
 	}
 	defer w.Remove()
 
 	err = compiled.CopyTo(language.ExeFileName, w)
 	if err != nil {
-		revel.AppLog.Errorf("exec: docker cp error", err)
+		logger.AppLog.Errorf("exec: docker cp error", err)
 		return nil
 	}
 
 	res, err := w.Run(testCase.Input[:])
 	if err != nil {
-		revel.AppLog.Errorf("exec: container attach error", err)
+		logger.AppLog.Errorf("exec: container attach error", err)
 	}
 	return res
 }

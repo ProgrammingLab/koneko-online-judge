@@ -1,26 +1,27 @@
 package models
 
 import (
+	"os"
+
+	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/revel/revel"
 )
 
 var db *gorm.DB
 
 func InitDB() {
-	driver, _ := revel.Config.String("db.driver")
-	spec, _ := revel.Config.String("db.spec")
+	driver := os.Getenv("KOJ_DB_DRIVER")
+	spec := os.Getenv("KOJ_DB_SPEC")
+	// model.dbに代入したいので。
 	var err error
 	db, err = gorm.Open(driver, spec)
 	if err != nil {
-		revel.AppLog.Fatal("DB Error", err.Error())
+		logger.AppLog.Fatal("DB Error", err.Error())
 		panic(err)
 	}
-	revel.AppLog.Info("DB Connected")
-	if revel.DevMode {
-		db.LogMode(true)
-	}
+	logger.AppLog.Info("DB Connected")
+	db.LogMode(true)
 
 	createTables()
 	seedLanguages()

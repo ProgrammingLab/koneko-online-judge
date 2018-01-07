@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
-	"github.com/revel/revel"
 )
 
 type CaseSet struct {
@@ -103,7 +103,7 @@ func deleteExistsCaseSets(problem *Problem) {
 	for _, s := range sets {
 		s.Delete()
 	}
-	revel.AppLog.Debugf("deleted %v", len(sets))
+	logger.AppLog.Debugf("deleted %v", len(sets))
 }
 
 func (s *CaseSet) Delete() {

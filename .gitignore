@@ -3,8 +3,5 @@
 /.idea/libraries
 .DS_Store
 
-## Revel
-test-results/
-tmp/
-routes/
+vendor/
 log/
