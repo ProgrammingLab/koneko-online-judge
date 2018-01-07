@@ -8,4 +8,8 @@ import (
 func Routes(e *echo.Echo) {
 	e.POST("/sessions/login", controllers.Login)
 	e.DELETE("/sessions/logout", controllers.Logout)
+
+	e.GET("/user", controllers.GetMyUser)
+	e.GET("/users", controllers.GetAllUsers)
+	e.GET("/users/:name", controllers.GetUser)
 }
