@@ -4,6 +4,10 @@ import (
 	"errors"
 	"time"
 
+	"strconv"
+
+	"strings"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -17,7 +21,7 @@ type UserSession struct {
 }
 
 var (
-	errorLogin = errors.New("incorrect username or password")
+	LoginError = errors.New("incorrect username or password")
 
 	lifetimeTicks = time.Duration(24 * time.Hour)
 )
@@ -28,13 +32,16 @@ func NewSession(email, password string) (*UserSession, string, error) {
 	notFound := db.Where(user).First(user).RecordNotFound()
 
 	if notFound || !user.IsCorrectPassword(password) {
-		return nil, "", errorLogin
+		return nil, "", LoginError
 	}
 
-	token := []byte(GenerateRandomBase64String(32))
-	digest, _ := bcrypt.GenerateFromPassword(token, bcrypt.DefaultCost)
+	secret := []byte(GenerateRandomBase64String(24))
+	digest, err := bcrypt.GenerateFromPassword(secret, bcrypt.DefaultCost)
+	if err != nil {
+		return nil, "", err
+	}
 
-	oldSession := getSession(user.ID)
+	oldSession := getSessionFromUser(user.ID)
 	if oldSession != nil {
 		db.Delete(oldSession)
 	}
@@ -42,13 +49,26 @@ func NewSession(email, password string) (*UserSession, string, error) {
 		User:        *user,
 		TokenDigest: string(digest),
 	}
-	db.Create(session)
+	err = db.Create(session).Error
+	if err != nil {
+		return nil, "", err
+	}
 
-	return session, string(token), nil
+	token := strconv.Itoa(int(session.ID)) + "_" + string(secret)
+
+	return session, token, nil
 }
 
-func CheckLogin(userID uint, token string) *UserSession {
-	session := getSession(userID)
+func CheckLogin(token string) *UserSession {
+	tokens := strings.Split(token, "_")
+	if len(tokens) != 2 {
+		return nil
+	}
+	id, err := strconv.Atoi(tokens[0])
+	if err != nil {
+		return nil
+	}
+	session := GetSession(uint(id))
 	if session == nil {
 		return nil
 	}
@@ -57,7 +77,7 @@ func CheckLogin(userID uint, token string) *UserSession {
 		return nil
 	}
 
-	err := bcrypt.CompareHashAndPassword([]byte(session.TokenDigest), []byte(token))
+	err = bcrypt.CompareHashAndPassword([]byte(session.TokenDigest), []byte(tokens[1]))
 	if err != nil {
 		return nil
 	}
@@ -66,7 +86,16 @@ func CheckLogin(userID uint, token string) *UserSession {
 	return session
 }
 
-func getSession(userID uint) *UserSession {
+func GetSession(id uint) *UserSession {
+	s := &UserSession{}
+	nf := db.Where(id).First(s).RecordNotFound()
+	if nf {
+		return nil
+	}
+	return s
+}
+
+func getSessionFromUser(userID uint) *UserSession {
 	session := &UserSession{UserID: userID}
 	notFound := db.Where(session).First(session).RecordNotFound()
 	if notFound {
