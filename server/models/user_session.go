@@ -36,7 +36,7 @@ func NewSession(email, password string) (*UserSession, string, error) {
 	}
 
 	secret := []byte(GenerateRandomBase64String(24))
-	digest, err := bcrypt.GenerateFromPassword(secret, bcrypt.DefaultCost)
+	digest, err := bcrypt.GenerateFromPassword(secret, bcrypt.MinCost)
 	if err != nil {
 		return nil, "", err
 	}
