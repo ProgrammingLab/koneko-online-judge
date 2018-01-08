@@ -72,7 +72,7 @@ func CheckLogin(token string) *UserSession {
 	if session == nil {
 		return nil
 	}
-	duration := session.CreatedAt.Sub(time.Now())
+	duration := time.Now().Sub(session.CreatedAt)
 	if lifetimeTicks < duration {
 		return nil
 	}
