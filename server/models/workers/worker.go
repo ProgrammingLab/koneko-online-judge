@@ -29,15 +29,15 @@ type Worker struct {
 type ExecStatus int
 
 const (
-	StatusFinished            = 0
-	StatusTimeLimitExceeded   = 1
-	StatusMemoryLimitExceeded = 2
-	StatusRuntimeError        = 3
-	StatusUnknownError        = 4
-	outputLimit               = 10 * 1024 * 1024
-	errorOutputLimit          = 512
-	Workspace                 = "/tmp/koj-workspace/"
-	errorString               = "runtime_error"
+	StatusFinished            ExecStatus = 0
+	StatusTimeLimitExceeded   ExecStatus = 1
+	StatusMemoryLimitExceeded ExecStatus = 2
+	StatusRuntimeError        ExecStatus = 3
+	StatusUnknownError        ExecStatus = 4
+	outputLimit                          = 10 * 1024 * 1024
+	errorOutputLimit                     = 512
+	Workspace                            = "/tmp/koj-workspace/"
+	errorString                          = "runtime_error"
 )
 
 var (

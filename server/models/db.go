@@ -103,7 +103,7 @@ func insertAdmin() {
 		Name:           "admin",
 		DisplayName:    "admin",
 		Email:          "admin@judge.kurume-nct.com",
-		Authority:      authorityAdmin,
+		Authority:      Admin,
 		PasswordDigest: GenerateRandomBase64String(64),
 	}
 	insertUserIfNonExisting(admin)

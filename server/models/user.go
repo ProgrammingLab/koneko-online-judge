@@ -6,6 +6,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type Authority uint
+
 type User struct {
 	ID             uint       `gorm:"primary_key" json:"-"`
 	CreatedAt      time.Time  `json:"-"`
@@ -14,13 +16,15 @@ type User struct {
 	Name           string     `gorm:"not null;unique_index" json:"name"`
 	DisplayName    string     `gorm:"not null" json:"displayName"`
 	Email          string     `gorm:"not null;unique_index" json:"email,omitempty"`
-	Authority      uint       `gorm:"not null" json:"authority"`
+	Authority      Authority  `gorm:"not null" json:"authority"`
 	IsDeleted      bool       `gorm:"not null;default:'0'" json:"-"`
 	PasswordDigest string     `gorm:"not null" json:"-"`
 }
 
-const authorityMember = 0
-const authorityAdmin = 1
+const (
+	Member Authority = 0
+	Admin  Authority = 1
+)
 
 func GetAllUsers() []User {
 	u := make([]User, 0)
