@@ -5,25 +5,25 @@ import (
 )
 
 type Problem struct {
-	ID              uint `gorm:"primary_key"`
-	WriterID        uint `gorm:"not null"`
-	Writer          User
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
-	Title           string `gorm:"not null"`
-	Body            string `gorm:"type:text; not null"`
-	InputFormat     string `gorm:"type:text"`
-	OutputFormat    string `gorm:"type:text"`
-	Constraints     string `gorm:"type:text"`
-	Samples         []Sample
-	TimeLimit       time.Duration `gorm:"not null"`
-	MemoryLimit     int           `gorm:"not null"`
-	JudgeType       int           `gorm:"not null; default:'0'"`
-	JudgeSourceCode string        `gorm:"type:text"`
-	CaseSets        []CaseSet
-	Submissions     []Submission
-	Contest         *Contest
-	ContestID       *uint
+	ID              uint          `gorm:"primary_key" json:"id"`
+	WriterID        uint          `gorm:"not null" json:"writerID"`
+	Writer          User          `gorm:"ForeignKey:WriterID" json:"writer"`
+	CreatedAt       time.Time     `json:"createdAt"`
+	UpdatedAt       time.Time     `json:"updatedAt"`
+	Title           string        `gorm:"not null" json:"title"`
+	Body            string        `gorm:"type:text; not null" json:"body"`
+	InputFormat     string        `gorm:"type:text" json:"inputFormat"`
+	OutputFormat    string        `gorm:"type:text" json:"outputFormat"`
+	Constraints     string        `gorm:"type:text" json:"constraints"`
+	Samples         []Sample      `json:"samples"`
+	TimeLimit       time.Duration `gorm:"not null" json:"timeLimit"`
+	MemoryLimit     int           `gorm:"not null" json:"memoryLimit"`
+	JudgeType       int           `gorm:"not null; default:'0'" json:"judgeType"`
+	JudgeSourceCode string        `gorm:"type:text" json:"judgeSourceCode;omitempty"`
+	CaseSets        []CaseSet     `json:"-"`
+	Submissions     []Submission  `json:"-"`
+	Contest         *Contest      `json:"contest;omitempty"`
+	ContestID       *uint         `json:"contestID"`
 }
 
 type JudgeType int
@@ -85,7 +85,7 @@ func (p *Problem) FetchSamples() {
 }
 
 func (p *Problem) FetchWriter() {
-	db.Model(p).Related(&p.Writer)
+	db.Where("id = ?", p.WriterID).First(&p.Writer)
 }
 
 func (p *Problem) FetchCaseSets() {

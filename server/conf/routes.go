@@ -12,4 +12,7 @@ func Routes(e *echo.Echo) {
 	e.GET("/user", controllers.GetMyUser)
 	e.GET("/users", controllers.GetAllUsers)
 	e.GET("/users/:name", controllers.GetUser)
+
+	e.POST("/problems/new", controllers.NewProblem)
+	e.GET("/problems/:id", controllers.GetProblem)
 }
