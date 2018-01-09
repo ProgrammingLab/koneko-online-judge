@@ -3,14 +3,13 @@
 ### Setup:
 ```
    go get github.com/gedorinku/koneko-online-judge
-   docker build -t koneko-online-judge-image-cpp $GOPATH/src/github.com/gedorinku/koneko-online-judge/container/cpp/
-   cd server
+   cd $GOPATH/src/github.com/gedorinku/koneko-online-judge/server/
+   docker build -t koneko-online-judge-image-cpp container/cpp/
    dep ensure
 ```
 
 ### Set environment variables:
 ```
-    export KOJ_SECRET="pJLzyoiDe17L36mytqC912j81PfTiolHm1veQK6Grn1En3YFdB5lvEHVTwFEaWvj"
     export KOJ_DB_DRIVER="mysql"
     export KOJ_DB_SPEC="user:password@/dbName?charset=utf8&parseTime=True&loc=Local"
     # DOCKER_API_VERSIONにはインストールされているバージョンを指定
@@ -22,6 +21,6 @@
 ```
     cd server
     go build main.go
-   ./main
-   # Go to http://localhost:9000/
+    ./main
+    # Go to http://localhost:9000/
 ```
