@@ -9,7 +9,16 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"
+	"gopkg.in/go-playground/validator.v9"
 )
+
+type CustomValidator struct {
+	validator *validator.Validate
+}
+
+func (cv *CustomValidator) Validate(i interface{}) error {
+	return cv.validator.Struct(i)
+}
 
 func main() {
 	e := echo.New()
@@ -17,6 +26,8 @@ func main() {
 	logger.AppLog = e.Logger
 	models.InitDB()
 	jobs.InitRunner()
+
+	e.Validator = &CustomValidator{validator: validator.New()}
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())

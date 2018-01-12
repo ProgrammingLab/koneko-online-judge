@@ -16,9 +16,9 @@ type Problem struct {
 	OutputFormat    string        `gorm:"type:text" json:"outputFormat"`
 	Constraints     string        `gorm:"type:text" json:"constraints"`
 	Samples         []Sample      `json:"samples"`
-	TimeLimit       time.Duration `gorm:"not null" json:"timeLimit"`
-	MemoryLimit     int           `gorm:"not null" json:"memoryLimit"`
-	JudgeType       int           `gorm:"not null; default:'0'" json:"judgeType"`
+	TimeLimit       time.Duration `gorm:"not null" json:"timeLimit" validate:"required,max=60000000000,min=1000000000"`
+	MemoryLimit     int           `gorm:"not null" json:"memoryLimit" validate:"required,max=512,min=128"`
+	JudgeType       int           `gorm:"not null; default:'0'" json:"judgeType" validate:"max=2,min=0"`
 	JudgeSourceCode string        `gorm:"type:text" json:"judgeSourceCode;omitempty"`
 	CaseSets        []CaseSet     `json:"-"`
 	Submissions     []Submission  `json:"-"`
@@ -37,14 +37,12 @@ const (
 	Special JudgeType = 2
 )
 
-func NewProblem(user *User) *Problem {
-	problem := &Problem{
-		WriterID:    user.ID,
-		TimeLimit:   time.Second,
-		MemoryLimit: 128,
+func NewProblem(problem *Problem) error {
+	err := db.Create(problem).Error
+	if err != nil {
+		return err
 	}
-	db.Create(problem)
-	return problem
+	return nil
 }
 
 func GetProblem(id uint) *Problem {
