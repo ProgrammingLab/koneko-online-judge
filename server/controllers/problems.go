@@ -45,5 +45,10 @@ func GetProblem(c echo.Context) error {
 	problem.Writer.Email = ""
 	problem.FetchSamples()
 
+	s := c.Get("session").(models.UserSession)
+	if problem.WriterID != s.UserID {
+		problem.JudgeSourceCode = ""
+	}
+
 	return c.JSON(http.StatusOK, problem)
 }
