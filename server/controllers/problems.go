@@ -27,6 +27,9 @@ func NewProblem(c echo.Context) error {
 	if err := models.NewProblem(problem); err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{err.Error()})
 	}
+	if problem.ContestID == nil {
+		problem.ContestID = new(uint)
+	}
 	return c.JSON(http.StatusCreated, problem)
 }
 
