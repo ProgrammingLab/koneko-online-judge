@@ -7,3 +7,7 @@ type Sample struct {
 	Output      string `gorm:"type:text"`
 	Description string `gorm:"type:text"`
 }
+
+func (s *Sample) Delete() {
+	db.Delete(s)
+}

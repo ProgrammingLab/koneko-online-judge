@@ -111,3 +111,10 @@ func (p *Problem) CanView(user *User) bool {
 	// TODO コンテストの問題だったらその辺を考える
 	return true
 }
+
+func (p *Problem) DeleteSamples() {
+	p.FetchSamples()
+	for _, s := range p.Samples {
+		s.Delete()
+	}
+}

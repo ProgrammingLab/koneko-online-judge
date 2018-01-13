@@ -30,6 +30,34 @@ func NewProblem(c echo.Context) error {
 	return c.JSON(http.StatusCreated, problem)
 }
 
+func UpdateProblem(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.ErrNotFound
+	}
+
+	request := &models.Problem{}
+	if err := c.Bind(request); err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{err.Error()})
+	}
+	if err := c.Validate(request); err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{err.Error()})
+	}
+	request.WriterID = 0
+	request.Writer = models.User{}
+
+	problem := models.GetProblem(uint(id))
+	if problem == nil {
+		return echo.ErrNotFound
+	}
+
+	problem.ContestID = nil
+	problem.Contest = nil
+	problem.DeleteSamples()
+	problem.Update(request)
+	return c.NoContent(http.StatusNoContent)
+}
+
 func GetProblem(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
