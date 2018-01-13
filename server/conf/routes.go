@@ -17,5 +17,6 @@ func Routes(e *echo.Echo) {
 	e.PUT("/problems/:id", controllers.UpdateProblem)
 	e.GET("/problems", controllers.GetProblems)
 	e.GET("/problems/:id", controllers.GetProblem)
-	e.PUT("/problems/:id/cases", controllers.UpdateCases)
+	e.POST("/problems/:id/cases/upload", controllers.UpdateCases)
+	e.PUT("/problems/:id/cases", controllers.SetTestCasePoint)
 }

@@ -36,6 +36,15 @@ var (
 	outputFileRegex = regexp.MustCompile(outputFilePrefix + `(\d+)-(\d+)\.txt`)
 )
 
+func GetCaseSet(id uint) *CaseSet {
+	s := &CaseSet{}
+	notFound := db.Where("id = ?", id).First(s).RecordNotFound()
+	if notFound {
+		return nil
+	}
+	return s
+}
+
 func newCaseSets(problem *Problem, archive []byte) ([]*CaseSet, error) {
 	if problem == nil {
 		return nil, NilArgumentError
@@ -108,6 +117,10 @@ func deleteExistsCaseSets(problem *Problem) {
 		s.Delete()
 	}
 	logger.AppLog.Debugf("deleted %v", len(sets))
+}
+
+func (s *CaseSet) UpdatePoint(point int) {
+	db.Model(s).Update("point", point)
 }
 
 func (s *CaseSet) Delete() {

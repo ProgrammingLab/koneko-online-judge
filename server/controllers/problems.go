@@ -138,6 +138,36 @@ func UpdateCases(c echo.Context) error {
 	return c.JSON(http.StatusOK, problem.CaseSets)
 }
 
+func SetTestCasePoint(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.ErrNotFound
+	}
+
+	s := c.Get("session").(models.UserSession)
+	problem := models.GetProblem(uint(id))
+	if problem == nil || !problem.CanEdit(s.UserID) {
+		return echo.ErrNotFound
+	}
+
+	requests := make([]int, 0)
+	if err = c.Bind(&requests); err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{err.Error()})
+	}
+	for _, r := range requests {
+		if r < 0 {
+			return c.JSON(http.StatusBadRequest, ErrorResponse{"点数は0以上である必要があります"})
+		}
+	}
+
+	problem.FetchCaseSets()
+	for i, s := range problem.CaseSets {
+		s.UpdatePoint(requests[i])
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
 func fetchProblem(out *models.Problem, userID uint) {
 	out.FetchWriter()
 	out.FetchSamples()
