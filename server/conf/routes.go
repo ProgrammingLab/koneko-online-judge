@@ -20,4 +20,6 @@ func Routes(e *echo.Echo) {
 	e.GET("/problems/:id", controllers.GetProblem)
 	e.POST("/problems/:id/cases/upload", controllers.UpdateCases)
 	e.PUT("/problems/:id/cases", controllers.SetTestCasePoint)
+
+	e.GET("/languages", controllers.GetLanguages)
 }
