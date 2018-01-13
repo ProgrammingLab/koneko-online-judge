@@ -145,3 +145,19 @@ func (p *Problem) DeleteSamples() {
 		s.Delete()
 	}
 }
+
+func (p *Problem) Delete() {
+	p.DeleteSamples()
+	p.FetchSubmissions()
+	for _, s := range p.Submissions {
+		s.Delete()
+	}
+
+	caseSets := make([]CaseSet, 0)
+	db.Unscoped().Where("problem_id = ?", p.ID).Find(&caseSets)
+	for _, s := range caseSets {
+		s.DeletePermanently()
+	}
+
+	db.Delete(p)
+}

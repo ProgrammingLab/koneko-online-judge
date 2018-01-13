@@ -87,3 +87,12 @@ func (s *Submission) GetJudgeSetResultsSorted() []JudgeSetResult {
 	db.Order("id ASC").Model(s).Related(&results)
 	return results
 }
+
+func (s *Submission) Delete() {
+	s.FetchJudgeSetResults()
+	for _, r := range s.JudgeSetResults {
+		r.Delete()
+	}
+
+	db.Delete(s)
+}

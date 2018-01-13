@@ -132,6 +132,16 @@ func (s *CaseSet) Delete() {
 	db.Delete(s)
 }
 
+func (s *CaseSet) DeletePermanently() {
+	cases := make([]TestCase, 0)
+	db.Unscoped().Where("case_set_id = ?", s.ID).Find(&cases)
+	for _, c := range cases {
+		c.DeletePermanently()
+	}
+
+	db.Unscoped().Delete(s)
+}
+
 func (s *CaseSet) FetchTestCases() {
 	db.Model(s).Related(&s.TestCases)
 }

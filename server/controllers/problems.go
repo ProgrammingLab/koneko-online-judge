@@ -111,6 +111,23 @@ func GetProblem(c echo.Context) error {
 	return c.JSON(http.StatusOK, problem)
 }
 
+func DeleteProblem(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.ErrNotFound
+	}
+
+	s := c.Get("session").(models.UserSession)
+	problem := models.GetProblem(uint(id))
+	if problem == nil || !problem.CanEdit(s.UserID) {
+		return echo.ErrNotFound
+	}
+
+	problem.Delete()
+
+	return c.NoContent(http.StatusNoContent)
+}
+
 func UpdateCases(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

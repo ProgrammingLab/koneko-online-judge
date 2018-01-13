@@ -25,3 +25,7 @@ func newJudgeResult(testCase *TestCase, setResult *JudgeSetResult) {
 func (r *JudgeResult) FetchTestCase() {
 	db.Model(r).Related(&r.TestCase)
 }
+
+func (r *JudgeResult) Delete() {
+	db.Delete(r)
+}
