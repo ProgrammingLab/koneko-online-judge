@@ -63,6 +63,33 @@ func UpdateProblem(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+func GetProblems(c echo.Context) error {
+	minID, err := strconv.Atoi(models.DefaultString(c.QueryParam("minID"), "0"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{err.Error()})
+	}
+	maxID, err := strconv.Atoi(models.DefaultString(c.QueryParam("maxID"), "0"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{err.Error()})
+	}
+	count, err := strconv.Atoi(models.DefaultString(c.QueryParam("count"), "0"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{err.Error()})
+	}
+	if minID < 0 || maxID < 0 || count < 0 {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{"0以上の値を指定してください"})
+	}
+
+	s := c.Get("session").(models.UserSession)
+
+	problems := models.GetProblems(nil, uint(minID), uint(maxID), count)
+	for i := range problems {
+		fetchProblem(&problems[i], s.UserID)
+	}
+
+	return c.JSON(http.StatusOK, problems)
+}
+
 func GetProblem(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -74,19 +101,8 @@ func GetProblem(c echo.Context) error {
 		return echo.ErrNotFound
 	}
 
-	problem.FetchWriter()
-	problem.Writer.Email = ""
-	problem.FetchSamples()
-	problem.FetchCaseSets()
-	problem.FetchContest()
-	if problem.ContestID == nil {
-		problem.ContestID = new(uint)
-	}
-
 	s := c.Get("session").(models.UserSession)
-	if problem.WriterID != s.UserID {
-		problem.JudgeSourceCode = ""
-	}
+	fetchProblem(problem, s.UserID)
 
 	return c.JSON(http.StatusOK, problem)
 }
@@ -115,4 +131,20 @@ func UpdateCases(c echo.Context) error {
 	problem.FetchCaseSets()
 
 	return c.JSON(http.StatusOK, problem.CaseSets)
+}
+
+func fetchProblem(out *models.Problem, userID uint) {
+	out.FetchWriter()
+	out.FetchSamples()
+	out.FetchCaseSets()
+	out.FetchContest()
+
+	out.Writer.Email = ""
+	if out.ContestID == nil {
+		out.ContestID = new(uint)
+	}
+
+	if out.WriterID != userID {
+		out.JudgeSourceCode = ""
+	}
 }

@@ -54,6 +54,13 @@ func MaxDuration(a, b time.Duration) time.Duration {
 	return a
 }
 
+func DefaultString(value, def string) string {
+	if value == "" {
+		return def
+	}
+	return value
+}
+
 func checkValidZip(reader *zip.Reader) error {
 	var total uint64
 

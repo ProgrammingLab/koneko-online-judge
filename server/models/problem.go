@@ -54,6 +54,19 @@ func GetProblem(id uint) *Problem {
 	return problem
 }
 
+func GetProblems(contestID *uint, minID, maxID uint, count int) []Problem {
+	problems := make([]Problem, 0)
+	query := db.Where("contest_id <=> ?", contestID).Where("id >= ?", minID)
+	if maxID != 0 {
+		query = query.Where("id <= ?", maxID)
+	}
+	if count != 0 {
+		query = query.Limit(count)
+	}
+	query.Find(&problems)
+	return problems
+}
+
 func GetNoContestProblems() []Problem {
 	problems := make([]Problem, 0)
 	db.Order("id ASC").Find(&problems)
