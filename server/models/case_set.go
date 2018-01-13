@@ -7,16 +7,20 @@ import (
 	"strconv"
 	"strings"
 
+	"time"
+
 	"github.com/gedorinku/koneko-online-judge/server/logger"
-	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 )
 
 type CaseSet struct {
-	gorm.Model
-	ProblemID uint `gorm:"not null"`
-	Point     int  `gorm:"not null; default:'0'"`
-	TestCases []TestCase
+	ID        uint       `gorm:"primary_key" json:"id"`
+	CreatedAt time.Time  `json:"createdAt"`
+	UpdatedAt time.Time  `json:"updatedAt"`
+	DeletedAt *time.Time `sql:"index" json:"-"`
+	ProblemID uint       `gorm:"not null" json:"problemID"`
+	Point     int        `gorm:"not null; default:'0'" json:"point"`
+	TestCases []TestCase `json:"-"`
 }
 
 const (

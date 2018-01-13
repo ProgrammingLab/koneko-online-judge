@@ -20,7 +20,7 @@ type Problem struct {
 	MemoryLimit     int           `gorm:"not null" json:"memoryLimit" validate:"required,max=512,min=128"`
 	JudgeType       int           `gorm:"not null; default:'0'" json:"judgeType" validate:"max=2,min=0"`
 	JudgeSourceCode string        `gorm:"type:text" json:"judgeSourceCode;omitempty"`
-	CaseSets        []CaseSet     `json:"-"`
+	CaseSets        []CaseSet     `json:"caseSets"`
 	Submissions     []Submission  `json:"-"`
 	Contest         *Contest      `json:"contest;omitempty"`
 	ContestID       *uint         `json:"contestID"`
@@ -95,7 +95,12 @@ func (p *Problem) FetchSubmissions() {
 }
 
 func (p *Problem) FetchContest() {
-	db.Model(p).Related(&p.Contest)
+	if p.ContestID == nil {
+		return
+	}
+
+	p.Contest = &Contest{}
+	db.Model(p).Related(p.Contest)
 }
 
 func (p *Problem) GetSubmissionsReversed() []Submission {

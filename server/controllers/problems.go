@@ -75,6 +75,11 @@ func GetProblem(c echo.Context) error {
 	problem.FetchWriter()
 	problem.Writer.Email = ""
 	problem.FetchSamples()
+	problem.FetchCaseSets()
+	problem.FetchContest()
+	if problem.ContestID == nil {
+		problem.ContestID = new(uint)
+	}
 
 	s := c.Get("session").(models.UserSession)
 	if problem.WriterID != s.UserID {
