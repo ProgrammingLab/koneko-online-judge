@@ -50,3 +50,9 @@ func (c *Contest) FetchWriters() {
 
 	db.Model(c).Related(&c.Writers)
 }
+
+func (c *Contest) IsWriter(userID uint) bool {
+	const query = "SELECT TOP (1) * FROM contests_writers WHERE contest_id = ? AND user_id = ?"
+	notFound := db.Raw(query, c.ID, userID).RecordNotFound()
+	return !notFound
+}

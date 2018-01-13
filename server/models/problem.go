@@ -122,12 +122,21 @@ func (p *Problem) GetSubmissionsReversed() []Submission {
 	return submissions
 }
 
-func (p *Problem) CanView(user *User) bool {
-	if user == nil {
-		return false
-	}
+func (p *Problem) CanView(userID uint) bool {
 	// TODO コンテストの問題だったらその辺を考える
 	return true
+}
+
+func (p *Problem) CanEdit(userID uint) bool {
+	if p.ContestID != nil && p.Contest == nil {
+		p.FetchContest()
+		p.Contest.FetchWriters()
+		if p.Contest.IsWriter(userID) {
+			return true
+		}
+	}
+
+	return p.WriterID == userID
 }
 
 func (p *Problem) DeleteSamples() {

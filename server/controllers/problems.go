@@ -51,8 +51,9 @@ func UpdateProblem(c echo.Context) error {
 	request.WriterID = 0
 	request.Writer = models.User{}
 
+	s := c.Get("session").(models.UserSession)
 	problem := models.GetProblem(uint(id))
-	if problem == nil {
+	if problem == nil || problem.CanView(s.UserID) {
 		return echo.ErrNotFound
 	}
 
@@ -84,6 +85,9 @@ func GetProblems(c echo.Context) error {
 
 	problems := models.GetProblems(nil, uint(minID), uint(maxID), count)
 	for i := range problems {
+		if !problems[i].CanView(s.UserID) {
+			return echo.ErrNotFound
+		}
 		fetchProblem(&problems[i], s.UserID)
 	}
 
@@ -96,12 +100,12 @@ func GetProblem(c echo.Context) error {
 		return echo.ErrNotFound
 	}
 
+	s := c.Get("session").(models.UserSession)
 	problem := models.GetProblem(uint(id))
-	if problem == nil {
+	if problem == nil || !problem.CanView(s.UserID) {
 		return echo.ErrNotFound
 	}
 
-	s := c.Get("session").(models.UserSession)
 	fetchProblem(problem, s.UserID)
 
 	return c.JSON(http.StatusOK, problem)
@@ -113,8 +117,9 @@ func UpdateCases(c echo.Context) error {
 		return echo.ErrNotFound
 	}
 
+	s := c.Get("session").(models.UserSession)
 	problem := models.GetProblem(uint(id))
-	if problem == nil {
+	if problem == nil || !problem.CanEdit(s.UserID) {
 		return echo.ErrNotFound
 	}
 
