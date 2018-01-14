@@ -20,7 +20,7 @@ func NewProblem(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{err.Error()})
 	}
 
-	s := c.Get("session").(models.UserSession)
+	s := getSession(c)
 	s.FetchUser()
 	problem.ID = 0
 	problem.Contest = nil
@@ -36,11 +36,6 @@ func NewProblem(c echo.Context) error {
 }
 
 func UpdateProblem(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.ErrNotFound
-	}
-
 	request := &models.Problem{}
 	if err := c.Bind(request); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{err.Error()})
@@ -51,9 +46,9 @@ func UpdateProblem(c echo.Context) error {
 	request.WriterID = 0
 	request.Writer = models.User{}
 
-	s := c.Get("session").(models.UserSession)
-	problem := models.GetProblem(uint(id))
-	if problem == nil || problem.CanView(s.UserID) {
+	s := getSession(c)
+	problem := getProblemFromContext(c)
+	if problem == nil || !problem.CanEdit(s.UserID) {
 		return echo.ErrNotFound
 	}
 
@@ -81,7 +76,7 @@ func GetProblems(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{"0以上の値を指定してください"})
 	}
 
-	s := c.Get("session").(models.UserSession)
+	s := getSession(c)
 
 	problems := models.GetProblems(nil, uint(minID), uint(maxID), count)
 	for i := range problems {
@@ -95,13 +90,8 @@ func GetProblems(c echo.Context) error {
 }
 
 func GetProblem(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.ErrNotFound
-	}
-
-	s := c.Get("session").(models.UserSession)
-	problem := models.GetProblem(uint(id))
+	s := getSession(c)
+	problem := getProblemFromContext(c)
 	if problem == nil || !problem.CanView(s.UserID) {
 		return echo.ErrNotFound
 	}
@@ -112,13 +102,8 @@ func GetProblem(c echo.Context) error {
 }
 
 func DeleteProblem(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.ErrNotFound
-	}
-
-	s := c.Get("session").(models.UserSession)
-	problem := models.GetProblem(uint(id))
+	s := getSession(c)
+	problem := getProblemFromContext(c)
 	if problem == nil || !problem.CanEdit(s.UserID) {
 		return echo.ErrNotFound
 	}
@@ -129,13 +114,8 @@ func DeleteProblem(c echo.Context) error {
 }
 
 func UpdateCases(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.ErrNotFound
-	}
-
-	s := c.Get("session").(models.UserSession)
-	problem := models.GetProblem(uint(id))
+	s := getSession(c)
+	problem := getProblemFromContext(c)
 	if problem == nil || !problem.CanEdit(s.UserID) {
 		return echo.ErrNotFound
 	}
@@ -156,19 +136,14 @@ func UpdateCases(c echo.Context) error {
 }
 
 func SetTestCasePoint(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.ErrNotFound
-	}
-
-	s := c.Get("session").(models.UserSession)
-	problem := models.GetProblem(uint(id))
+	s := getSession(c)
+	problem := getProblemFromContext(c)
 	if problem == nil || !problem.CanEdit(s.UserID) {
 		return echo.ErrNotFound
 	}
 
 	requests := make([]int, 0)
-	if err = c.Bind(&requests); err != nil {
+	if err := c.Bind(&requests); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{err.Error()})
 	}
 	for _, r := range requests {
@@ -199,4 +174,13 @@ func fetchProblem(out *models.Problem, userID uint) {
 	if out.WriterID != userID {
 		out.JudgeSourceCode = ""
 	}
+}
+
+func getProblemFromContext(c echo.Context) *models.Problem {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return nil
+	}
+
+	return models.GetProblem(uint(id))
 }

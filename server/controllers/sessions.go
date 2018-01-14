@@ -40,3 +40,7 @@ func Logout(c echo.Context) error {
 	s.Delete()
 	return c.NoContent(http.StatusNoContent)
 }
+
+func getSession(c echo.Context) models.UserSession {
+	return c.Get("session").(models.UserSession)
+}
