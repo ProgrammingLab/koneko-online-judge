@@ -28,7 +28,7 @@ func (j judgementJob) Run() {
 	db.Model(submission).Update("status", submission.Status)
 	submission.FetchLanguage()
 	submission.FetchProblem()
-	submission.FetchJudgeSetResults()
+	submission.FetchJudgeSetResults(false)
 	var (
 		execTime    time.Duration
 		memoryUsage int64
@@ -77,7 +77,7 @@ func (j judgementJob) Run() {
 
 func markAs(setResults []JudgeSetResult, status JudgementStatus) {
 	for _, s := range setResults {
-		s.FetchJudgeResults()
+		s.FetchJudgeResults(false)
 		db.Model(s).Update("status", status)
 		for _, r := range s.JudgeResults {
 			db.Model(r).Update("status", status)
@@ -87,7 +87,7 @@ func markAs(setResults []JudgeSetResult, status JudgementStatus) {
 
 func judgeCaseSet(result *JudgeSetResult, submission *Submission, compileWorker *workers.Worker) (JudgementStatus, time.Duration, int64) {
 	result.FetchCaseSet()
-	result.FetchJudgeResults()
+	result.FetchJudgeResults(false)
 
 	setStatus := Accepted
 	var (

@@ -5,17 +5,17 @@ import (
 )
 
 type JudgeSetResult struct {
-	ID           uint `gorm:"primary_key"`
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	SubmissionID uint `gorm:"not null"`
-	CaseSet      CaseSet
-	CaseSetID    uint `gorm:"not null"`
-	Point        int
+	ID           uint            `gorm:"primary_key" json:"id"`
+	CreatedAt    time.Time       `json:"createdAt"`
+	UpdatedAt    time.Time       `json:"updatedAt"`
+	SubmissionID uint            `gorm:"not null" json:"-"`
+	CaseSet      CaseSet         `json:"-"`
+	CaseSetID    uint            `gorm:"not null" json:"caseSetID"`
+	Point        int             `json:"point"`
 	Status       JudgementStatus `gorm:"not null; default:'0'"`
-	JudgeResults []JudgeResult
-	ExecTime     time.Duration
-	MemoryUsage  int64
+	JudgeResults []JudgeResult   `json:"judgeResults"`
+	ExecTime     time.Duration   `json:"execTime"`
+	MemoryUsage  int64           `json:"memoryUsage"`
 }
 
 func initJudgeSetResults(submission *Submission) {
@@ -45,8 +45,12 @@ func (r *JudgeSetResult) FetchCaseSet() {
 	db.Model(r).Related(&r.CaseSet)
 }
 
-func (r *JudgeSetResult) FetchJudgeResults() {
-	db.Model(r).Related(&r.JudgeResults)
+func (r *JudgeSetResult) FetchJudgeResults(sorted bool) {
+	query := db
+	if sorted {
+		query = query.Order("id ASC")
+	}
+	query.Model(r).Related(&r.JudgeResults)
 }
 
 func (r *JudgeSetResult) GetJudgeResultsSorted() []JudgeResult {
@@ -56,7 +60,7 @@ func (r *JudgeSetResult) GetJudgeResultsSorted() []JudgeResult {
 }
 
 func (r *JudgeSetResult) Delete() {
-	r.FetchJudgeResults()
+	r.FetchJudgeResults(false)
 	for _, res := range r.JudgeResults {
 		res.Delete()
 	}

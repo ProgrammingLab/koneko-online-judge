@@ -7,23 +7,23 @@ import (
 )
 
 type Submission struct {
-	ID              uint `gorm:"primary_key"`
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
-	UserID          uint `gorm:"not null"`
-	User            User
-	ProblemID       uint `gorm:"not null"`
-	Problem         Problem
-	LanguageID      uint `gorm:"not null"`
-	Language        Language
-	SourceCode      string `gorm:"type:text; not null"`
-	Point           int
-	Status          JudgementStatus `gorm:"default:'0'"`
-	ErrorLog        string          `gorm:"type:text"`
-	ExecTime        time.Duration
-	MemoryUsage     int64
-	CodeBytes       uint
-	JudgeSetResults []JudgeSetResult
+	ID              uint             `gorm:"primary_key" json:"id"`
+	CreatedAt       time.Time        `json:"createdAt"`
+	UpdatedAt       time.Time        `json:"updatedAt"`
+	UserID          uint             `gorm:"not null" json:"userID"`
+	User            User             `json:"user"`
+	ProblemID       uint             `gorm:"not null" json:"problemID"`
+	Problem         Problem          `json:"problem"`
+	LanguageID      uint             `gorm:"not null" json:"-"`
+	Language        Language         `json:"language"`
+	SourceCode      string           `gorm:"type:text; not null" json:"sourceCode"`
+	Point           int              `json:"point"`
+	Status          JudgementStatus  `gorm:"default:'0'" json:"status"`
+	ErrorLog        string           `gorm:"type:text" json:"errorLog"`
+	ExecTime        time.Duration    `json:"execTime"`
+	MemoryUsage     int64            `json:"memoryUsage"`
+	CodeBytes       uint             `json:"codeBytes"`
+	JudgeSetResults []JudgeSetResult `json:"judgeSetResults"`
 }
 
 type JudgementStatus int
@@ -78,18 +78,27 @@ func (s *Submission) FetchProblem() {
 	db.Model(s).Related(&s.Problem)
 }
 
-func (s *Submission) FetchJudgeSetResults() {
-	db.Model(s).Related(&s.JudgeSetResults)
+func (s *Submission) FetchJudgeSetResults(sorted bool) {
+	query := db
+	if sorted {
+		query = query.Order("id ASC")
+	}
+	query.Model(s).Related(&s.JudgeSetResults)
 }
 
-func (s *Submission) GetJudgeSetResultsSorted() []JudgeSetResult {
-	results := make([]JudgeSetResult, 0)
-	db.Order("id ASC").Model(s).Related(&results)
-	return results
+func (s *Submission) FetchJudgeSetResultsDeeply(sorted bool) {
+	query := db
+	if sorted {
+		query = query.Order("id ASC")
+	}
+	query.Model(s).Related(&s.JudgeSetResults)
+	for i := range s.JudgeSetResults {
+		s.JudgeSetResults[i].FetchJudgeResults(sorted)
+	}
 }
 
 func (s *Submission) Delete() {
-	s.FetchJudgeSetResults()
+	s.FetchJudgeSetResults(false)
 	for _, r := range s.JudgeSetResults {
 		r.Delete()
 	}

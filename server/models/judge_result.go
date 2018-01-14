@@ -6,8 +6,8 @@ type JudgeResult struct {
 	ID               uint `gorm:"primary_key"`
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
-	JudgeSetResultID uint `gorm:"not null"`
-	TestCase         TestCase
+	JudgeSetResultID uint            `gorm:"not null"`
+	TestCase         TestCase        `json:"-"`
 	TestCaseID       uint            `gorm:"not null"`
 	Status           JudgementStatus `gorm:"not null; default:'0'"`
 	ExecTime         time.Duration
