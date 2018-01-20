@@ -45,6 +45,20 @@ func Submit(c echo.Context) error {
 	return c.JSON(http.StatusCreated, submission)
 }
 
+func GetSubmissions(c echo.Context) error {
+	s := getSession(c)
+	problem := getProblemFromContext(c)
+	if problem == nil || !problem.CanView(s.UserID) {
+		return echo.ErrNotFound
+	}
+
+	problem.FetchSubmissions()
+	for i := range problem.Submissions {
+		fetchSubmission(&problem.Submissions[i], s.UserID)
+	}
+	return c.JSON(http.StatusOK, problem.Submissions)
+}
+
 func fetchSubmission(out *models.Submission, userID uint) {
 	out.FetchUser()
 	out.User.Email = ""
