@@ -4,9 +4,7 @@ language: go
 go:
   - "1.9"
 install:
-  - go get -u github.com/golang/dep/cmd/dep
-  - cd server && dep ensure
-  - cd nekonote && dep ensure
+  - ./setup.sh
 script:
   - go test ./server/...
   - go test ./nekonote/...
