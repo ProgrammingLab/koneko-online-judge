@@ -1,4 +1,5 @@
 # Koneko Online Judge (=^ - ^=)
+[![Build Status](https://travis-ci.org/gedorinku/koneko-online-judge.svg?branch=test)](https://travis-ci.org/gedorinku/koneko-online-judge)
 
 ### Setup:
 ```
