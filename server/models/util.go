@@ -83,3 +83,17 @@ func checkValidZip(reader *zip.Reader) error {
 
 	return nil
 }
+
+func UniqueUsers(users []User) []User {
+	m := make(map[User]bool, len(users))
+	res := make([]User, 0, len(users))
+	for _, u := range users {
+		if m[u] {
+			continue
+		}
+		m[u] = true
+		res = append(res, u)
+	}
+
+	return res
+}

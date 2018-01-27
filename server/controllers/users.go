@@ -16,19 +16,15 @@ func GetMyUser(c echo.Context) error {
 }
 
 func GetUser(c echo.Context) error {
-	user := models.FindUserByName(c.Param("name"))
+	user := models.FindUserByName(c.Param("name"), false)
 	if user == nil {
 		return c.JSON(http.StatusNotFound, userNotFound)
 	}
-	user.Email = ""
 	return c.JSON(http.StatusOK, user)
 }
 
 func GetAllUsers(c echo.Context) error {
-	users := models.GetAllUsers()
-	for i := range users {
-		users[i].Email = ""
-	}
+	users := models.GetAllUsers(false)
 
 	return c.JSON(http.StatusOK, users)
 }

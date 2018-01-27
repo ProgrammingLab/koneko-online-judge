@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -26,17 +27,39 @@ const (
 	Admin  Authority = 1
 )
 
-func GetAllUsers() []User {
+var UserIDIsZeroError = errors.New("User IDが0です")
+
+func GetUser(id uint, email bool) *User {
+	user := &User{}
+	nf := db.Where(id).First(user).RecordNotFound()
+	if nf {
+		return nil
+	}
+	if !email {
+		user.Email = ""
+	}
+	return user
+}
+
+func GetAllUsers(email bool) []User {
 	u := make([]User, 0)
 	db.Find(&u)
+	if !email {
+		for i := range u {
+			u[i].Email = ""
+		}
+	}
 	return u
 }
 
-func FindUserByName(name string) *User {
+func FindUserByName(name string, email bool) *User {
 	u := &User{}
 	nf := db.Where("name = ?", name).First(u).RecordNotFound()
 	if nf {
 		return nil
+	}
+	if !email {
+		u.Email = ""
 	}
 	return u
 }
