@@ -110,7 +110,7 @@ func (c *Contest) IsWriter(userID uint) bool {
 
 func (c *Contest) addWriterWithinTransaction(tx *gorm.DB, userID uint) error {
 	const query = "INSERT INTO contests_writers (contest_id, user_id) VALUES (?, ?)"
-	if err := tx.Raw(query, c.ID, userID).Error; err != nil {
+	if err := tx.Exec(query, c.ID, userID).Error; err != nil {
 		return err
 	}
 	return nil
