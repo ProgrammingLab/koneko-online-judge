@@ -27,4 +27,5 @@ func Routes(e *echo.Echo) {
 	e.GET("/languages", controllers.GetLanguages)
 
 	e.POST("/contests", controllers.NewContest)
+	e.GET("/contests/:id", controllers.GetContest)
 }

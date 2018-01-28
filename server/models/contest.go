@@ -65,6 +65,8 @@ func GetContest(id uint) *Contest {
 	if notFound {
 		return nil
 	}
+	contest.FetchWriters()
+	contest.FetchParticipants()
 	return contest
 }
 
@@ -81,7 +83,23 @@ func (c *Contest) FetchWriters() {
 		return
 	}
 
-	db.Model(c).Related(&c.Writers)
+	c.Writers = make([]User, 0)
+	db.Model(c).Related(&c.Writers, "Writers")
+	for i := range c.Writers {
+		c.Writers[i].Email = ""
+	}
+}
+
+func (c *Contest) FetchParticipants() {
+	if c.ID == 0 || 0 < len(c.Participants) {
+		return
+	}
+
+	c.Participants = make([]User, 0)
+	db.Model(c).Related(&c.Participants, "Participants")
+	for i := range c.Participants {
+		c.Participants[i].Email = ""
+	}
 }
 
 func (c *Contest) IsWriter(userID uint) bool {

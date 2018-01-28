@@ -5,6 +5,8 @@ import (
 
 	"net/http"
 
+	"strconv"
+
 	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"github.com/gedorinku/koneko-online-judge/server/models"
 	"github.com/labstack/echo"
@@ -36,6 +38,20 @@ func NewContest(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{"internal server error"})
 	}
 	return c.JSON(http.StatusCreated, contest)
+}
+
+func GetContest(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.ErrNotFound
+	}
+
+	contest := models.GetContest(uint(id))
+	if contest == nil {
+		return echo.ErrNotFound
+	}
+
+	return c.JSON(http.StatusOK, contest)
 }
 
 func toContest(request *contestRequest) *models.Contest {
