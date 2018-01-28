@@ -7,6 +7,8 @@ import (
 
 	"reflect"
 
+	"time"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -26,6 +28,37 @@ func TestGetBcryptCost(t *testing.T) {
 	c := GetBcryptCost()
 	if c < bcrypt.MinCost || bcrypt.MaxCost < c {
 		t.Errorf("cost is out of renge: %v", c)
+	}
+}
+
+func TestEqualTime(t *testing.T) {
+	now := time.Now()
+	inputs := []struct{ A, B time.Time }{
+		{now, now},
+		{
+			time.Date(2018, 1, 1, 12, 0, 0, 0, time.Local),
+			time.Date(2018, 1, 1, 12, 0, 0, int(100*time.Millisecond), time.Local),
+		},
+		{
+			time.Date(2018, 1, 1, 12, 0, 0, 0, time.Local),
+			time.Date(2018, 1, 1, 11, 59, 59, int(800*time.Millisecond), time.Local),
+		},
+		{
+			time.Date(2018, 1, 1, 12, 0, 0, 0, time.Local),
+			time.Date(2018, 1, 1, 11, 59, 59, int(100*time.Millisecond), time.Local),
+		},
+	}
+	outputs := []bool{
+		true,
+		true,
+		true,
+		false,
+	}
+
+	for i, in := range inputs {
+		if EqualTime(in.A, in.B) != outputs[i] {
+			t.Errorf("error on test case #%v", i)
+		}
 	}
 }
 

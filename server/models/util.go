@@ -61,6 +61,10 @@ func DefaultString(value, def string) string {
 	return value
 }
 
+func EqualTime(t1, t2 time.Time) bool {
+	return int64(t1.Sub(t2).Seconds()+0.5) == 0
+}
+
 func checkValidZip(reader *zip.Reader) error {
 	var total uint64
 

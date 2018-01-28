@@ -65,6 +65,15 @@ func GetContest(id uint) *Contest {
 	if notFound {
 		return nil
 	}
+	return contest
+}
+
+func GetContestDeeply(id uint) *Contest {
+	contest := &Contest{}
+	notFound := db.Where(id).First(contest).RecordNotFound()
+	if notFound {
+		return nil
+	}
 	contest.FetchWriters()
 	contest.FetchParticipants()
 	return contest

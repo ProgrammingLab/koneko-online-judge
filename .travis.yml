@@ -1,10 +1,18 @@
 services:
   - docker
+  - mysql
+
 language: go
+
 go:
   - "1.9"
+
+before_install:
+  - mysql -e 'CREATE DATABASE koj_test;'
+
 install:
   - ./setup.sh
+
 script:
   - go test ./server/...
   - go test ./nekonote/...

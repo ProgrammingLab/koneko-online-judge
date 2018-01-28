@@ -13,19 +13,26 @@ var db *gorm.DB
 func InitDB() {
 	driver := os.Getenv("KOJ_DB_DRIVER")
 	spec := os.Getenv("KOJ_DB_SPEC")
-	// model.dbに代入したいので。
-	var err error
-	db, err = gorm.Open(driver, spec)
+
+	err := connectDB(driver, spec)
 	if err != nil {
 		logger.AppLog.Fatal("DB Error", err.Error())
 		panic(err)
 	}
+
 	logger.AppLog.Info("DB Connected")
 	db.LogMode(true)
 
 	createTables()
 	seedLanguages()
 	insertAdmin()
+}
+
+func connectDB(driver, spec string) error {
+	// model.dbに代入したいので。
+	var err error
+	db, err = gorm.Open(driver, spec)
+	return err
 }
 
 func createTables() {

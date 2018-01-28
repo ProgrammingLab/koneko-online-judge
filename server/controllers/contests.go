@@ -46,7 +46,7 @@ func GetContest(c echo.Context) error {
 		return echo.ErrNotFound
 	}
 
-	contest := models.GetContest(uint(id))
+	contest := models.GetContestDeeply(uint(id))
 	if contest == nil {
 		return echo.ErrNotFound
 	}
