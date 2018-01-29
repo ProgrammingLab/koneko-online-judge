@@ -47,6 +47,35 @@ func TestNewContest(t *testing.T) {
 	}
 }
 
+func TestContest_Update(t *testing.T) {
+	contest := &Contest{
+		Title:       "hogehoge",
+		Description: "ぴよぴよ",
+		StartAt:     time.Now(),
+		EndAt:       time.Now(),
+		Writers: []User{
+			{ID: 1},
+			{ID: 2},
+		},
+	}
+
+	if err := NewContest(contest); err != nil {
+		t.Fatal(err)
+	}
+
+	contest.Title = "あいうえお"
+	contest.Description = "ほげほげ"
+	contest.StartAt = time.Date(2018, 1, 1, 0, 0, 0, 0, time.Local)
+	contest.EndAt = time.Date(2018, 1, 1, 0, 0, 0, 0, time.Local)
+	tmp := *contest
+	if err := contest.Update(); err != nil {
+		t.Fatal(err)
+	}
+	if !deepEqualContest(tmp, *contest) {
+		t.Fatalf("DeepEqual error: %+v %+v", tmp, *contest)
+	}
+}
+
 func deepEqualContest(a, b Contest) bool {
 	if !EqualTime(a.CreatedAt, b.CreatedAt) {
 		return false

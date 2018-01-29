@@ -24,6 +24,7 @@ type Contest struct {
 func NewContest(out *Contest) error {
 	writers := out.Writers
 	out.Writers = nil
+	out.Participants = nil
 	tx := db.Begin()
 	if err := tx.Create(out).Error; err != nil {
 		tx.Rollback()
@@ -84,7 +85,13 @@ func (c *Contest) Update() error {
 		return db.Create(c).Error
 	}
 
-	return db.Save(c).Error
+	query := map[string]interface{}{
+		"title":       c.Title,
+		"description": c.Description,
+		"startAt":     c.StartAt,
+		"endAt":       c.EndAt,
+	}
+	return db.Model(&Contest{ID: c.ID}).Updates(query).Error
 }
 
 func (c *Contest) FetchWriters() {

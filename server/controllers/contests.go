@@ -13,11 +13,12 @@ import (
 )
 
 type contestRequest struct {
-	Title       string      `json:"title"`
-	Description string      `json:"description"`
-	StartAt     time.Time   `json:"startAt"`
-	EndAt       time.Time   `json:"endAt"`
-	Writers     []idRequest `json:"writers"`
+	Title        string      `json:"title"`
+	Description  string      `json:"description"`
+	StartAt      time.Time   `json:"startAt"`
+	EndAt        time.Time   `json:"endAt"`
+	Writers      []idRequest `json:"writers"`
+	Participants []idRequest `json:"participants"`
 }
 
 func NewContest(c echo.Context) error {
@@ -52,6 +53,30 @@ func GetContest(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, contest)
+}
+
+func UpdateContest(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.ErrNotFound
+	}
+
+	request := &contestRequest{}
+	if err := c.Bind(request); err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{"bind error"})
+	}
+	if err := c.Validate(request); err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{err.Error()})
+	}
+
+	contest := toContest(request)
+	contest.ID = uint(id)
+	if err := contest.Update(); err != nil {
+		logger.AppLog.Error(err)
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{"internals server error"})
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }
 
 func toContest(request *contestRequest) *models.Contest {
