@@ -8,3 +8,8 @@ install:
 script:
   - go test ./server/...
   - go test ./nekonote/...
+
+notifications:
+  email:
+    on_success: never
+    on_failure: always
