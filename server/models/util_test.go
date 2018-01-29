@@ -47,12 +47,17 @@ func TestEqualTime(t *testing.T) {
 			time.Date(2018, 1, 1, 12, 0, 0, 0, time.Local),
 			time.Date(2018, 1, 1, 11, 59, 59, int(100*time.Millisecond), time.Local),
 		},
+		{
+			time.Date(2018, 1, 1, 12, 0, 0, int(400*time.Millisecond), time.Local),
+			time.Date(2018, 1, 1, 11, 59, 59, int(600*time.Millisecond), time.Local),
+		},
 	}
 	outputs := []bool{
 		true,
 		true,
 		true,
 		false,
+		true,
 	}
 
 	for i, in := range inputs {

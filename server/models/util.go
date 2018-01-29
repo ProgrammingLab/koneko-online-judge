@@ -62,7 +62,16 @@ func DefaultString(value, def string) string {
 }
 
 func EqualTime(t1, t2 time.Time) bool {
-	return int64(t1.Sub(t2).Seconds()+0.5) == 0
+	if t1.Unix() < 0 {
+		t1 = time.Unix(-t1.Unix(), 0)
+	}
+	if t2.Unix() < 0 {
+		t2 = time.Unix(-t2.Unix(), 0)
+	}
+
+	u1 := t1.Add(500 * time.Millisecond).Unix()
+	u2 := t2.Add(500 * time.Millisecond).Unix()
+	return u1 == u2
 }
 
 func checkValidZip(reader *zip.Reader) error {
