@@ -118,10 +118,14 @@ func (c *Contest) FetchParticipants() {
 	}
 }
 
-func (c *Contest) IsWriter(userID uint) bool {
-	const query = "SELECT TOP (1) * FROM contests_writers WHERE contest_id = ? AND user_id = ?"
-	notFound := db.Raw(query, c.ID, userID).RecordNotFound()
-	return !notFound
+func (c *Contest) IsWriter(userID uint) (bool, error) {
+	res := db.Limit(1).Table("contests_writers").Where("contest_id = ? AND user_id = ?", c.ID, userID)
+	res = res.First(&struct{}{})
+	if res.Error != nil && res.Error != gorm.ErrRecordNotFound {
+		return false, res.Error
+	}
+
+	return !res.RecordNotFound(), nil
 }
 
 func (c *Contest) IsParticipant(userID uint) (bool, error) {

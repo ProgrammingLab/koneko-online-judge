@@ -131,7 +131,7 @@ func (p *Problem) CanEdit(userID uint) bool {
 	if p.ContestID != nil && p.Contest == nil {
 		p.FetchContest()
 		p.Contest.FetchWriters()
-		if p.Contest.IsWriter(userID) {
+		if res, _ := p.Contest.IsWriter(userID); res {
 			return true
 		}
 	}
