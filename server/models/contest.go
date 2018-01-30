@@ -121,21 +121,27 @@ func (c *Contest) FetchParticipants() {
 func (c *Contest) IsWriter(userID uint) (bool, error) {
 	res := db.Limit(1).Table("contests_writers").Where("contest_id = ? AND user_id = ?", c.ID, userID)
 	res = res.First(&struct{}{})
-	if res.Error != nil && res.Error != gorm.ErrRecordNotFound {
+	if res.RecordNotFound() {
+		return false, nil
+	}
+	if res.Error != nil {
 		return false, res.Error
 	}
 
-	return !res.RecordNotFound(), nil
+	return true, nil
 }
 
 func (c *Contest) IsParticipant(userID uint) (bool, error) {
 	res := db.Limit(1).Table("contests_participants").Where("contest_id = ? AND user_id = ?", c.ID, userID)
 	res = res.First(&struct{}{})
-	if res.Error != nil && res.Error != gorm.ErrRecordNotFound {
+	if res.RecordNotFound() {
+		return false, nil
+	}
+	if res.Error != nil {
 		return false, res.Error
 	}
 
-	return !res.RecordNotFound(), nil
+	return true, nil
 }
 
 func (c *Contest) AddParticipant(userID uint) error {

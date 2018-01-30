@@ -36,12 +36,22 @@ func TestNewContest(t *testing.T) {
 		}
 	}
 
-	if !contest.IsWriter(334) {
-		t.Fatalf("IsWriter returns true")
+	{
+		res, err := contest.IsWriter(334)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if res {
+			t.Fatalf("IsWriter returns true")
+		}
 	}
 
 	for _, w := range contest.Writers {
-		if !contest.IsWriter(w.ID) {
+		res, err := contest.IsWriter(w.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !res {
 			t.Fatalf("IsWriter returns false")
 		}
 	}
