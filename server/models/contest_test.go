@@ -76,6 +76,58 @@ func TestContest_Update(t *testing.T) {
 	}
 }
 
+func TestContest_AddParticipant(t *testing.T) {
+	const writerID = 1
+	contest := &Contest{
+		Title:       "hogehoge",
+		Description: "ぴよぴよ",
+		StartAt:     time.Now(),
+		EndAt:       time.Now(),
+		Writers: []User{
+			{ID: writerID},
+		},
+	}
+
+	if err := NewContest(contest); err != nil {
+		t.Fatal(err)
+	}
+
+	const participantID = 2
+	if err := contest.AddParticipant(participantID); err != nil {
+		t.Fatal(err)
+	}
+
+	{
+		res, err := contest.IsParticipant(participantID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !res {
+			t.Errorf("IsParticipant(participantID) reutrns false")
+		}
+	}
+
+	{
+		res, err := contest.IsParticipant(writerID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if res {
+			t.Errorf("IsParticipant(writerID) reutrns true")
+		}
+	}
+
+	{
+		res, err := contest.IsParticipant(334)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if res {
+			t.Errorf("IsParticipant(334) reutrns true")
+		}
+	}
+}
+
 func deepEqualContest(a, b Contest) bool {
 	if !EqualTime(a.CreatedAt, b.CreatedAt) {
 		return false

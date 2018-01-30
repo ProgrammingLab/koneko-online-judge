@@ -29,4 +29,5 @@ func Routes(e *echo.Echo) {
 	e.POST("/contests", controllers.NewContest)
 	e.GET("/contests/:id", controllers.GetContest)
 	e.PUT("/contests/:id", controllers.UpdateContest)
+	e.POST("/contests/:id/enter", controllers.EnterContest)
 }

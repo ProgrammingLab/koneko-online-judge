@@ -124,6 +124,25 @@ func (c *Contest) IsWriter(userID uint) bool {
 	return !notFound
 }
 
+func (c *Contest) IsParticipant(userID uint) (bool, error) {
+	res := db.Limit(1).Table("contests_participants").Where("contest_id = ? AND user_id = ?", c.ID, userID)
+	res = res.First(&struct{}{})
+	if res.Error != nil && res.Error != gorm.ErrRecordNotFound {
+		return false, res.Error
+	}
+
+	return !res.RecordNotFound(), nil
+}
+
+func (c *Contest) AddParticipant(userID uint) error {
+	return c.addParticipantTransaction(db, userID)
+}
+
+func (c *Contest) addParticipantTransaction(tx *gorm.DB, userID uint) error {
+	const query = "INSERT INTO contests_participants (contest_id, user_id) VALUES (?, ?)"
+	return tx.Exec(query, c.ID, userID).Error
+}
+
 func (c *Contest) addWriterWithinTransaction(tx *gorm.DB, userID uint) error {
 	const query = "INSERT INTO contests_writers (contest_id, user_id) VALUES (?, ?)"
 	return tx.Exec(query, c.ID, userID).Error

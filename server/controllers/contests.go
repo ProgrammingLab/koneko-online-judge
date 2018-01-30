@@ -79,6 +79,37 @@ func UpdateContest(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+func EnterContest(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.ErrNotFound
+	}
+
+	contest := models.GetContest(uint(id))
+	if contest == nil {
+		return echo.ErrNotFound
+	}
+
+	s := getSession(c)
+	res, err := contest.IsParticipant(s.UserID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{"internal server error"})
+	}
+	if res {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{"すでに参加しています。"})
+	}
+
+	if err := contest.AddParticipant(s.UserID); err != nil {
+		logger.AppLog.Error(err)
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{"internal server error"})
+	}
+
+	contest.FetchWriters()
+	contest.FetchParticipants()
+
+	return c.JSON(http.StatusOK, contest)
+}
+
 func toContest(request *contestRequest) *models.Contest {
 	contest := &models.Contest{
 		Title:       request.Title,
