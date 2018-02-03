@@ -1,6 +1,7 @@
 package models
 
 import (
+	"sort"
 	"reflect"
 	"testing"
 	"time"
@@ -135,6 +136,45 @@ func TestContest_AddParticipant(t *testing.T) {
 		if res {
 			t.Errorf("IsParticipant(334) reutrns true")
 		}
+	}
+}
+
+func TestContest_UpdateWriters(t *testing.T) {
+	contest := &Contest{
+		Title:       "hogehoge",
+		Description: "ぴよぴよ",
+		StartAt:     time.Now(),
+		EndAt:       time.Now(),
+		Writers: []User{
+			{ID: 1},
+		},
+	}
+
+	if err := NewContest(contest); err != nil {
+		t.Fatal(err)
+	}
+
+	contest.Writers = append(contest.Writers, User{ID: 2})
+	if err := contest.UpdateWriters(); err != nil {
+		t.Fatal(err)
+	}
+
+	res := GetContest(contest.ID)
+	if contest == nil {
+		t.Fatalf("GetContest(%v) returns nil", contest.ID)
+	}
+	res.FetchWriters()
+	
+	sort.Slice(res.Writers, func(i, j int) bool {
+		return res.Writers[i].ID < res.Writers[j].ID
+	})
+
+	for i := range res.Writers {
+		if contest.Writers[i].ID == res.Writers[i].ID {
+			continue
+		}
+
+		t.Fatalf("mismatch writers: %+v %+v", contest.Writers[i],  res.Writers[i])
 	}
 }
 

@@ -94,6 +94,36 @@ func (c *Contest) Update() error {
 	return db.Model(&Contest{ID: c.ID}).Updates(query).Error
 }
 
+func (c *Contest) UpdateWriters() error {
+	if len(c.Writers) == 0 {
+		return nil
+	}
+
+	cur := make([]User, 0)
+	err := db.Model(c).Order("id ASC").Related(&cur, "Writers").Error
+	if err != nil {
+		return err
+	}
+
+	tx := db.Begin()
+
+	for _, u := range cur {
+		if err := c.removeWriterWithinTransaction(tx, u.ID); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	for _, u := range c.Writers {
+		if err := c.addWriterWithinTransaction(tx, u.ID); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	return tx.Commit().Error
+}
+
 func (c *Contest) FetchWriters() {
 	if c.ID == 0 || 0 < len(c.Writers) {
 		return
@@ -155,5 +185,10 @@ func (c *Contest) addParticipantTransaction(tx *gorm.DB, userID uint) error {
 
 func (c *Contest) addWriterWithinTransaction(tx *gorm.DB, userID uint) error {
 	const query = "INSERT INTO contests_writers (contest_id, user_id) VALUES (?, ?)"
+	return tx.Exec(query, c.ID, userID).Error
+}
+
+func (c *Contest) removeWriterWithinTransaction(tx *gorm.DB, userID uint) error {
+	const query = "DELETE FROM contests_writers WHERE contest_id = ? AND user_id = ?"
 	return tx.Exec(query, c.ID, userID).Error
 }

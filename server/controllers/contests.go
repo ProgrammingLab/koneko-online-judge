@@ -69,14 +69,23 @@ func UpdateContest(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{err.Error()})
 	}
 
+	request.Participants = nil
 	contest := toContest(request)
 	contest.ID = uint(id)
 	if err := contest.Update(); err != nil {
 		logger.AppLog.Error(err)
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{"internals server error"})
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{"internal server error"})
+	}
+	if len(contest.Writers) != 0 {
+		if err := contest.UpdateWriters(); err != nil {
+			logger.AppLog.Error(err)
+			return c.JSON(http.StatusInternalServerError, ErrorResponse{"internal server error"})
+		}
 	}
 
-	return c.NoContent(http.StatusNoContent)
+	res := models.GetContestDeeply(contest.ID)
+
+	return c.JSON(http.StatusOK, res)
 }
 
 func EnterContest(c echo.Context) error {
