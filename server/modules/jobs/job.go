@@ -1,6 +1,8 @@
 package jobs
 
 import (
+	"sync"
+
 	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"github.com/pkg/errors"
 )
@@ -12,19 +14,15 @@ type Job interface {
 const QueueSize = 10000
 
 var (
-	StuffedQueueError       = errors.New("job queueがいっぱいです")
-	AlreadyInitializedError = errors.New("job runnerは初期化済みです")
-	queue                   = make(chan Job, QueueSize)
-	initialized             = false
+	StuffedQueueError = errors.New("job queueがいっぱいです")
+	queue             = make(chan Job, QueueSize)
+	once              sync.Once
 )
 
-func InitRunner() error {
-	if initialized {
-		return AlreadyInitializedError
-	}
-	go run()
-	initialized = true
-	return nil
+func InitRunner() {
+	once.Do(func() {
+		go run()
+	})
 }
 
 func run() {
