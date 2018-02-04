@@ -41,8 +41,8 @@ const (
 )
 
 var (
-	TimeTextParseError = errors.New("time.txtの内容がパースできません。")
-	runtimeError       = errors.New("runtime error")
+	ErrTimeTextParse = errors.New("time.txtの内容がパースできません。")
+	errRuntime       = errors.New("runtime error")
 )
 
 type ExecResult struct {
@@ -92,7 +92,7 @@ func NewWorker(img string, timeLimit int64, memoryLimit int64, cmd []string) (*W
 
 	res, err := cli.ContainerCreate(ctx, cfg, hcfg, &network.NetworkingConfig{}, "")
 	if err != nil {
-		logger.AppLog.Errorf("error %v", img, err)
+		logger.AppLog.Errorf("error %v %+v", img, err)
 		return nil, err
 	}
 
@@ -115,27 +115,27 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	}
 	hijacked, err := w.cli.ContainerAttach(ctx, w.ID, opt)
 	if err != nil {
-		logger.AppLog.Errorf("error", err)
+		logger.AppLog.Errorf("error  %+v", err)
 		return nil, err
 	}
 	defer hijacked.Close()
 
 	err = w.cli.ContainerStart(ctx, w.ID, types.ContainerStartOptions{})
 	if err != nil {
-		logger.AppLog.Errorf("error", err)
+		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
 
 	stdout, err := ioutil.TempFile("", "stdout")
 	if err != nil {
-		logger.AppLog.Errorf("error", err)
+		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
 	defer removeTempFile(stdout)
 
 	stderr, err := ioutil.TempFile("", "stderr")
 	if err != nil {
-		logger.AppLog.Errorf("error", err)
+		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
 	defer removeTempFile(stderr)
@@ -157,48 +157,48 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 
 	err = w.cli.ContainerStart(ctx, w.ID, types.ContainerStartOptions{})
 	if err != nil {
-		logger.AppLog.Errorf("error", err)
+		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
 
 	if err := <-streamErrChan; err != nil {
-		logger.AppLog.Errorf("error", err)
+		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
 
 	_, err = stdout.Seek(0, 0)
 	if err != nil {
-		logger.AppLog.Errorf("error", err)
+		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
 	stdoutBuf := make([]byte, outputLimit)
 	n, err := stdout.Read(stdoutBuf)
 	if err != nil && err != io.EOF {
-		logger.AppLog.Errorf("error", err)
+		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
 	stdoutBuf = stdoutBuf[0:n]
 	stderrString, err := w.getFromContainer(Workspace+"error.txt", errorOutputLimit)
 	if err != nil && err != io.EOF {
-		logger.AppLog.Errorf("error", err)
+		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
 
 	timeText, err := w.getFromContainer(Workspace+"time.txt", 128)
 	if err != nil {
-		logger.AppLog.Errorf("error", err)
+		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
 
 	timeMillis, memoryUsage, err := parseTimeText(string(timeText))
 	if err != nil {
-		logger.AppLog.Errorf("error: %v", string(timeText), err)
+		logger.AppLog.Errorf("error: %v %+v", string(timeText), err)
 		return nil, err
 	}
 
 	var status ExecStatus
 	switch checkRuntimeError(stderr) {
-	case runtimeError:
+	case errRuntime:
 		status = StatusRuntimeError
 	case nil:
 		switch {
@@ -229,7 +229,7 @@ func (w Worker) CopyTo(basename string, dist *Worker) error {
 	name := Workspace + basename
 	content, err := w.getFromContainer(name, limit)
 	if err != nil {
-		logger.AppLog.Errorf("", err)
+		logger.AppLog.Errorf("%+v", err)
 		return err
 	}
 	return dist.CopyContentToContainer(content, basename)
@@ -239,14 +239,14 @@ func (w Worker) CopyContentToContainer(content []byte, name string) error {
 	createTempDir()
 	f, err := os.Create(Workspace + name)
 	if err != nil {
-		logger.AppLog.Errorf("could not create temp file", err)
+		logger.AppLog.Errorf("could not create temp file %+v", err)
 		return err
 	}
 	f.Write(content)
 	f.Close()
 	err = os.Chmod(f.Name(), 0777)
 	if err != nil {
-		logger.AppLog.Errorf("could not change temp file mode", err)
+		logger.AppLog.Errorf("could not change temp file mode %+v", err)
 		return err
 	}
 	defer removeTempFile(f)
@@ -259,7 +259,7 @@ func (w Worker) CopyContentToContainer(content []byte, name string) error {
 
 	srcArchive, err := archive.TarResource(srcInfo)
 	if err != nil {
-		logger.AppLog.Errorf("", err)
+		logger.AppLog.Errorf("%+v", err)
 		return err
 	}
 	defer srcArchive.Close()
@@ -267,7 +267,7 @@ func (w Worker) CopyContentToContainer(content []byte, name string) error {
 	dstInfo := archive.CopyInfo{Path: Workspace + name}
 	dstDir, preparedArchive, err := archive.PrepareArchiveCopy(srcArchive, srcInfo, dstInfo)
 	if err != nil {
-		logger.AppLog.Errorf("", err)
+		logger.AppLog.Errorf("%+v", err)
 		return err
 	}
 
@@ -307,7 +307,7 @@ func removeTempFile(file *os.File) {
 	file.Close()
 	err := os.Remove(file.Name())
 	if err != nil {
-		logger.AppLog.Errorf("temp file remove fail:", err)
+		logger.AppLog.Errorf("temp file remove fail: %+v", err)
 	}
 }
 
@@ -321,18 +321,18 @@ func parseTimeText(time string) (int64, int64, error) {
 	}
 	args := strings.Split(strings.TrimSpace(time), " ")
 	if len(args) < 2 {
-		return 0, 0, TimeTextParseError
+		return 0, 0, ErrTimeTextParse
 	}
 	t, err := strconv.ParseFloat(args[0], 64)
 	if err != nil {
-		logger.AppLog.Errorf("parse error", err)
-		return 0, 0, TimeTextParseError
+		logger.AppLog.Errorf("parse error %+v", err)
+		return 0, 0, ErrTimeTextParse
 	}
 
 	m, err := strconv.ParseFloat(args[1], 64)
 	if err != nil {
-		logger.AppLog.Errorf("parse error", err)
-		return 0, 0, TimeTextParseError
+		logger.AppLog.Errorf("parse error %+v", err)
+		return 0, 0, ErrTimeTextParse
 	}
 
 	// GNU Timeにはメモリ使用量が4倍に表示されるバグがある。
@@ -343,7 +343,7 @@ func parseTimeText(time string) (int64, int64, error) {
 func checkRuntimeError(stderr *os.File) error {
 	_, err := stderr.Seek(0, 0)
 	if err != nil {
-		logger.AppLog.Errorf("error", err)
+		logger.AppLog.Errorf("error %+v", err)
 		return err
 	}
 	stderrString, err := ioutil.ReadAll(stderr)
@@ -355,7 +355,7 @@ func checkRuntimeError(stderr *os.File) error {
 	if index == -1 {
 		return nil
 	}
-	return runtimeError
+	return errRuntime
 }
 
 func createTempDir() error {

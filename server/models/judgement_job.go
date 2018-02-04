@@ -146,19 +146,19 @@ func compile(submission *Submission) (*workers.Worker, *workers.ExecResult) {
 	cmd := strings.Split(language.CompileCommand, " ")
 	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, int64(5*1000), int64(256*1024*1024), cmd)
 	if err != nil {
-		logger.AppLog.Errorf("compile: container create error", err)
+		logger.AppLog.Errorf("compile: container create error %+v", err)
 		return nil, nil
 	}
 
 	err = w.CopyContentToContainer([]byte(submission.SourceCode), language.FileName)
 	if err != nil {
-		logger.AppLog.Errorf("compile: docker cp", err)
+		logger.AppLog.Errorf("compile: docker cp %+v", err)
 		return nil, nil
 	}
 
 	res, err := w.Run("")
 	if err != nil {
-		logger.AppLog.Errorf("compile: container attach error", err)
+		logger.AppLog.Errorf("compile: container attach error %+v", err)
 	}
 
 	return w, res
@@ -170,20 +170,20 @@ func execSubmission(submission *Submission, testCase *TestCase, compiled *worker
 	cmd := strings.Split(language.ExecCommand, " ")
 	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, int64(problem.TimeLimit.Seconds()*1000), int64(problem.MemoryLimit*1024*1024), cmd)
 	if err != nil {
-		logger.AppLog.Errorf("exec: container create error", err)
+		logger.AppLog.Errorf("exec: container create error %+v", err)
 		return nil
 	}
 	defer w.Remove()
 
 	err = compiled.CopyTo(language.ExeFileName, w)
 	if err != nil {
-		logger.AppLog.Errorf("exec: docker cp error", err)
+		logger.AppLog.Errorf("exec: docker cp error %+v", err)
 		return nil
 	}
 
 	res, err := w.Run(testCase.Input[:])
 	if err != nil {
-		logger.AppLog.Errorf("exec: container attach error", err)
+		logger.AppLog.Errorf("exec: container attach error %+v", err)
 	}
 	return res
 }
