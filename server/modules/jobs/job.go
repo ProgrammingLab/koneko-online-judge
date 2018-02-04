@@ -14,9 +14,9 @@ type Job interface {
 const QueueSize = 10000
 
 var (
-	StuffedQueueError = errors.New("job queueがいっぱいです")
-	queue             = make(chan Job, QueueSize)
-	once              sync.Once
+	ErrStuffedQueue = errors.New("job queueがいっぱいです")
+	queue           = make(chan Job, QueueSize)
+	once            sync.Once
 )
 
 func InitRunner() {
@@ -41,7 +41,7 @@ func run() {
 
 func Now(job Job) error {
 	if len(queue) == QueueSize {
-		return StuffedQueueError
+		return ErrStuffedQueue
 	}
 	queue <- job
 	return nil

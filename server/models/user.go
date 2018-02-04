@@ -27,7 +27,7 @@ const (
 	Admin  Authority = 1
 )
 
-var UserIDIsZeroError = errors.New("User IDが0です")
+var ErrUserIDIsZero = errors.New("User IDが0です")
 
 func GetUser(id uint, email bool) *User {
 	user := &User{}

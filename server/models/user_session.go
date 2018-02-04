@@ -21,7 +21,7 @@ type UserSession struct {
 }
 
 var (
-	LoginError = errors.New("incorrect username or password")
+	ErrLogin = errors.New("incorrect username or password")
 
 	lifetimeTicks = time.Duration(24 * time.Hour)
 )
@@ -32,7 +32,7 @@ func NewSession(email, password string) (*UserSession, string, error) {
 	notFound := db.Where(user).First(user).RecordNotFound()
 
 	if notFound || !user.IsCorrectPassword(password) {
-		return nil, "", LoginError
+		return nil, "", ErrLogin
 	}
 
 	secret := []byte(GenerateRandomBase64String(24))

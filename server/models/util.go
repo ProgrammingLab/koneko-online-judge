@@ -5,10 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 const (
@@ -19,9 +16,9 @@ const (
 )
 
 var (
-	caseFileCountLimitExceeded     = errors.New(fmt.Sprintf("ファイルの数は%v個以下にしてください。", maxCaseFileCount))
-	caseFileSizeLimitExceeded      = errors.New(fmt.Sprintf("展開後の各ファイルのサイズは%vMiB以下にしてください。", maxCaseFileSize))
-	totalCaseFileSizeLimitExceeded = errors.New(fmt.Sprintf("展開後の合計ファイルサイズは%vMiB以下にしてください。", maxCaseZipTotalSize))
+	errCaseFileCountLimitExceeded     = fmt.Errorf("ファイルの数は%v個以下にしてください。", maxCaseFileCount)
+	errCaseFileSizeLimitExceeded      = fmt.Errorf("展開後の各ファイルのサイズは%vMiB以下にしてください。", maxCaseFileSize)
+	errTotalCaseFileSizeLimitExceeded = fmt.Errorf("展開後の合計ファイルサイズは%vMiB以下にしてください。", maxCaseZipTotalSize)
 )
 
 func GetBcryptCost() int {
@@ -78,7 +75,7 @@ func checkValidZip(reader *zip.Reader) error {
 	var total uint64
 
 	if maxCaseFileCount < len(reader.File) {
-		return caseFileCountLimitExceeded
+		return errCaseFileCountLimitExceeded
 	}
 
 	for _, f := range reader.File {
@@ -87,11 +84,11 @@ func checkValidZip(reader *zip.Reader) error {
 			continue
 		}
 
-		return caseFileSizeLimitExceeded
+		return errCaseFileSizeLimitExceeded
 	}
 
 	if maxCaseZipTotalSize < total {
-		return totalCaseFileSizeLimitExceeded
+		return errTotalCaseFileSizeLimitExceeded
 	}
 
 	return nil

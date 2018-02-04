@@ -34,7 +34,7 @@ func NewContest(out *Contest) error {
 	for i, w := range writers {
 		if w.ID == 0 {
 			tx.Rollback()
-			return UserIDIsZeroError
+			return ErrUserIDIsZero
 		}
 		if err := out.addWriterWithinTransaction(tx, w.ID); err != nil {
 			tx.Rollback()

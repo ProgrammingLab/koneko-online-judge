@@ -25,7 +25,7 @@ func Login(c echo.Context) error {
 
 	_, token, err := models.NewSession(r.Email, r.Password)
 	if err != nil {
-		if err == models.LoginError {
+		if err == models.ErrLogin {
 			return c.JSON(http.StatusUnauthorized, ErrorResponse{"メールアドレスかパスワードが間違っています"})
 		}
 

@@ -29,8 +29,8 @@ const (
 )
 
 var (
-	NilArgumentError                    = errors.New("nil argument(s)")
-	InvalidFileNameOrDirectoryStructure = errors.New("ファイルの命名かディレクトリの構造が正しくありません。")
+	ErrNilArgument                         = errors.New("nil argument(s)")
+	ErrInvalidFileNameOrDirectoryStructure = errors.New("ファイルの命名かディレクトリの構造が正しくありません。")
 
 	inputFileRegex  = regexp.MustCompile(inputFilePrefix + `(\d+)-(\d+)\.txt`)
 	outputFileRegex = regexp.MustCompile(outputFilePrefix + `(\d+)-(\d+)\.txt`)
@@ -47,7 +47,7 @@ func GetCaseSet(id uint) *CaseSet {
 
 func newCaseSets(problem *Problem, archive []byte) ([]*CaseSet, error) {
 	if problem == nil {
-		return nil, NilArgumentError
+		return nil, ErrNilArgument
 	}
 	deleteExistsCaseSets(problem)
 	r, err := zip.NewReader(bytes.NewReader(archive), int64(len(archive)))
@@ -62,18 +62,18 @@ func newCaseSets(problem *Problem, archive []byte) ([]*CaseSet, error) {
 
 	inputs, outputs := getCaseFiles(r)
 	if inputs == nil || outputs == nil {
-		return nil, InvalidFileNameOrDirectoryStructure
+		return nil, ErrInvalidFileNameOrDirectoryStructure
 	}
 
 	inputSets := checkCaseFileNaming(inputs, inputFilePrefix)
 	outputSets := checkCaseFileNaming(outputs, outputFilePrefix)
 	if inputSets == nil || outputSets == nil {
-		return nil, InvalidFileNameOrDirectoryStructure
+		return nil, ErrInvalidFileNameOrDirectoryStructure
 	}
 
 	c := len(inputSets)
 	if c != len(outputSets) {
-		return nil, InvalidFileNameOrDirectoryStructure
+		return nil, ErrInvalidFileNameOrDirectoryStructure
 	}
 
 	result := make([]*CaseSet, c)
@@ -90,7 +90,7 @@ func newCaseSets(problem *Problem, archive []byte) ([]*CaseSet, error) {
 func newCaseSet(problem *Problem, inputs map[int]*zip.File, outputs map[int]*zip.File) (*CaseSet, error) {
 	c := len(inputs)
 	if c != len(outputs) {
-		return nil, InvalidFileNameOrDirectoryStructure
+		return nil, ErrInvalidFileNameOrDirectoryStructure
 	}
 
 	caseSet := &CaseSet{ProblemID: problem.ID}
