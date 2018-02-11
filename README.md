@@ -14,7 +14,7 @@
 ### Start the backend server
 ```
     go get github.com/gedorinku/koneko-online-judge/...
-    cd $GOPATH/src/github.com/gedorinku/koneko-online-judge/server/
+    cd $GOPATH/src/github.com/gedorinku/koneko-online-judge/
     docker-compose up
 ```
 
