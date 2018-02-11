@@ -1,0 +1,44 @@
+version: "3"
+
+services:
+  koneko:
+    build: ./server
+    command: ["./wait-for-it.sh", "mysql:3306", "--", "./wait-for-it.sh", "docker:2375", "--", "./run.sh"]
+    depends_on:
+      - mysql
+      - docker
+    environment: 
+      DOCKER_HOST: "tcp://docker:2375"
+    ports:
+      - "2323:2323"
+    restart: always
+    logging:
+      options:
+        max-size: 5m
+        max-file: "10"
+
+  mysql:
+    image: mysql:5.7
+    hostname: mysql
+    environment: 
+      MYSQL_ROOT_PASSWORD: "${KOJ_DB_PASSWORD}"
+      MYSQL_DATABASE: "koj"
+    restart: always
+    logging:
+      options:
+        max-size: 5m
+        max-file: "10"
+    ports:
+      - "33060:3306"
+
+  docker:
+    image: docker:stable-dind
+    hostname: docker
+    privileged: true
+    environment: 
+      DOCKER_OPTS: "-H :2375"
+    restart: always
+    logging:
+      options:
+        max-size: 5m
+        max-file: "10"
