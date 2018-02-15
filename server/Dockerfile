@@ -9,7 +9,6 @@ RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
 
 # Setup Docker
 ENV DOCKER_VERSION 1.35
-ENV DOCKER_HOST tcp://docker:2375
 
 # Setup Koneko
 RUN apk --no-cache add bash git mercurial
