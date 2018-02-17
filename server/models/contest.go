@@ -80,6 +80,32 @@ func GetContestDeeply(id uint) *Contest {
 	return contest
 }
 
+func IsWriter(contestID, userID uint) (bool, error) {
+	res := db.Limit(1).Table("contests_writers").Where("contest_id = ? AND user_id = ?", contestID, userID)
+	res = res.First(&struct{}{})
+	if res.RecordNotFound() {
+		return false, nil
+	}
+	if res.Error != nil {
+		return false, res.Error
+	}
+
+	return true, nil
+}
+
+func IsParticipant(contestID, userID uint) (bool, error) {
+	res := db.Limit(1).Table("contests_participants").Where("contest_id = ? AND user_id = ?", contestID, userID)
+	res = res.First(&struct{}{})
+	if res.RecordNotFound() {
+		return false, nil
+	}
+	if res.Error != nil {
+		return false, res.Error
+	}
+
+	return true, nil
+}
+
 func (c *Contest) Update() error {
 	if c.ID == 0 {
 		return db.Create(c).Error
@@ -148,30 +174,21 @@ func (c *Contest) FetchParticipants() {
 	}
 }
 
-func (c *Contest) IsWriter(userID uint) (bool, error) {
-	res := db.Limit(1).Table("contests_writers").Where("contest_id = ? AND user_id = ?", c.ID, userID)
-	res = res.First(&struct{}{})
-	if res.RecordNotFound() {
-		return false, nil
-	}
-	if res.Error != nil {
-		return false, res.Error
+func (c *Contest) CanEdit(s *UserSession) bool {
+	if s == nil {
+		return false
 	}
 
-	return true, nil
+	res, _ := c.IsWriter(s.UserID)
+	return res
+}
+
+func (c *Contest) IsWriter(userID uint) (bool, error) {
+	return IsWriter(c.ID, userID)
 }
 
 func (c *Contest) IsParticipant(userID uint) (bool, error) {
-	res := db.Limit(1).Table("contests_participants").Where("contest_id = ? AND user_id = ?", c.ID, userID)
-	res = res.First(&struct{}{})
-	if res.RecordNotFound() {
-		return false, nil
-	}
-	if res.Error != nil {
-		return false, res.Error
-	}
-
-	return true, nil
+	return IsParticipant(c.ID, userID)
 }
 
 func (c *Contest) AddParticipant(userID uint) error {

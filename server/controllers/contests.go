@@ -1,11 +1,9 @@
 package controllers
 
 import (
-	"time"
-
 	"net/http"
-
 	"strconv"
+	"time"
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"github.com/gedorinku/koneko-online-judge/server/models"
@@ -22,6 +20,11 @@ type contestRequest struct {
 }
 
 func NewContest(c echo.Context) error {
+	s := getSession(c)
+	if s == nil {
+		return c.JSON(http.StatusUnauthorized, responseUnauthorized)
+	}
+
 	var request contestRequest
 	if err := c.Bind(&request); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{"bind error"})
@@ -30,7 +33,6 @@ func NewContest(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{err.Error()})
 	}
 
-	s := getSession(c)
 	request.Writers = append(request.Writers, idRequest{s.UserID})
 	contest := toContest(&request)
 	contest.ID = 0
@@ -72,6 +74,10 @@ func UpdateContest(c echo.Context) error {
 	request.Participants = nil
 	contest := toContest(request)
 	contest.ID = uint(id)
+	s := getSession(c)
+	if !contest.CanEdit(s) {
+		return echo.ErrNotFound
+	}
 	if err := contest.Update(); err != nil {
 		logger.AppLog.Error(err)
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{"internal server error"})
@@ -89,6 +95,11 @@ func UpdateContest(c echo.Context) error {
 }
 
 func EnterContest(c echo.Context) error {
+	s := getSession(c)
+	if s == nil {
+		return c.JSON(http.StatusUnauthorized, responseUnauthorized)
+	}
+
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return echo.ErrNotFound
@@ -99,7 +110,6 @@ func EnterContest(c echo.Context) error {
 		return echo.ErrNotFound
 	}
 
-	s := getSession(c)
 	res, err := contest.IsParticipant(s.UserID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{"internal server error"})

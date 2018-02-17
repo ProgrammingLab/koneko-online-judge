@@ -1,9 +1,8 @@
 package controllers
 
 import (
-	"strings"
-
 	"net/http"
+	"strings"
 
 	"github.com/gedorinku/koneko-online-judge/server/models"
 	"github.com/labstack/echo"
@@ -17,6 +16,9 @@ func CheckLogin(next echo.HandlerFunc) echo.HandlerFunc {
 
 		const bearer = "Bearer"
 		auth := c.Request().Header.Get("Authorization")
+		if auth == "" {
+			return next(c)
+		}
 		values := strings.Split(auth, " ")
 		if len(values) < 2 || values[0] != bearer {
 			return c.JSON(http.StatusBadRequest, ErrorResponse{"Authorizationヘッダーが不正です"})

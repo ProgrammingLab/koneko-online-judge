@@ -16,6 +16,8 @@ type sessionResponse struct {
 	Token string `json:"token"`
 }
 
+var responseUnauthorized = ErrorResponse{"Unauthorized"}
+
 func Login(c echo.Context) error {
 	r := &sessionRequest{}
 	err := c.Bind(r)
@@ -36,11 +38,18 @@ func Login(c echo.Context) error {
 }
 
 func Logout(c echo.Context) error {
-	s, _ := c.Get("session").(models.UserSession)
+	s := getSession(c)
+	if s == nil {
+		return c.JSON(http.StatusUnauthorized, responseUnauthorized)
+	}
 	s.Delete()
 	return c.NoContent(http.StatusNoContent)
 }
 
-func getSession(c echo.Context) models.UserSession {
-	return c.Get("session").(models.UserSession)
+func getSession(c echo.Context) *models.UserSession {
+	s, ok := c.Get("session").(models.UserSession)
+	if ok {
+		return &s
+	}
+	return nil
 }

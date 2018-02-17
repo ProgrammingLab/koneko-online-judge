@@ -1,8 +1,8 @@
 package models
 
 import (
-	"sort"
 	"reflect"
+	"sort"
 	"testing"
 	"time"
 )
@@ -164,7 +164,7 @@ func TestContest_UpdateWriters(t *testing.T) {
 		t.Fatalf("GetContest(%v) returns nil", contest.ID)
 	}
 	res.FetchWriters()
-	
+
 	sort.Slice(res.Writers, func(i, j int) bool {
 		return res.Writers[i].ID < res.Writers[j].ID
 	})
@@ -174,7 +174,7 @@ func TestContest_UpdateWriters(t *testing.T) {
 			continue
 		}
 
-		t.Fatalf("mismatch writers: %+v %+v", contest.Writers[i],  res.Writers[i])
+		t.Fatalf("mismatch writers: %+v %+v", contest.Writers[i], res.Writers[i])
 	}
 }
 

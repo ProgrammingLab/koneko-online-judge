@@ -1,17 +1,20 @@
 package controllers
 
 import (
-	"strconv"
-
-	"net/http"
-
 	"io/ioutil"
+	"net/http"
+	"strconv"
 
 	"github.com/gedorinku/koneko-online-judge/server/models"
 	"github.com/labstack/echo"
 )
 
 func NewProblem(c echo.Context) error {
+	s := getSession(c)
+	if s == nil {
+		return c.JSON(http.StatusUnauthorized, responseUnauthorized)
+	}
+
 	problem := &models.Problem{}
 	if err := c.Bind(problem); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{err.Error()})
@@ -20,7 +23,6 @@ func NewProblem(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{err.Error()})
 	}
 
-	s := getSession(c)
 	s.FetchUser()
 	problem.ID = 0
 	problem.Contest = nil
@@ -36,6 +38,11 @@ func NewProblem(c echo.Context) error {
 }
 
 func UpdateProblem(c echo.Context) error {
+	s := getSession(c)
+	if s == nil {
+		return c.JSON(http.StatusUnauthorized, responseUnauthorized)
+	}
+
 	request := &models.Problem{}
 	if err := c.Bind(request); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{err.Error()})
@@ -46,9 +53,8 @@ func UpdateProblem(c echo.Context) error {
 	request.WriterID = 0
 	request.Writer = models.User{}
 
-	s := getSession(c)
 	problem := getProblemFromContext(c)
-	if problem == nil || !problem.CanEdit(s.UserID) {
+	if problem == nil || !problem.CanEdit(s) {
 		return echo.ErrNotFound
 	}
 
@@ -80,10 +86,10 @@ func GetProblems(c echo.Context) error {
 
 	problems := models.GetProblems(nil, uint(minID), uint(maxID), count)
 	for i := range problems {
-		if !problems[i].CanView(s.UserID) {
+		if !problems[i].CanView(s) {
 			return echo.ErrNotFound
 		}
-		fetchProblem(&problems[i], s.UserID)
+		fetchProblem(&problems[i], s)
 	}
 
 	return c.JSON(http.StatusOK, problems)
@@ -92,11 +98,11 @@ func GetProblems(c echo.Context) error {
 func GetProblem(c echo.Context) error {
 	s := getSession(c)
 	problem := getProblemFromContext(c)
-	if problem == nil || !problem.CanView(s.UserID) {
+	if problem == nil || !problem.CanView(s) {
 		return echo.ErrNotFound
 	}
 
-	fetchProblem(problem, s.UserID)
+	fetchProblem(problem, s)
 
 	return c.JSON(http.StatusOK, problem)
 }
@@ -104,7 +110,7 @@ func GetProblem(c echo.Context) error {
 func DeleteProblem(c echo.Context) error {
 	s := getSession(c)
 	problem := getProblemFromContext(c)
-	if problem == nil || !problem.CanEdit(s.UserID) {
+	if problem == nil || !problem.CanEdit(s) {
 		return echo.ErrNotFound
 	}
 
@@ -116,7 +122,7 @@ func DeleteProblem(c echo.Context) error {
 func UpdateCases(c echo.Context) error {
 	s := getSession(c)
 	problem := getProblemFromContext(c)
-	if problem == nil || !problem.CanEdit(s.UserID) {
+	if problem == nil || !problem.CanEdit(s) {
 		return echo.ErrNotFound
 	}
 
@@ -138,7 +144,7 @@ func UpdateCases(c echo.Context) error {
 func SetTestCasePoint(c echo.Context) error {
 	s := getSession(c)
 	problem := getProblemFromContext(c)
-	if problem == nil || !problem.CanEdit(s.UserID) {
+	if problem == nil || !problem.CanEdit(s) {
 		return echo.ErrNotFound
 	}
 
@@ -160,7 +166,7 @@ func SetTestCasePoint(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-func fetchProblem(out *models.Problem, userID uint) {
+func fetchProblem(out *models.Problem, s *models.UserSession) {
 	out.FetchWriter()
 	out.FetchSamples()
 	out.FetchCaseSets()
@@ -171,7 +177,7 @@ func fetchProblem(out *models.Problem, userID uint) {
 		out.ContestID = new(uint)
 	}
 
-	if out.WriterID != userID {
+	if !out.CanEdit(s) {
 		out.JudgeSourceCode = ""
 	}
 }
