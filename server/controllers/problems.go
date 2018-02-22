@@ -25,6 +25,12 @@ func NewProblem(c echo.Context) error {
 
 	s.FetchUser()
 	problem.ID = 0
+	contestID, err := getContestIDFromContext(c)
+	if err == nil {
+		problem.ContestID = &contestID
+	} else {
+		problem.ContestID = nil
+	}
 	problem.Contest = nil
 	problem.WriterID = s.ID
 	problem.Writer = s.User

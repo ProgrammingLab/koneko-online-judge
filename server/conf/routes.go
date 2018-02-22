@@ -27,7 +27,9 @@ func Routes(e *echo.Echo) {
 	e.GET("/languages", controllers.GetLanguages)
 
 	e.POST("/contests", controllers.NewContest)
-	e.GET("/contests/:id", controllers.GetContest)
-	e.PUT("/contests/:id", controllers.UpdateContest)
-	e.POST("/contests/:id/enter", controllers.EnterContest)
+	e.GET("/contests/:contestID", controllers.GetContest)
+	e.PUT("/contests/:contestID", controllers.UpdateContest)
+	e.POST("/contests/:contestID/enter", controllers.EnterContest)
+
+	e.POST("/contests/:contestID/problems/new", controllers.NewContestProblem)
 }

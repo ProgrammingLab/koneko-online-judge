@@ -44,7 +44,7 @@ func NewContest(c echo.Context) error {
 }
 
 func GetContest(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
+	id, err := getContestIDFromContext(c)
 	if err != nil {
 		return echo.ErrNotFound
 	}
@@ -58,7 +58,7 @@ func GetContest(c echo.Context) error {
 }
 
 func UpdateContest(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
+	id, err := getContestIDFromContext(c)
 	if err != nil {
 		return echo.ErrNotFound
 	}
@@ -100,12 +100,7 @@ func EnterContest(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, responseUnauthorized)
 	}
 
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.ErrNotFound
-	}
-
-	contest := models.GetContest(uint(id))
+	contest := getContestFromContext(c)
 	if contest == nil {
 		return echo.ErrNotFound
 	}
@@ -144,4 +139,18 @@ func toContest(request *contestRequest) *models.Contest {
 	contest.Writers = models.UniqueUsers(contest.Writers)
 
 	return contest
+}
+
+func getContestFromContext(c echo.Context) *models.Contest {
+	id, err := getContestIDFromContext(c)
+	if err != nil {
+		return nil
+	}
+
+	return models.GetContest(uint(id))
+}
+
+func getContestIDFromContext(c echo.Context) (uint, error) {
+	id, err := strconv.Atoi(c.Param("contestID"))
+	return uint(id), err
 }

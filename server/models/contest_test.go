@@ -43,7 +43,7 @@ func TestNewContest(t *testing.T) {
 			t.Fatal(err)
 		}
 		if res {
-			t.Fatalf("IsWriter returns true")
+			t.Fatalf("IsContestWriter returns true")
 		}
 	}
 
@@ -53,7 +53,7 @@ func TestNewContest(t *testing.T) {
 			t.Fatal(err)
 		}
 		if !res {
-			t.Fatalf("IsWriter returns false")
+			t.Fatalf("IsContestWriter returns false")
 		}
 	}
 }
@@ -114,7 +114,7 @@ func TestContest_AddParticipant(t *testing.T) {
 			t.Fatal(err)
 		}
 		if !res {
-			t.Errorf("IsParticipant(participantID) reutrns false")
+			t.Errorf("IsContestParticipant(participantID) reutrns false")
 		}
 	}
 
@@ -124,7 +124,7 @@ func TestContest_AddParticipant(t *testing.T) {
 			t.Fatal(err)
 		}
 		if res {
-			t.Errorf("IsParticipant(writerID) reutrns true")
+			t.Errorf("IsContestParticipant(writerID) reutrns true")
 		}
 	}
 
@@ -134,7 +134,7 @@ func TestContest_AddParticipant(t *testing.T) {
 			t.Fatal(err)
 		}
 		if res {
-			t.Errorf("IsParticipant(334) reutrns true")
+			t.Errorf("IsContestParticipant(334) reutrns true")
 		}
 	}
 }
