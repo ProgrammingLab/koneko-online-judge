@@ -19,6 +19,7 @@ type Contest struct {
 	EndAt        time.Time  `json:"endAt"`
 	Writers      []User     `gorm:"many2many:contests_writers;" json:"writers"`
 	Participants []User     `gorm:"many2many:contests_participants;" json:"participants"`
+	Problems     []Problem  `json:"problems"`
 }
 
 func NewContest(out *Contest) error {
@@ -179,11 +180,38 @@ func (c *Contest) FetchParticipants() {
 	}
 }
 
+func (c *Contest) FetchProblems() {
+	if c.ID == 0 || 0 < len(c.Problems) {
+		return
+	}
+
+	c.Problems = make([]Problem, 0)
+	db.Model(c).Related(&c.Problems, "Problems")
+}
+
+func (c *Contest) Started() bool {
+	return c.StartAt.After(time.Now())
+}
+
 func (c *Contest) CanEdit(s *UserSession) bool {
 	if s == nil {
 		return false
 	}
 	return CanEditContest(c.ID, s.UserID)
+}
+
+func (c *Contest) CanViewProblems(s *UserSession) bool {
+	if s == nil {
+		return false
+	}
+
+	isWriter, _ := c.IsWriter(s.UserID)
+	if isWriter {
+		return true
+	}
+
+	isParticipant, _ := c.IsParticipant(s.UserID)
+	return c.Started() && isParticipant
 }
 
 func (c *Contest) IsWriter(userID uint) (bool, error) {
