@@ -6,6 +6,7 @@ import (
 	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var db *gorm.DB
@@ -106,19 +107,32 @@ func seedLanguages() {
 }
 
 func insertAdmin() {
+	const email = "admin@judge.kurume-nct.com"
+	password := GenerateRandomBase64String(12)
+
+	digest, err := bcrypt.GenerateFromPassword([]byte(password), GetBcryptCost())
+	if err != nil {
+		panic(err)
+	}
+
 	admin := &User{
 		Name:           "admin",
 		DisplayName:    "admin",
-		Email:          "admin@judge.kurume-nct.com",
+		Email:          email,
 		Authority:      Admin,
-		PasswordDigest: GenerateRandomBase64String(64),
+		PasswordDigest: string(digest),
 	}
-	insertUserIfNonExisting(admin)
+	inserted := insertUserIfNonExisting(admin)
+	if inserted {
+		logger.AppLog.Infof("admin user -> email: %v password: %v", email, password)
+	}
 }
 
-func insertUserIfNonExisting(user *User) {
+func insertUserIfNonExisting(user *User) bool {
 	existing := &User{}
 	if db.Where("name = ?", user.Name).First(existing).RecordNotFound() {
 		db.Save(user)
+		return true
 	}
+	return false
 }
