@@ -129,21 +129,18 @@ func (p *Problem) CanView(s *UserSession) bool {
 	if s == nil {
 		return false
 	}
-	//TODO コンテストの問題だったらその辺を考える
-	return false
+
+	p.FetchContest()
+	return p.Contest.CanViewProblems(s)
 }
 
 func (p *Problem) CanEdit(s *UserSession) bool {
 	if s == nil {
 		return false
 	}
-	if p.ContestID != nil && p.Contest == nil {
-		//TODO idだけで判定できそう
-		p.FetchContest()
-		p.Contest.FetchWriters()
-		if res, _ := p.Contest.IsWriter(s.UserID); res {
-			return true
-		}
+	if p.ContestID != nil {
+		isWriter, _ := IsContestWriter(*p.ContestID, s.UserID)
+		return isWriter
 	}
 
 	return p.WriterID == s.UserID

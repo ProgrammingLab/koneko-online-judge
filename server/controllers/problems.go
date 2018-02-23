@@ -91,14 +91,16 @@ func GetProblems(c echo.Context) error {
 	s := getSession(c)
 
 	problems := models.GetProblems(nil, uint(minID), uint(maxID), count)
+	results := make([]models.Problem, 0, len(problems))
 	for i := range problems {
 		if !problems[i].CanView(s) {
-			return echo.ErrNotFound
+			continue
 		}
 		fetchProblem(&problems[i], s)
+		results = append(results, problems[i])
 	}
 
-	return c.JSON(http.StatusOK, problems)
+	return c.JSON(http.StatusOK, results)
 }
 
 func GetProblem(c echo.Context) error {
