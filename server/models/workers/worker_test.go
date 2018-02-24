@@ -53,6 +53,8 @@ func TestWorkerOutput(t *testing.T) {
 			if strings.TrimSpace(res.Stderr) != stderr {
 				t.Errorf("invalid stderr on case #%v: test case -> %v, actual -> %v", i, stderr, res.Stderr)
 			}
+
+			t.Logf("exec result on case #%v: %+v", i, res)
 		}()
 	}
 }
@@ -86,15 +88,15 @@ func TestWorkerTimeLimit(t *testing.T) {
 				t.Errorf("invalid exec time on case #%v: test case -> %v, actual -> %v", i, millis, res.ExecTime)
 			}
 
-			t.Logf("exec result: %+v", res)
+			t.Logf("exec result on case #%v: %+v", i, res)
 		}()
 	}
 }
 
 func TestWorkerMemoryLimit(t *testing.T) {
 	const memoryLimit = 1 * 1024 * 1024
-	cmd := []string{"/bin/sh", "-c", "/dev/null < $(yes yeaaaaaaaah)"}
-	w, err := NewWorker(image, int64(10*time.Second), memoryLimit, cmd)
+	cmd := []string{"/bin/sh", "-c", "/dev/null < $(yes)"}
+	w, err := NewWorker(image, int64(1*1000), memoryLimit, cmd)
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
@@ -113,4 +115,6 @@ func TestWorkerMemoryLimit(t *testing.T) {
 	if float64(25*1024*1024) < math.Abs(diff) {
 		t.Errorf("invalid memory usage: test case -> %v, actual -> %v", memoryLimit, res.MemoryUsage)
 	}
+
+	t.Logf("exec result: %+v", res)
 }

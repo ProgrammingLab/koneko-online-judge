@@ -179,7 +179,8 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	}
 	stdoutBuf = stdoutBuf[0:n]
 	stderrString, err := w.getFromContainer(Workspace+"error.txt", errorOutputLimit)
-	if err != nil && err != io.EOF {
+	// プロセスがOOM Killerによって殺されたとき、error.txtが出力されないので、そのようなエラーは無視する
+	if err != nil && err != io.EOF && !strings.Contains(err.Error(), "Could not find the file") {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
@@ -195,6 +196,7 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		logger.AppLog.Errorf("error: %v %+v", string(timeText), err)
 		return nil, err
 	}
+	memoryUsage *= 1024
 
 	var status ExecStatus
 	switch checkRuntimeError(stderr) {
