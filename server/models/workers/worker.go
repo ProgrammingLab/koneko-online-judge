@@ -64,7 +64,7 @@ func NewWorker(img string, timeLimit int64, memoryLimit int64, cmd []string) (*W
 	// 下のやつ、echo $?したら必ず0になってよくわからず
 	runCmd := []string{
 		"/usr/bin/time", "-f", "%e %M", "-o", "time.txt",
-		"timeout", strconv.FormatFloat(float64(timeLimit/1000)+0.01, 'f', 4, 64),
+		"timeout", strconv.FormatFloat(float64(timeLimit)/1000.0+0.01, 'f', 4, 64),
 		"/usr/bin/sudo", "-u", "nobody", "--",
 		"/bin/sh", "-c", strings.Join(cmd, " ") + " 2>error.txt || echo " + errorString + " 1>&2",
 	}
@@ -185,7 +185,7 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	}
 
 	timeText, err := w.getFromContainer(Workspace+"time.txt", 128)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
@@ -289,6 +289,7 @@ func (w Worker) getFromContainer(path string, limit int64) ([]byte, error) {
 	ctx := context.Background()
 	f, _, err := w.cli.CopyFromContainer(ctx, w.ID, path)
 	if err != nil {
+		logger.AppLog.Errorf("%+v", err)
 		return nil, err
 	}
 
@@ -296,7 +297,8 @@ func (w Worker) getFromContainer(path string, limit int64) ([]byte, error) {
 	r.Next()
 	buf := make([]byte, limit)
 	n, err := r.Read(buf)
-	if err != nil {
+	if err != nil && err != io.EOF {
+		logger.AppLog.Errorf("%+v", err)
 		return nil, err
 	}
 
