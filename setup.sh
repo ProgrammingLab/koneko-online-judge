@@ -5,3 +5,5 @@ cd server
 dep ensure
 cd ../nekonote
 dep ensure
+
+docker build -t koneko-online-judge-image-cpp ./server/container/cpp/
