@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -22,7 +23,7 @@ import (
 type Worker struct {
 	ID          string
 	cli         *client.Client
-	TimeLimit   int64
+	TimeLimit   time.Duration
 	MemoryLimit int64
 }
 
@@ -47,14 +48,14 @@ var (
 
 type ExecResult struct {
 	Status      ExecStatus
-	ExecTime    int64
+	ExecTime    time.Duration
 	MemoryUsage int64
 	Stdout      string
 	Stderr      string
 }
 
 // memoryLimitはバイト、timeLimitはミリ秒単位
-func NewWorker(img string, timeLimit int64, memoryLimit int64, cmd []string) (*Worker, error) {
+func NewWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []string) (*Worker, error) {
 	ctx := context.Background()
 	cli, err := client.NewEnvClient()
 	if err != nil {
@@ -64,7 +65,7 @@ func NewWorker(img string, timeLimit int64, memoryLimit int64, cmd []string) (*W
 	// 下のやつ、echo $?したら必ず0になってよくわからず
 	runCmd := []string{
 		"/usr/bin/time", "-f", "%e %M", "-o", "time.txt",
-		"timeout", strconv.FormatFloat(float64(timeLimit)/1000.0+0.01, 'f', 4, 64),
+		"timeout", strconv.FormatFloat(timeLimit.Seconds()+0.01, 'f', 4, 64),
 		"/usr/bin/sudo", "-u", "nobody", "--",
 		"/bin/sh", "-c", strings.Join(cmd, " ") + " 2>error.txt || echo " + errorString + " 1>&2",
 	}
@@ -204,7 +205,7 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		status = StatusRuntimeError
 	case nil:
 		switch {
-		case w.TimeLimit <= timeMillis:
+		case int64(w.TimeLimit.Seconds()*1000.0+0.0001) <= timeMillis:
 			status = StatusTimeLimitExceeded
 			logger.AppLog.Debugf("time limit(%v) exceeded:%v", w.TimeLimit, timeMillis)
 		case w.MemoryLimit <= memoryUsage:
@@ -219,7 +220,7 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 
 	return &ExecResult{
 		Status:      status,
-		ExecTime:    timeMillis,
+		ExecTime:    time.Duration(timeMillis) * time.Millisecond,
 		MemoryUsage: memoryUsage,
 		Stdout:      string(stdoutBuf),
 		Stderr:      string(stderrString),

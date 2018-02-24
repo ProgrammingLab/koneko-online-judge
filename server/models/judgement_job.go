@@ -129,7 +129,7 @@ func judgeTestCase(result *JudgeResult, submission *Submission, compileWorker *w
 
 	res := execSubmission(submission, testCase, compileWorker)
 	result.Status = toJudgementStatus(res, testCase)
-	result.ExecTime = time.Millisecond * time.Duration(res.ExecTime)
+	result.ExecTime = res.ExecTime
 	result.MemoryUsage = res.MemoryUsage / 1024
 
 	query := map[string]interface{}{
@@ -144,7 +144,7 @@ func judgeTestCase(result *JudgeResult, submission *Submission, compileWorker *w
 func compile(submission *Submission) (*workers.Worker, *workers.ExecResult) {
 	language := &submission.Language
 	cmd := strings.Split(language.CompileCommand, " ")
-	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, int64(5*1000), int64(256*1024*1024), cmd)
+	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, 5*time.Second, int64(256*1024*1024), cmd)
 	if err != nil {
 		logger.AppLog.Errorf("compile: container create error %+v", err)
 		return nil, nil
@@ -168,7 +168,7 @@ func execSubmission(submission *Submission, testCase *TestCase, compiled *worker
 	problem := &submission.Problem
 	language := &submission.Language
 	cmd := strings.Split(language.ExecCommand, " ")
-	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, int64(problem.TimeLimit.Seconds()*1000), int64(problem.MemoryLimit*1024*1024), cmd)
+	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, problem.TimeLimit, int64(problem.MemoryLimit*1024*1024), cmd)
 	if err != nil {
 		logger.AppLog.Errorf("exec: container create error %+v", err)
 		return nil

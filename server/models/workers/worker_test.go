@@ -27,7 +27,7 @@ func TestWorkerOutput(t *testing.T) {
 	for i := range exitCodes {
 		func() {
 			script := fmt.Sprintf(scriptTmp, exitCodes[i])
-			w, err := NewWorker(image, 1000, 128*1024*1024, []string{"./" + filename})
+			w, err := NewWorker(image, time.Second, 128*1024*1024, []string{"./" + filename})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -61,14 +61,13 @@ func TestWorkerOutput(t *testing.T) {
 
 func TestWorkerTimeLimit(t *testing.T) {
 	cmd := []string{"/bin/sleep", "1s"}
-	timeLimits := []time.Duration{time.Second / 2, 5 * time.Second}
+	timeLimits := []time.Duration{500 * time.Millisecond, 5 * time.Second}
 	execStatuses := []ExecStatus{StatusTimeLimitExceeded, StatusFinished}
-	execTimes := []int64{500, 1000}
+	execTimes := []time.Duration{500 * time.Millisecond, 1000 * time.Millisecond}
 
 	for i := range timeLimits {
 		func() {
-			millis := timeLimits[i].Seconds() * 1000
-			w, err := NewWorker(image, int64(millis), 128*1024*1024, cmd)
+			w, err := NewWorker(image, timeLimits[i], 128*1024*1024, cmd)
 			if err != nil {
 				t.Fatalf("on case %v: %+v", i, err)
 			}
@@ -83,9 +82,9 @@ func TestWorkerTimeLimit(t *testing.T) {
 				t.Errorf("invalid ExecStatus on case #%v: test case -> %v, actual -> %v", i, execStatuses[i], res.Status)
 			}
 
-			diff := float64(res.ExecTime - execTimes[i])
-			if 1000 < math.Abs(diff) {
-				t.Errorf("invalid exec time on case #%v: test case -> %v, actual -> %v", i, millis, res.ExecTime)
+			diff := res.ExecTime.Seconds() - execTimes[i].Seconds()
+			if 1.0 < math.Abs(diff) {
+				t.Errorf("invalid exec time on case #%v: test case -> %v, actual -> %v", i, execTimes, res.ExecTime)
 			}
 
 			t.Logf("exec result on case #%v: %+v", i, res)
@@ -96,7 +95,7 @@ func TestWorkerTimeLimit(t *testing.T) {
 func TestWorkerMemoryLimit(t *testing.T) {
 	const memoryLimit = 1 * 1024 * 1024
 	cmd := []string{"/bin/sh", "-c", "/dev/null < $(yes)"}
-	w, err := NewWorker(image, int64(1*1000), memoryLimit, cmd)
+	w, err := NewWorker(image, time.Second, memoryLimit, cmd)
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
