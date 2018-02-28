@@ -2,6 +2,7 @@ package workers
 
 import (
 	"fmt"
+	"io/ioutil"
 	"math"
 	"strings"
 	"testing"
@@ -37,21 +38,25 @@ func TestWorkerOutput(t *testing.T) {
 				t.Fatalf("on case %v: %+v", i, err)
 			}
 
-			res, err := w.Run("")
+			res, err := w.Output()
 			if err != nil {
 				t.Fatalf("on case %v: %+v", i, err)
 			}
 
-			if res.Status != execStatuses[i] {
-				t.Errorf("invalid ExecStatus on case #%v: test case -> %v, actual -> %v", i, execStatuses[i], res.Status)
+			if w.Status != execStatuses[i] {
+				t.Errorf("invalid ExecStatus on case #%v: test case -> %v, actual -> %v", i, execStatuses[i], res)
 			}
 
-			if strings.TrimSpace(res.Stdout) != output {
-				t.Errorf("invalid stdout on case #%v: test case -> %v, actual -> %v", i, output, res.Stdout)
+			if strings.TrimSpace(res) != output {
+				t.Errorf("invalid stdout on case #%v: test case -> %v, actual -> %v", i, output, res)
 			}
 
-			if strings.TrimSpace(res.Stderr) != stderr {
-				t.Errorf("invalid stderr on case #%v: test case -> %v, actual -> %v", i, stderr, res.Stderr)
+			resErr, err := ioutil.ReadAll(w.Stderr)
+			if err != nil {
+				t.Errorf("could not read stderr on case #%v: #%+v", i, err)
+			}
+			if strings.TrimSpace(string(resErr)) != stderr {
+				t.Errorf("invalid stderr on case #%v: test case -> %v, actual -> %v", i, stderr, string(resErr))
 			}
 
 			t.Logf("exec result on case #%v: %+v", i, res)
@@ -73,18 +78,18 @@ func TestWorkerTimeLimit(t *testing.T) {
 			}
 			defer w.Remove()
 
-			res, err := w.Run("")
+			res, err := w.Output()
 			if err != nil {
 				t.Fatalf("on case %v: %+v", i, err)
 			}
 
-			if res.Status != execStatuses[i] {
-				t.Errorf("invalid ExecStatus on case #%v: test case -> %v, actual -> %v", i, execStatuses[i], res.Status)
+			if w.Status != execStatuses[i] {
+				t.Errorf("invalid ExecStatus on case #%v: test case -> %v, actual -> %v", i, execStatuses[i], w.Status)
 			}
 
-			diff := res.ExecTime.Seconds() - execTimes[i].Seconds()
+			diff := w.ExecTime.Seconds() - execTimes[i].Seconds()
 			if 1.0 < math.Abs(diff) {
-				t.Errorf("invalid exec time on case #%v: test case -> %v, actual -> %v", i, execTimes, res.ExecTime)
+				t.Errorf("invalid exec time on case #%v: test case -> %v, actual -> %v", i, execTimes, w.ExecTime)
 			}
 
 			t.Logf("exec result on case #%v: %+v", i, res)
@@ -101,18 +106,18 @@ func TestWorkerMemoryLimit(t *testing.T) {
 	}
 	defer w.Remove()
 
-	res, err := w.Run("")
+	res, err := w.Output()
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
 
-	if res.Status != StatusMemoryLimitExceeded {
-		t.Errorf("invalid ExecStatus: test case -> %v, actual -> %v", StatusMemoryLimitExceeded, res.Status)
+	if w.Status != StatusMemoryLimitExceeded {
+		t.Errorf("invalid ExecStatus: test case -> %v, actual -> %v", StatusMemoryLimitExceeded, w.Status)
 	}
 
-	diff := float64(res.MemoryUsage - memoryLimit)
+	diff := float64(w.MemoryUsage - memoryLimit)
 	if float64(25*1024*1024) < math.Abs(diff) {
-		t.Errorf("invalid memory usage: test case -> %v, actual -> %v", memoryLimit, res.MemoryUsage)
+		t.Errorf("invalid memory usage: test case -> %v, actual -> %v", memoryLimit, w.MemoryUsage)
 	}
 
 	t.Logf("exec result: %+v", res)

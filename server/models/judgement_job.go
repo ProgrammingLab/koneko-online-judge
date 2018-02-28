@@ -36,18 +36,16 @@ func (j judgementJob) Run() {
 		finalStatus = Accepted
 	)
 
-	compileWorker, compileRes := compile(submission)
-	if compileWorker == nil || compileRes == nil {
+	compileWorker, err := compile(submission)
+	if err != nil {
 		finalStatus = UnknownError
 		markAs(submission.JudgeSetResults, finalStatus)
 	} else {
 		defer compileWorker.Remove()
-		logger.AppLog.Debugf("%v %v", compileRes.Status, compileRes.Stderr)
 
-		if compileRes.Status != workers.StatusFinished {
+		if compileWorker.Status != workers.StatusFinished {
 			finalStatus = CompileError
 			markAs(submission.JudgeSetResults, finalStatus)
-			logger.AppLog.Debugf("compile error: worker status %v", compileRes.Status, compileRes.Stderr)
 		} else {
 			for _, r := range submission.JudgeSetResults {
 				status, t, m := judgeCaseSet(&r, submission, compileWorker)
@@ -127,10 +125,13 @@ func judgeTestCase(result *JudgeResult, submission *Submission, compileWorker *w
 	result.FetchTestCase()
 	testCase := &result.TestCase
 
-	res := execSubmission(submission, testCase, compileWorker)
-	result.Status = toJudgementStatus(res, testCase)
-	result.ExecTime = res.ExecTime
-	result.MemoryUsage = res.MemoryUsage / 1024
+	w, err := execSubmission(submission, testCase, compileWorker)
+	if err != nil {
+		logger.AppLog.Errorf("error %+v", err)
+	}
+	result.Status = toJudgementStatus(w, testCase)
+	result.ExecTime = w.ExecTime
+	result.MemoryUsage = w.MemoryUsage / 1024
 
 	query := map[string]interface{}{
 		"status":       result.Status,
@@ -141,54 +142,59 @@ func judgeTestCase(result *JudgeResult, submission *Submission, compileWorker *w
 	return result.Status, result.ExecTime, result.MemoryUsage
 }
 
-func compile(submission *Submission) (*workers.Worker, *workers.ExecResult) {
+func compile(submission *Submission) (*workers.Worker, error) {
 	language := &submission.Language
 	cmd := strings.Split(language.CompileCommand, " ")
 	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, 5*time.Second, int64(256*1024*1024), cmd)
 	if err != nil {
 		logger.AppLog.Errorf("compile: container create error %+v", err)
-		return nil, nil
+		return nil, err
 	}
 
 	err = w.CopyContentToContainer([]byte(submission.SourceCode), language.FileName)
 	if err != nil {
 		logger.AppLog.Errorf("compile: docker cp %+v", err)
-		return nil, nil
+		return nil, err
 	}
 
-	res, err := w.Run("")
+	_, err = w.Output()
 	if err != nil {
 		logger.AppLog.Errorf("compile: container attach error %+v", err)
 	}
 
-	return w, res
+	return w, nil
 }
 
-func execSubmission(submission *Submission, testCase *TestCase, compiled *workers.Worker) *workers.ExecResult {
+func execSubmission(submission *Submission, testCase *TestCase, compiled *workers.Worker) (*workers.Worker, error) {
 	problem := &submission.Problem
 	language := &submission.Language
 	cmd := strings.Split(language.ExecCommand, " ")
 	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, problem.TimeLimit, int64(problem.MemoryLimit*1024*1024), cmd)
 	if err != nil {
 		logger.AppLog.Errorf("exec: container create error %+v", err)
-		return nil
+		return nil, err
 	}
 	defer w.Remove()
 
 	err = compiled.CopyTo(language.ExeFileName, w)
 	if err != nil {
 		logger.AppLog.Errorf("exec: docker cp error %+v", err)
-		return nil
+		return nil, err
 	}
 
-	res, err := w.Run(testCase.Input[:])
-	if err != nil {
+	w.Stdin.Write([]byte(testCase.Input))
+	if err := w.Start(); err != nil {
 		logger.AppLog.Errorf("exec: container attach error %+v", err)
+		return nil, err
 	}
-	return res
+	if err := w.Wait(); err != nil {
+		logger.AppLog.Errorf("exec: %+v", err)
+		return nil, err
+	}
+	return w, nil
 }
 
-func toJudgementStatus(res *workers.ExecResult, testCase *TestCase) JudgementStatus {
+func toJudgementStatus(res *workers.Worker, testCase *TestCase) JudgementStatus {
 	if res == nil {
 		return UnknownError
 	}
@@ -201,10 +207,13 @@ func toJudgementStatus(res *workers.ExecResult, testCase *TestCase) JudgementSta
 	case workers.StatusRuntimeError:
 		return RuntimeError
 	case workers.StatusFinished:
-		if res.Stdout == testCase.Output {
+		buf := make([]byte, 0, workers.OutputLimit)
+		n, _ := res.Stdout.Read(buf)
+		out := string(buf[:n])
+		if out == testCase.Output {
 			return Accepted
 		}
-		if strings.TrimSpace(res.Stdout) == strings.TrimSpace(testCase.Output) {
+		if strings.TrimSpace(out) == strings.TrimSpace(testCase.Output) {
 			return PresentationError
 		}
 		return WrongAnswer
