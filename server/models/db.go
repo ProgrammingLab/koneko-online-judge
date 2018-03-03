@@ -71,6 +71,14 @@ func createTables() {
 	db.Table("contests_writers").AddForeignKey("contest_id", "contests(id)", "RESTRICT", "RESTRICT")
 	db.Table("contests_participants").AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
 	db.Table("contests_participants").AddForeignKey("contest_id", "contests(id)", "RESTRICT", "RESTRICT")
+
+	db.AutoMigrate(&Score{})
+	db.Model(&Score{}).AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
+	db.Model(&Score{}).AddForeignKey("contest_id", "contests(id)", "RESTRICT", "RESTRICT")
+
+	db.AutoMigrate(&ScoreDetail{})
+	db.Model(&ScoreDetail{}).AddForeignKey("score_id", "scores(id)", "RESTRICT", "RESTRICT")
+	db.Model(&ScoreDetail{}).AddForeignKey("problem_id", "problems(id)", "RESTRICT", "RESTRICT")
 }
 
 func seedLanguages() {
