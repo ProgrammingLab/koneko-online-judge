@@ -77,7 +77,12 @@ func (j judgementJob) Run() {
 	if submission.Problem.ContestID != nil {
 		p := &submission.Problem
 		p.FetchContest()
-		if p.Contest.IsOpen(submission.CreatedAt) {
+		writer, err := p.Contest.IsWriter(submission.UserID)
+		if err != nil {
+			logger.AppLog.Errorf("error %+v", err)
+			return
+		}
+		if p.Contest.IsOpen(submission.CreatedAt) && !writer {
 			updateScore(submission, *submission.Problem.ContestID)
 		}
 	}
