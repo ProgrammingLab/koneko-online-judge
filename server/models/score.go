@@ -7,13 +7,13 @@ import (
 )
 
 type Score struct {
-	ID           uint      `gorm:"primary_key" json:"id"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
-	Point        int       `json:"point"`
-	UserID       uint      `gorm:"not null"`
-	ContestID    uint      `gorm:"not null"`
-	ScoreDetails []ScoreDetail
+	ID           uint          `gorm:"primary_key" json:"id"`
+	CreatedAt    time.Time     `json:"createdAt"`
+	UpdatedAt    time.Time     `json:"updatedAt"`
+	Point        int           `json:"point"`
+	UserID       uint          `gorm:"not null"`
+	ContestID    uint          `gorm:"not null" json:"-"`
+	ScoreDetails []ScoreDetail `json:"details"`
 }
 
 func newScore(userID, contestID uint, tx *gorm.DB) *Score {

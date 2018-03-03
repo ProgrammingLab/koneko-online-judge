@@ -124,6 +124,20 @@ func EnterContest(c echo.Context) error {
 	return c.JSON(http.StatusOK, contest)
 }
 
+func GetStandings(c echo.Context) error {
+	s := getSession(c)
+	if s == nil {
+		return c.JSON(http.StatusUnauthorized, responseUnauthorized)
+	}
+
+	contest := getContestFromContext(c)
+	if contest == nil || !contest.CanViewProblems(s) {
+		return echo.ErrNotFound
+	}
+
+	return c.JSON(http.StatusOK, contest.GetStandings())
+}
+
 func toContest(request *contestRequest) *models.Contest {
 	contest := &models.Contest{
 		Title:       request.Title,

@@ -3,6 +3,8 @@ package models
 import (
 	"time"
 
+	"sort"
+
 	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
@@ -156,6 +158,28 @@ func (c *Contest) UpdateWriters() error {
 	return tx.Commit().Error
 }
 
+func (c *Contest) GetStandings() []Score {
+	s := make([]Score, 0, 0)
+	db.Model(c).Related(&s)
+	sort.Slice(s, func(i, j int) bool {
+		if s[i].Point == s[j].Point {
+			return s[i].UpdatedAt.After(s[j].UpdatedAt)
+		}
+
+		return s[i].Point < s[j].Point
+	})
+	for i := range s {
+		score := &s[i]
+		score.FetchDetails()
+		sort.Slice(score.ScoreDetails, func(i, j int) bool {
+			// TODO コンテスト中の問題の順番とか
+			return score.ScoreDetails[i].ProblemID < score.ScoreDetails[j].ProblemID
+		})
+	}
+
+	return s
+}
+
 func (c *Contest) FetchWriters() {
 	if c.ID == 0 || 0 < len(c.Writers) {
 		return
@@ -190,12 +214,12 @@ func (c *Contest) FetchProblems() {
 }
 
 func (c *Contest) Started() bool {
-	return c.StartAt.After(time.Now())
+	return c.StartAt.Before(time.Now())
 }
 
 // コンテストが時刻tのとき開催中であればtrueを返します。
 func (c *Contest) IsOpen(t time.Time) bool {
-	return c.StartAt.After(t) && c.EndAt.Before(t)
+	return c.StartAt.Before(t) && c.EndAt.After(t)
 }
 
 func (c *Contest) CanEdit(s *UserSession) bool {
