@@ -34,14 +34,19 @@ func updateScore(submission *Submission, contestID uint) {
 	d := &ScoreDetail{}
 	found := !db.Where("score_id = ?", s.ID).First(d).RecordNotFound()
 
-	d.Point = submission.Point
+	if found && submission.Point <= d.Point && d.Accepted {
+		return
+	}
 	if submission.IsWrong() {
 		d.WrongCount += 1
 	}
+	ac := submission.Status == Accepted
 	if found {
-		db.Model(d).Updates(map[string]interface{}{"point": d.Point, "wrong_count": d.WrongCount})
+		newPoint := MaxInt(d.Point, submission.Point)
+		db.Model(d).Updates(map[string]interface{}{"point": newPoint, "wrong_count": d.WrongCount, "accepted": ac})
+		db.Model(s).Update("point", s.Point-d.Point+submission.Point)
 	} else {
-		newScoreDetail(s, submission.ProblemID, d.Point, d.WrongCount, db)
+		newScoreDetail(s, submission.ProblemID, submission.Point, d.WrongCount, db)
 	}
 }
 

@@ -44,6 +44,13 @@ func MaxLong(a, b int64) int64 {
 	return a
 }
 
+func MaxInt(a, b int) int {
+	if a < b {
+		return b
+	}
+	return a
+}
+
 func MaxDuration(a, b time.Duration) time.Duration {
 	if a < b {
 		return b
