@@ -73,6 +73,14 @@ func (j judgementJob) Run() {
 		"memory_usage": memoryUsage,
 	}
 	db.Model(&Submission{ID: submission.ID}).Updates(query)
+
+	if submission.Problem.ContestID != nil {
+		p := &submission.Problem
+		p.FetchContest()
+		if p.Contest.IsOpen(submission.CreatedAt) {
+			updateScore(submission, *submission.Problem.ContestID)
+		}
+	}
 }
 
 func markAs(setResults []JudgeSetResult, status JudgementStatus) {

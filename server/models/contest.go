@@ -193,6 +193,11 @@ func (c *Contest) Started() bool {
 	return c.StartAt.After(time.Now())
 }
 
+// コンテストが時刻tのとき開催中であればtrueを返します。
+func (c *Contest) IsOpen(t time.Time) bool {
+	return c.StartAt.After(t) && c.EndAt.Before(t)
+}
+
 func (c *Contest) CanEdit(s *UserSession) bool {
 	if s == nil {
 		return false
@@ -228,7 +233,12 @@ func (c *Contest) AddParticipant(userID uint) error {
 
 func (c *Contest) addParticipantTransaction(tx *gorm.DB, userID uint) error {
 	const query = "INSERT INTO contests_participants (contest_id, user_id) VALUES (?, ?)"
-	return tx.Exec(query, c.ID, userID).Error
+	if err := tx.Exec(query, c.ID, userID).Error; err != nil {
+		return err
+	}
+
+	newScore(userID, c.ID, tx)
+	return tx.Error
 }
 
 func (c *Contest) addWriterWithinTransaction(tx *gorm.DB, userID uint) error {

@@ -66,6 +66,11 @@ func GetSubmission(submissionID uint) *Submission {
 	return submission
 }
 
+func (s *Submission) IsWrong() bool {
+	stat := s.Status
+	return stat == WrongAnswer || stat == TimeLimitExceeded || stat == MemoryLimitExceeded || stat == RuntimeError
+}
+
 func (s *Submission) FetchUser() {
 	db.Model(s).Related(&s.User)
 }

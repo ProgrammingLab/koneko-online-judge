@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/jinzhu/gorm"
+)
 
 type ScoreDetail struct {
 	ID         uint      `gorm:"primary_key" json:"id"`
@@ -12,16 +16,16 @@ type ScoreDetail struct {
 	ProblemID  uint      `gorm:"not null" json:"problemID"`
 }
 
-func NewScoreDetail(score *Score, problemID uint, point int) *ScoreDetail {
+func newScoreDetail(score *Score, problemID uint, point, wrongCount int, tx *gorm.DB) *ScoreDetail {
 	d := &ScoreDetail{
 		Point:      point,
-		WrongCount: 0,
+		WrongCount: wrongCount,
 		ScoreID:    score.ID,
 		ProblemID:  problemID,
 	}
-	db.Create(d)
+	tx.Create(d)
 
-	db.Model(score).Update("point", score.Point+point)
+	tx.Model(score).Update("point", score.Point+point)
 
 	return d
 }
