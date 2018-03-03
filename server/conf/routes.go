@@ -30,7 +30,7 @@ func Routes(e *echo.Echo) {
 	e.GET("/contests/:contestID", controllers.GetContest)
 	e.PUT("/contests/:contestID", controllers.UpdateContest)
 	e.POST("/contests/:contestID/enter", controllers.EnterContest)
-	e.GET("/contests/:contestID", controllers.GetStandings)
+	e.GET("/contests/:contestID/standings", controllers.GetStandings)
 
 	e.POST("/contests/:contestID/problems/new", controllers.NewContestProblem)
 	e.GET("/contests/:contestID/problems", controllers.GetContestProblems)

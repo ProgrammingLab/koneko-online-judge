@@ -11,7 +11,7 @@ type Score struct {
 	CreatedAt    time.Time     `json:"createdAt"`
 	UpdatedAt    time.Time     `json:"updatedAt"`
 	Point        int           `json:"point"`
-	UserID       uint          `gorm:"not null"`
+	UserID       uint          `gorm:"not null" json:"userID"`
 	ContestID    uint          `gorm:"not null" json:"-"`
 	ScoreDetails []ScoreDetail `json:"details"`
 }
@@ -32,7 +32,7 @@ func updateScore(submission *Submission, contestID uint) {
 	db.Where("user_id = ? AND contest_id = ?", submission.UserID, contestID).First(s)
 
 	d := &ScoreDetail{}
-	found := !db.Where("score_id = ?").First(d).RecordNotFound()
+	found := !db.Where("score_id = ?", s.ID).First(d).RecordNotFound()
 
 	d.Point = submission.Point
 	if submission.IsWrong() {

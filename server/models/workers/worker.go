@@ -231,7 +231,7 @@ func (w Worker) CopyTo(basename string, dist *Worker) error {
 	const limit = 10 * 1024 * 1024
 	name := Workspace + basename
 	content, err := w.getFromContainer(name, limit)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		logger.AppLog.Errorf("%+v", err)
 		return err
 	}
