@@ -41,10 +41,6 @@ func NewSession(email, password string) (*UserSession, string, error) {
 		return nil, "", err
 	}
 
-	oldSession := getSessionFromUser(user.ID)
-	if oldSession != nil {
-		db.Delete(oldSession)
-	}
 	session := &UserSession{
 		User:        *user,
 		TokenDigest: string(digest),
@@ -74,6 +70,7 @@ func CheckLogin(token string) *UserSession {
 	}
 	duration := time.Now().Sub(session.CreatedAt)
 	if lifetimeTicks < duration {
+		db.Delete(session)
 		return nil
 	}
 
@@ -93,15 +90,6 @@ func GetSession(id uint) *UserSession {
 		return nil
 	}
 	return s
-}
-
-func getSessionFromUser(userID uint) *UserSession {
-	session := &UserSession{UserID: userID}
-	notFound := db.Where(session).First(session).RecordNotFound()
-	if notFound {
-		return nil
-	}
-	return session
 }
 
 func (s *UserSession) Delete() {
