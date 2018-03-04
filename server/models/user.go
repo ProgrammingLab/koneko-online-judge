@@ -10,7 +10,7 @@ import (
 type Authority uint
 
 type User struct {
-	ID             uint       `gorm:"primary_key" json:"-"`
+	ID             uint       `gorm:"primary_key" json:"id"`
 	CreatedAt      time.Time  `json:"-"`
 	UpdatedAt      time.Time  `json:"-"`
 	DeletedAt      *time.Time `sql:"index" json:"-"`
