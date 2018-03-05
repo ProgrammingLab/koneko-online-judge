@@ -64,7 +64,26 @@ func FindUserByName(name string, email bool) *User {
 	return u
 }
 
+func FindUserByEmail(email string) *User {
+	u := &User{}
+	nf := db.Where("email = ?", email).First(u).RecordNotFound()
+	if nf {
+		return nil
+	}
+	return u
+}
+
 func (u *User) IsCorrectPassword(password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(u.PasswordDigest), []byte(password))
 	return err == nil
+}
+
+func (u *User) SetPassword(password string) error {
+	d, err := bcrypt.GenerateFromPassword([]byte(password), GetBcryptCost())
+	if err != nil {
+		return err
+	}
+
+	u.PasswordDigest = string(d)
+	return db.Model(u).Update("password_digest", string(d)).Error
 }

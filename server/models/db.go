@@ -79,6 +79,9 @@ func createTables() {
 	db.AutoMigrate(&ScoreDetail{})
 	db.Model(&ScoreDetail{}).AddForeignKey("score_id", "scores(id)", "RESTRICT", "RESTRICT")
 	db.Model(&ScoreDetail{}).AddForeignKey("problem_id", "problems(id)", "RESTRICT", "RESTRICT")
+
+	db.AutoMigrate(&PasswordResetToken{})
+	db.Model(&PasswordResetToken{}).AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
 }
 
 func seedLanguages() {
