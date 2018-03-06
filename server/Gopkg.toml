@@ -21,3 +21,7 @@
 [[constraint]]
   branch = "master"
   name = "golang.org/x/net"
+
+[[constraint]]
+  name = "gopkg.in/gomail.v2"
+  branch = "v2"

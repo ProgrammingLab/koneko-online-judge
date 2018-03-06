@@ -215,14 +215,14 @@
   version = "v9.9.2"
 
 [[projects]]
+  branch = "v2"
   name = "gopkg.in/gomail.v2"
   packages = ["."]
-  revision = "41f3572897373c5538c50a2402db15db079fa4fd"
-  version = "2.0.0"
+  revision = "81ebce5c23dfd25c6c67194b37d3dd3f338c98b1"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "40fad01a5163b988518eb424ec1f5dc8775d69a01097cd9cdc0bf9c537d7a581"
+  inputs-digest = "d5035a54c953d3c5265ca778cafab02e6a3d084807093bae19f80224f603daf3"
   solver-name = "gps-cdcl"
   solver-version = 1
