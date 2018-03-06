@@ -203,14 +203,26 @@
   revision = "dd9ec17814d5b1de388ebe438ec013d57d8b3779"
 
 [[projects]]
+  branch = "v3"
+  name = "gopkg.in/alexcesaro/quotedprintable.v3"
+  packages = ["."]
+  revision = "2caba252f4dc53eaf6b553000885530023f54623"
+
+[[projects]]
   name = "gopkg.in/go-playground/validator.v9"
   packages = ["."]
   revision = "230db62e071d40171640c9deb875d46a3858d9dd"
   version = "v9.9.2"
 
+[[projects]]
+  name = "gopkg.in/gomail.v2"
+  packages = ["."]
+  revision = "41f3572897373c5538c50a2402db15db079fa4fd"
+  version = "2.0.0"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "164a221100e6271f16de9993393aed83412168823ef6682e5c4d97f16ea25d26"
+  inputs-digest = "40fad01a5163b988518eb424ec1f5dc8775d69a01097cd9cdc0bf9c537d7a581"
   solver-name = "gps-cdcl"
   solver-version = 1
