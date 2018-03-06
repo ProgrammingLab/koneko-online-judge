@@ -36,5 +36,6 @@ func Routes(e *echo.Echo) {
 	e.GET("/contests/:contestID/problems", controllers.GetContestProblems)
 
 	e.POST("/password_reset", controllers.SendPasswordResetMail)
+	e.GET("/password_reset/:token", controllers.VerifyPasswordResetToken)
 	e.POST("/password_reset/:token", controllers.ResetPassword)
 }

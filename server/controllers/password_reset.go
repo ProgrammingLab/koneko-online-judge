@@ -36,6 +36,14 @@ func SendPasswordResetMail(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+func VerifyPasswordResetToken(c echo.Context) error {
+	token := c.Param("token")
+	if t := models.GetPasswordResetToken(token); t == nil {
+		return echo.ErrNotFound
+	}
+	return c.NoContent(http.StatusNoContent)
+}
+
 func ResetPassword(c echo.Context) error {
 	token := c.Param("token")
 	pass := &password{}

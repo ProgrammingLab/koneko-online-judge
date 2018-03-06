@@ -56,14 +56,21 @@ func newPasswordResetToken(user *User) (*PasswordResetToken, error) {
 	return t, nil
 }
 
-func ResetPassword(token, password string) error {
+func GetPasswordResetToken(token string) *PasswordResetToken {
 	t := &PasswordResetToken{}
-	notFound := db.Where("token = ?", token).First(t).RecordNotFound()
-	if notFound {
-		return ErrInvalidToken
+	if db.Where("token = ?", token).First(t).RecordNotFound() {
+		return nil
 	}
 	if PasswordResetTokenLifeTime < time.Now().Sub(t.CreatedAt) {
 		db.Delete(t)
+		return nil
+	}
+	return t
+}
+
+func ResetPassword(token, password string) error {
+	t := GetPasswordResetToken(token)
+	if t == nil {
 		return ErrInvalidToken
 	}
 
