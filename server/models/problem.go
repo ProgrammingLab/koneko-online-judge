@@ -5,25 +5,29 @@ import (
 )
 
 type Problem struct {
-	ID              uint          `gorm:"primary_key" json:"id"`
-	WriterID        uint          `gorm:"not null" json:"writerID"`
-	Writer          User          `gorm:"ForeignKey:WriterID" json:"writer;omitempty"`
-	CreatedAt       time.Time     `json:"createdAt"`
-	UpdatedAt       time.Time     `json:"updatedAt"`
-	Title           string        `gorm:"not null" json:"title"`
-	Body            string        `gorm:"type:text; not null" json:"body"`
-	InputFormat     string        `gorm:"type:text" json:"inputFormat"`
-	OutputFormat    string        `gorm:"type:text" json:"outputFormat"`
-	Constraints     string        `gorm:"type:text" json:"constraints"`
-	Samples         []Sample      `json:"samples;omitempty"`
-	TimeLimit       time.Duration `gorm:"not null" json:"timeLimit" validate:"required,max=60000000000,min=1000000000"`
-	MemoryLimit     int           `gorm:"not null" json:"memoryLimit" validate:"required,max=512,min=128"`
-	JudgeType       int           `gorm:"not null; default:'0'" json:"judgeType" validate:"max=2,min=0"`
-	JudgeSourceCode string        `gorm:"type:text" json:"judgeSourceCode;omitempty"`
-	CaseSets        []CaseSet     `json:"caseSets;omitempty"`
-	Submissions     []Submission  `json:"-"`
-	Contest         *Contest      `json:"contest;omitempty"`
-	ContestID       *uint         `json:"contestID"`
+	ID           uint          `gorm:"primary_key" json:"id"`
+	WriterID     uint          `gorm:"not null" json:"writerID"`
+	Writer       User          `gorm:"ForeignKey:WriterID" json:"writer;omitempty"`
+	CreatedAt    time.Time     `json:"createdAt"`
+	UpdatedAt    time.Time     `json:"updatedAt"`
+	Title        string        `gorm:"not null" json:"title"`
+	Body         string        `gorm:"type:text; not null" json:"body"`
+	InputFormat  string        `gorm:"type:text" json:"inputFormat"`
+	OutputFormat string        `gorm:"type:text" json:"outputFormat"`
+	Constraints  string        `gorm:"type:text" json:"constraints"`
+	Samples      []Sample      `json:"samples;omitempty"`
+	TimeLimit    time.Duration `gorm:"not null" json:"timeLimit" validate:"required,max=60000000000,min=1000000000"`
+	MemoryLimit  int           `gorm:"not null" json:"memoryLimit" validate:"required,max=512,min=128"`
+	JudgeType    int           `gorm:"not null; default:'0'" json:"judgeType" validate:"max=2,min=0"`
+	// Deprecated
+	JudgeSourceCode string `gorm:"type:text" json:"judgeSourceCode;omitempty"`
+
+	CaseSets          []CaseSet        `json:"caseSets;omitempty"`
+	Submissions       []Submission     `json:"-"`
+	Contest           *Contest         `json:"contest;omitempty"`
+	ContestID         *uint            `json:"contestID"`
+	JudgementConfigID *uint            `json:"judgementConfigID;omitempty"`
+	JudgementConfig   *JudgementConfig `json:"judgementConfig;omitempty"`
 }
 
 type JudgeType int

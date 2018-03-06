@@ -42,8 +42,11 @@ func createTables() {
 	db.AutoMigrate(&UserSession{})
 	db.Model(&UserSession{}).AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
 
+	db.AutoMigrate(&JudgementConfig{})
+
 	db.AutoMigrate(&Problem{})
 	db.Model(&Problem{}).AddForeignKey("writer_id", "users(id)", "RESTRICT", "RESTRICT")
+	db.Model(&Problem{}).AddForeignKey("judgement_config_id", "judgement_configs(id)", "RESTRICT", "RESTRICT")
 	db.AutoMigrate(&Sample{})
 	db.Model(&Sample{}).AddForeignKey("problem_id", "problems(id)", "RESTRICT", "RESTRICT")
 
@@ -57,6 +60,7 @@ func createTables() {
 	db.Model(&Submission{}).AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
 	db.Model(&Submission{}).AddForeignKey("language_id", "languages(id)", "RESTRICT", "RESTRICT")
 	db.Model(&Submission{}).AddForeignKey("problem_id", "problems(id)", "RESTRICT", "RESTRICT")
+	db.Model(&JudgementConfig{}).AddForeignKey("language_id", "languages(id)", "RESTRICT", "RESTRICT")
 
 	db.AutoMigrate(&JudgeSetResult{})
 	db.AutoMigrate(&JudgeResult{})
