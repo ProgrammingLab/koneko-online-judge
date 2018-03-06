@@ -1,9 +1,8 @@
 package models
 
 import (
-	"time"
-
 	"fmt"
+	"time"
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"github.com/gedorinku/koneko-online-judge/server/modules/mail"
