@@ -68,7 +68,7 @@ func ResetPassword(token, password string) error {
 	}
 
 	t.FetchUser()
-	if err := t.User.SetPassword(password); err != nil {
+	if err := t.User.SetPassword(password, true); err != nil {
 		logger.AppLog.Errorf("err %+v", err)
 		return err
 	}

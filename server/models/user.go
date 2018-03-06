@@ -3,6 +3,10 @@ package models
 import (
 	"time"
 
+	"fmt"
+
+	"github.com/gedorinku/koneko-online-judge/server/logger"
+	"github.com/gedorinku/koneko-online-judge/server/modules/mail"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -25,6 +29,10 @@ type User struct {
 const (
 	Member Authority = 0
 	Admin  Authority = 1
+
+	subjectPasswordChanged = "[Koneko Online Judge]パスワードが変更されました"
+	bodyPasswordChanged    = `<p>%v さん</p>
+<p>お使いのKoneko Online Judgeアカウントのパスワードが変更されましたので、お知らせいたします。</p>`
 )
 
 var ErrUserIDIsZero = errors.New("User IDが0です")
@@ -78,12 +86,27 @@ func (u *User) IsCorrectPassword(password string) bool {
 	return err == nil
 }
 
-func (u *User) SetPassword(password string) error {
+func (u *User) SetPassword(password string, notification bool) error {
 	d, err := bcrypt.GenerateFromPassword([]byte(password), GetBcryptCost())
 	if err != nil {
 		return err
 	}
 
 	u.PasswordDigest = string(d)
-	return db.Model(u).Update("password_digest", string(d)).Error
+	err = db.Model(u).Update("password_digest", string(d)).Error
+	if err != nil {
+		logger.AppLog.Errorf("error: %+v", err)
+		return err
+	}
+
+	if !notification {
+		return nil
+	}
+
+	body := fmt.Sprintf(bodyPasswordChanged, u.Name)
+	err = mail.SendMail(u.Email, subjectPasswordChanged, body)
+	if err != nil {
+		logger.AppLog.Errorf("error: %+v", err)
+	}
+	return err
 }
