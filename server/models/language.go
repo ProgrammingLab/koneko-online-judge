@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 type Language struct {
 	ID             uint      `gorm:"primary_key" json:"-"`
@@ -27,4 +30,12 @@ func GetLanguageByDisplayName(displayName string) *Language {
 		return nil
 	}
 	return result
+}
+
+func (l Language) GetCompileCommandSlice() []string {
+	return strings.Split(l.CompileCommand, " ")
+}
+
+func (l Language) GetExecCommandSlice() []string {
+	return strings.Split(l.ExecCommand, " ")
 }

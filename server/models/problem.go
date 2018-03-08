@@ -18,7 +18,7 @@ type Problem struct {
 	Samples      []Sample      `json:"samples;omitempty"`
 	TimeLimit    time.Duration `gorm:"not null" json:"timeLimit" validate:"required,max=60000000000,min=1000000000"`
 	MemoryLimit  int           `gorm:"not null" json:"memoryLimit" validate:"required,max=512,min=128"`
-	JudgeType    int           `gorm:"not null; default:'0'" json:"judgeType" validate:"max=2,min=0"`
+	JudgeType    JudgeType     `gorm:"not null; default:'0'" json:"judgeType" validate:"max=2,min=0"`
 	// Deprecated
 	JudgeSourceCode string `gorm:"type:text" json:"judgeSourceCode;omitempty"`
 
@@ -34,11 +34,11 @@ type JudgeType int
 
 const (
 	// inputとoutputが1対1の普通のジャッジ
-	Normal JudgeType = 0
+	JudgeTypeNormal JudgeType = 0
 	// 誤差許容
-	Precision JudgeType = 1
+	JudgeTypePrecision JudgeType = 1
 	// 特別なoutputの評価器が必要なジャッジ
-	Special JudgeType = 2
+	JudgeTypeSpecial JudgeType = 2
 )
 
 func NewProblem(problem *Problem) error {

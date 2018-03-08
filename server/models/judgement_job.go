@@ -1,8 +1,8 @@
 package models
 
 import (
+	"strconv"
 	"strings"
-
 	"time"
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
@@ -14,7 +14,11 @@ type judgementJob struct {
 	SubmissionID uint
 }
 
-const imageNamePrefix = "koneko-online-judge-image-"
+const (
+	imageNamePrefix    = "koneko-online-judge-image-"
+	compileTimeLimit   = 5 * time.Second
+	compileMemoryLimit = 256 * 1024 * 1024
+)
 
 func judge(submissionID uint) {
 	jobs.Now(judgementJob{
@@ -36,7 +40,7 @@ func (j judgementJob) Run() {
 		finalStatus = Accepted
 	)
 
-	compileWorker, compileRes := compile(submission)
+	compileWorker, compileRes := compile(submission.SourceCode[:], &submission.Language)
 	if compileWorker == nil || compileRes == nil {
 		finalStatus = UnknownError
 		markAs(submission.JudgeSetResults, finalStatus)
@@ -107,17 +111,26 @@ func judgeCaseSet(result *JudgeSetResult, submission *Submission, compileWorker 
 		execTime    time.Duration
 		memoryUsage int64
 	)
+	specialPoint := 0
 	for _, r := range result.JudgeResults {
-		status, t, m := judgeTestCase(&r, submission, compileWorker)
-		execTime = MaxDuration(execTime, t)
-		memoryUsage = MaxLong(memoryUsage, m)
-		if status != Accepted {
-			setStatus = status
+		specialPoint += judgeTestCase(&r, submission, compileWorker)
+		execTime = MaxDuration(execTime, r.ExecTime)
+		memoryUsage = MaxLong(memoryUsage, r.MemoryUsage)
+		if r.Status != Accepted {
+			setStatus = r.Status
 		}
 	}
 
 	if setStatus == Accepted {
-		result.Point = result.CaseSet.Point
+		switch submission.Problem.JudgeType {
+		case JudgeTypeNormal:
+			result.Point = result.CaseSet.Point
+		case JudgeTypePrecision:
+			logger.AppLog.Errorf("'JudgeTypePrecision' is not implemented")
+			setStatus = UnknownError
+		case JudgeTypeSpecial:
+			result.Point = specialPoint
+		}
 	}
 
 	result.Status = setStatus
@@ -134,14 +147,15 @@ func judgeCaseSet(result *JudgeSetResult, submission *Submission, compileWorker 
 	return setStatus, execTime, memoryUsage
 }
 
-func judgeTestCase(result *JudgeResult, submission *Submission, compileWorker *workers.Worker) (JudgementStatus, time.Duration, int64) {
+func judgeTestCase(result *JudgeResult, submission *Submission, compileWorker *workers.Worker) int {
 	result.Status = Judging
 	db.Model(result).Update("status", result.Status)
 	result.FetchTestCase()
 	testCase := &result.TestCase
 
 	res := execSubmission(submission, testCase, compileWorker)
-	result.Status = toJudgementStatus(res, testCase)
+	var point int
+	result.Status, point = judgeExecResult(res, submission, testCase)
 	result.ExecTime = res.ExecTime
 	result.MemoryUsage = res.MemoryUsage / 1024
 
@@ -151,19 +165,18 @@ func judgeTestCase(result *JudgeResult, submission *Submission, compileWorker *w
 		"memory_usage": result.MemoryUsage,
 	}
 	db.Model(&JudgeResult{ID: result.ID}).Updates(query)
-	return result.Status, result.ExecTime, result.MemoryUsage
+	return point
 }
 
-func compile(submission *Submission) (*workers.Worker, *workers.ExecResult) {
-	language := &submission.Language
-	cmd := strings.Split(language.CompileCommand, " ")
-	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, 5*time.Second, int64(256*1024*1024), cmd)
+func compile(sourceCode string, language *Language) (*workers.Worker, *workers.ExecResult) {
+	cmd := language.GetCompileCommandSlice()
+	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, compileTimeLimit, compileMemoryLimit, cmd)
 	if err != nil {
 		logger.AppLog.Errorf("compile: container create error %+v", err)
 		return nil, nil
 	}
 
-	err = w.CopyContentToContainer([]byte(submission.SourceCode), language.FileName)
+	err = w.CopyContentToContainer([]byte(sourceCode), language.FileName)
 	if err != nil {
 		logger.AppLog.Errorf("compile: docker cp %+v", err)
 		return nil, nil
@@ -172,6 +185,7 @@ func compile(submission *Submission) (*workers.Worker, *workers.ExecResult) {
 	res, err := w.Run("")
 	if err != nil {
 		logger.AppLog.Errorf("compile: container attach error %+v", err)
+		return nil, nil
 	}
 
 	return w, res
@@ -180,7 +194,7 @@ func compile(submission *Submission) (*workers.Worker, *workers.ExecResult) {
 func execSubmission(submission *Submission, testCase *TestCase, compiled *workers.Worker) *workers.ExecResult {
 	problem := &submission.Problem
 	language := &submission.Language
-	cmd := strings.Split(language.ExecCommand, " ")
+	cmd := language.GetExecCommandSlice()
 	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, problem.TimeLimit, int64(problem.MemoryLimit*1024*1024), cmd)
 	if err != nil {
 		logger.AppLog.Errorf("exec: container create error %+v", err)
@@ -201,7 +215,24 @@ func execSubmission(submission *Submission, testCase *TestCase, compiled *worker
 	return res
 }
 
-func toJudgementStatus(res *workers.ExecResult, testCase *TestCase) JudgementStatus {
+func judgeExecResult(res *workers.ExecResult, submission *Submission, testCase *TestCase) (JudgementStatus, int) {
+	problem := &submission.Problem
+
+	switch problem.JudgeType {
+	case JudgeTypeNormal:
+		return judgeExecResultNormal(res, testCase), 0
+	case JudgeTypePrecision:
+		logger.AppLog.Errorf("'JudgeTypePrecision' is not implemented")
+		return UnknownError, 0
+	case JudgeTypeSpecial:
+		return judgeExecResultSpecial(res, submission, testCase, problem.JudgementConfig)
+	default:
+		logger.AppLog.Errorf("judge type %v is not implemented", problem.JudgeType)
+		return UnknownError, 0
+	}
+}
+
+func judgeExecResultNormal(res *workers.ExecResult, testCase *TestCase) JudgementStatus {
 	if res == nil {
 		return UnknownError
 	}
@@ -224,4 +255,46 @@ func toJudgementStatus(res *workers.ExecResult, testCase *TestCase) JudgementSta
 	default:
 		return UnknownError
 	}
+}
+
+func judgeExecResultSpecial(res *workers.ExecResult, submission *Submission, testCase *TestCase, config *JudgementConfig) (JudgementStatus, int) {
+	compiled, compileRes := compile(*config.JudgeSourceCode, config.Language)
+	if compiled == nil || compileRes == nil {
+		return UnknownError, 0
+	}
+	defer compiled.Remove()
+	if compileRes.Status != workers.StatusFinished {
+		return CompileError, 0
+	}
+
+	l := submission.Language
+	const (
+		input      = "in"
+		output     = "out"
+		userOutput = "submission"
+	)
+	cmd := append(config.Language.GetExecCommandSlice(), input, output, userOutput, l.FileName)
+	w, err := workers.NewWorker(imageNamePrefix+config.Language.ImageName, compileTimeLimit, compileMemoryLimit, cmd)
+	if err != nil {
+		logger.AppLog.Errorf("error: %+v", err)
+		return UnknownError, 0
+	}
+	defer w.Remove()
+
+	w.CopyContentToContainer([]byte(testCase.Input), input)
+	w.CopyContentToContainer([]byte(testCase.Output), output)
+	w.CopyContentToContainer([]byte(res.Stdout), userOutput)
+	w.CopyContentToContainer([]byte(submission.SourceCode), l.FileName)
+
+	judged, err := w.Run("")
+	if err != nil {
+		logger.AppLog.Errorf("error: %+v", err)
+		return UnknownError, 0
+	}
+
+	point, _ := strconv.Atoi(judged.Stdout)
+	if judged.Status == workers.StatusFinished {
+		return Accepted, point
+	}
+	return WrongAnswer, 0
 }
