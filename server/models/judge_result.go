@@ -3,15 +3,15 @@ package models
 import "time"
 
 type JudgeResult struct {
-	ID               uint `gorm:"primary_key"`
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
-	JudgeSetResultID uint            `gorm:"not null"`
+	ID               uint            `gorm:"primary_key" json:"id"`
+	CreatedAt        time.Time       `json:"createdAt"`
+	UpdatedAt        time.Time       `json:"updatedAt"`
+	JudgeSetResultID uint            `gorm:"not null" json:"-"`
 	TestCase         TestCase        `json:"-"`
-	TestCaseID       uint            `gorm:"not null"`
-	Status           JudgementStatus `gorm:"not null; default:'0'"`
-	ExecTime         time.Duration
-	MemoryUsage      int64
+	TestCaseID       uint            `gorm:"not null" json:"-"`
+	Status           JudgementStatus `gorm:"not null; default:'0'" json:"status"`
+	ExecTime         time.Duration   `json:"execTime"`
+	MemoryUsage      int64           `json:"memoryUsage"`
 }
 
 func newJudgeResult(testCase *TestCase, setResult *JudgeSetResult) {

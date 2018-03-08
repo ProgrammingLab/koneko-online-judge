@@ -14,7 +14,7 @@ type Submission struct {
 	User            User             `json:"user"`
 	ProblemID       uint             `gorm:"not null" json:"problemID"`
 	Problem         Problem          `json:"problem"`
-	LanguageID      uint             `gorm:"not null" json:"-"`
+	LanguageID      uint             `gorm:"not null" json:"languageID"`
 	Language        Language         `json:"language"`
 	SourceCode      string           `gorm:"type:text; not null" json:"sourceCode"`
 	Point           int              `json:"point"`

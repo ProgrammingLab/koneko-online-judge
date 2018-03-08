@@ -12,7 +12,7 @@ type JudgeSetResult struct {
 	CaseSet      CaseSet         `json:"-"`
 	CaseSetID    uint            `gorm:"not null" json:"caseSetID"`
 	Point        int             `json:"point"`
-	Status       JudgementStatus `gorm:"not null; default:'0'"`
+	Status       JudgementStatus `gorm:"not null; default:'0'" json:"status"`
 	JudgeResults []JudgeResult   `json:"judgeResults"`
 	ExecTime     time.Duration   `json:"execTime"`
 	MemoryUsage  int64           `json:"memoryUsage"`
