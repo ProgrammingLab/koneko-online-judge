@@ -40,6 +40,9 @@ func NewProblem(c echo.Context) error {
 	if err := models.NewProblem(problem); err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{err.Error()})
 	}
+	if problem.JudgementConfig != nil {
+		problem.JudgementConfig.FetchLanguage()
+	}
 	if problem.ContestID == nil {
 		problem.ContestID = new(uint)
 	}

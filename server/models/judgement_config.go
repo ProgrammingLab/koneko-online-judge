@@ -4,11 +4,11 @@ import "time"
 
 type JudgementConfig struct {
 	ID              uint      `gorm:"primary_key" json:"id"`
-	CreatedAt       time.Time `json:"createdAt"`
-	UpdatedAt       time.Time `json:"updatedAt"`
-	JudgeSourceCode *string   `gorm:"type:text" json:"judgeSourceCode;omitempty"`
-	LanguageID      *uint     `json:"languageID;omitempty"`
-	Language        *Language `json:"language;omitempty"`
+	CreatedAt       time.Time `json:"-"`
+	UpdatedAt       time.Time `json:"-"`
+	JudgeSourceCode *string   `gorm:"type:text" json:"judgeSourceCode,omitempty"`
+	LanguageID      *uint     `json:"languageID,omitempty"`
+	Language        *Language `json:"language,omitempty"`
 	Difference      float64   `json:"difference"`
 }
 
