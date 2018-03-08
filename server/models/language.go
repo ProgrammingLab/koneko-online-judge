@@ -6,7 +6,7 @@ import (
 )
 
 type Language struct {
-	ID             uint      `gorm:"primary_key" json:"-"`
+	ID             uint      `gorm:"primary_key" json:"id"`
 	CreatedAt      time.Time `json:"-"`
 	UpdatedAt      time.Time `json:"-"`
 	ImageName      string    `gorm:"not null" json:"-"`
@@ -23,13 +23,13 @@ func GetAllLanguages() []*Language {
 	return result
 }
 
-func GetLanguageByDisplayName(displayName string) *Language {
-	result := &Language{DisplayName: displayName}
-	notFound := db.Where(result).First(result).RecordNotFound()
+func GetLanguage(id uint) *Language {
+	res := &Language{}
+	notFound := db.Where("id = ?", id).First(res).RecordNotFound()
 	if notFound {
 		return nil
 	}
-	return result
+	return res
 }
 
 func (l Language) GetCompileCommandSlice() []string {

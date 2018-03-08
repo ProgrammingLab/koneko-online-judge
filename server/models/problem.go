@@ -5,23 +5,20 @@ import (
 )
 
 type Problem struct {
-	ID           uint          `gorm:"primary_key" json:"id"`
-	WriterID     uint          `gorm:"not null" json:"writerID"`
-	Writer       User          `gorm:"ForeignKey:WriterID" json:"writer;omitempty"`
-	CreatedAt    time.Time     `json:"createdAt"`
-	UpdatedAt    time.Time     `json:"updatedAt"`
-	Title        string        `gorm:"not null" json:"title"`
-	Body         string        `gorm:"type:text; not null" json:"body"`
-	InputFormat  string        `gorm:"type:text" json:"inputFormat"`
-	OutputFormat string        `gorm:"type:text" json:"outputFormat"`
-	Constraints  string        `gorm:"type:text" json:"constraints"`
-	Samples      []Sample      `json:"samples;omitempty"`
-	TimeLimit    time.Duration `gorm:"not null" json:"timeLimit" validate:"required,max=60000000000,min=1000000000"`
-	MemoryLimit  int           `gorm:"not null" json:"memoryLimit" validate:"required,max=512,min=128"`
-	JudgeType    JudgeType     `gorm:"not null; default:'0'" json:"judgeType" validate:"max=2,min=0"`
-	// Deprecated
-	JudgeSourceCode string `gorm:"type:text" json:"judgeSourceCode;omitempty"`
-
+	ID                uint             `gorm:"primary_key" json:"id"`
+	WriterID          uint             `gorm:"not null" json:"writerID"`
+	Writer            User             `gorm:"ForeignKey:WriterID" json:"writer;omitempty"`
+	CreatedAt         time.Time        `json:"createdAt"`
+	UpdatedAt         time.Time        `json:"updatedAt"`
+	Title             string           `gorm:"not null" json:"title"`
+	Body              string           `gorm:"type:text; not null" json:"body"`
+	InputFormat       string           `gorm:"type:text" json:"inputFormat"`
+	OutputFormat      string           `gorm:"type:text" json:"outputFormat"`
+	Constraints       string           `gorm:"type:text" json:"constraints"`
+	Samples           []Sample         `json:"samples;omitempty"`
+	TimeLimit         time.Duration    `gorm:"not null" json:"timeLimit" validate:"required,max=60000000000,min=1000000000"`
+	MemoryLimit       int              `gorm:"not null" json:"memoryLimit" validate:"required,max=512,min=128"`
+	JudgeType         JudgeType        `gorm:"not null; default:'0'" json:"judgeType" validate:"max=2,min=0"`
 	CaseSets          []CaseSet        `json:"caseSets;omitempty"`
 	Submissions       []Submission     `json:"-"`
 	Contest           *Contest         `json:"contest;omitempty"`
@@ -78,11 +75,27 @@ func GetNoContestProblems() []Problem {
 }
 
 func (p *Problem) Update(request *Problem) {
+	defer db.Save(p)
 	p.Title = request.Title
 	p.TimeLimit = request.TimeLimit
 	p.MemoryLimit = request.MemoryLimit
 	p.Body = request.Body
-	db.Save(p)
+
+	if p.JudgementConfigID == nil && request.JudgementConfig == nil {
+		return
+	}
+
+	if p.JudgementConfigID != nil {
+		db.Delete(&JudgementConfig{}, "id = ?", *p.JudgementConfigID)
+	}
+	if request.JudgementConfig != nil {
+		db.Create(request.JudgementConfig)
+		p.JudgementConfigID = &request.JudgementConfig.ID
+		p.JudgementConfig = nil
+	} else {
+		p.JudgementConfigID = nil
+		p.JudgementConfig = nil
+	}
 }
 
 func (p *Problem) ReplaceTestCases(archive []byte) error {
@@ -118,6 +131,15 @@ func (p *Problem) FetchContest() {
 
 	p.Contest = &Contest{}
 	db.Model(p).Related(p.Contest)
+}
+
+func (p *Problem) FetchJudgementConfig() {
+	if p.JudgementConfigID == nil {
+		return
+	}
+
+	p.JudgementConfig = &JudgementConfig{}
+	db.Model(p).Related(p.JudgementConfig)
 }
 
 func (p *Problem) GetSubmissionsReversed() []Submission {

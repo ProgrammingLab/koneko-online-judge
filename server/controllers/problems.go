@@ -22,6 +22,9 @@ func NewProblem(c echo.Context) error {
 	if err := c.Validate(problem); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{err.Error()})
 	}
+	if problem.JudgeType != models.JudgeTypeNormal && problem.JudgementConfig == nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{"judgementConfig is required"})
+	}
 
 	s.FetchUser()
 	problem.ID = 0
@@ -179,14 +182,17 @@ func fetchProblem(out *models.Problem, s *models.UserSession) {
 	out.FetchSamples()
 	out.FetchCaseSets()
 	out.FetchContest()
+	if out.CanEdit(s) {
+		out.FetchJudgementConfig()
+	}
 
 	out.Writer.Email = ""
 	if out.ContestID == nil {
 		out.ContestID = new(uint)
 	}
 
-	if !out.CanEdit(s) {
-		out.JudgeSourceCode = ""
+	if out.JudgementConfigID == nil {
+		out.JudgementConfigID = new(uint)
 	}
 }
 

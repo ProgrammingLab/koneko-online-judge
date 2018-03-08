@@ -8,7 +8,7 @@ import (
 )
 
 type submissionRequest struct {
-	Language   string `json:"language"`
+	LanguageID uint   `json:"languageID"`
 	SourceCode string `json:"sourceCode"`
 }
 
@@ -24,7 +24,7 @@ func Submit(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{err.Error()})
 	}
 
-	lang := models.GetLanguageByDisplayName(request.Language)
+	lang := models.GetLanguage(request.LanguageID)
 	if lang == nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{"使用できない言語です"})
 	}
