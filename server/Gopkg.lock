@@ -103,8 +103,8 @@
     ".",
     "dialects/mysql"
   ]
-  revision = "5174cc5c242a728b435ea2be8a2f7f998e15429b"
-  version = "v1.0"
+  revision = "6ed508ec6a4ecb3531899a69cbc746ccf65a4166"
+  version = "v1.9.1"
 
 [[projects]]
   branch = "master"
@@ -223,6 +223,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d5035a54c953d3c5265ca778cafab02e6a3d084807093bae19f80224f603daf3"
+  inputs-digest = "af471b1594b8519009b336047c2bf854002b2f2fc0371caa253f1ef02a9957b4"
   solver-name = "gps-cdcl"
   solver-version = 1
