@@ -54,7 +54,6 @@ type ExecResult struct {
 	Stderr      string
 }
 
-// memoryLimitはバイト、timeLimitはミリ秒単位
 func NewWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []string) (*Worker, error) {
 	ctx := context.Background()
 	cli, err := client.NewEnvClient()
@@ -142,7 +141,6 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	defer removeTempFile(stderr)
 
 	streamErrChan := make(chan error)
-	// 関数分けようとしたら、hijackedを引数にとる関数をつくろうとするとコンパイルエラーになる(意味不明)のでつらい
 	go func() {
 		_, err := hijacked.Conn.Write([]byte(input))
 		if err != nil {
