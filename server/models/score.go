@@ -40,7 +40,7 @@ func updateScore(submission *Submission, contestID uint) {
 	if submission.IsWrong() {
 		d.WrongCount += 1
 	}
-	ac := submission.Status == Accepted
+	ac := submission.Status == StatusAccepted
 	if found {
 		newPoint := MaxInt(d.Point, submission.Point)
 		db.Model(d).Updates(map[string]interface{}{"point": newPoint, "wrong_count": d.WrongCount, "accepted": ac})

@@ -89,7 +89,7 @@ func (e *specialCaseSetEvaluator) next(res *workers.ExecResult, testCase *TestCa
 	w, err := workers.NewWorker(imageNamePrefix+e.config.Language.ImageName, compileTimeLimit, compileMemoryLimit, cmd)
 	if err != nil {
 		logger.AppLog.Errorf("error: %+v", err)
-		return UnknownError, 0
+		return StatusUnknownError, 0
 	}
 	defer w.Remove()
 
@@ -103,19 +103,19 @@ func (e *specialCaseSetEvaluator) next(res *workers.ExecResult, testCase *TestCa
 	judged, err := w.Run("")
 	if err != nil {
 		logger.AppLog.Errorf("error: %+v", err)
-		return UnknownError, 0
+		return StatusUnknownError, 0
 	}
 
 	point, _ := strconv.Atoi(judged.Stdout)
 	if judged.Status == workers.StatusFinished {
-		return Accepted, point
+		return StatusAccepted, point
 	}
-	return WrongAnswer, 0
+	return StatusWrongAnswer, 0
 }
 
 func (e *specialCaseSetEvaluator) evaluate() (JudgementStatus, int) {
 	st := evaluateStatuses(e.statuses)
-	if st == Accepted {
+	if st == StatusAccepted {
 		return st, e.point
 	}
 	return st, 0

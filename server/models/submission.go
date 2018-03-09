@@ -29,17 +29,17 @@ type Submission struct {
 type JudgementStatus int
 
 const (
-	InQueue             JudgementStatus = 0
-	Judging             JudgementStatus = 1
-	Accepted            JudgementStatus = 2
-	PresentationError   JudgementStatus = 3
-	WrongAnswer         JudgementStatus = 4
-	TimeLimitExceeded   JudgementStatus = 5
-	MemoryLimitExceeded JudgementStatus = 6
-	RuntimeError        JudgementStatus = 7
-	CompileError        JudgementStatus = 8
-	OutputLimitExceeded JudgementStatus = 9
-	UnknownError        JudgementStatus = 10
+	StatusInQueue             JudgementStatus = 0
+	StatusJudging             JudgementStatus = 1
+	StatusAccepted            JudgementStatus = 2
+	StatusPresentationError   JudgementStatus = 3
+	StatusWrongAnswer         JudgementStatus = 4
+	StatusTimeLimitExceeded   JudgementStatus = 5
+	StatusMemoryLimitExceeded JudgementStatus = 6
+	StatusRuntimeError        JudgementStatus = 7
+	StatusCompileError        JudgementStatus = 8
+	StatusOutputLimitExceeded JudgementStatus = 9
+	StatusUnknownError        JudgementStatus = 10
 )
 
 func Submit(submission *Submission) error {
@@ -68,7 +68,7 @@ func GetSubmission(submissionID uint) *Submission {
 
 func (s *Submission) IsWrong() bool {
 	stat := s.Status
-	return stat == WrongAnswer || stat == TimeLimitExceeded || stat == MemoryLimitExceeded || stat == RuntimeError
+	return stat == StatusWrongAnswer || stat == StatusTimeLimitExceeded || stat == StatusMemoryLimitExceeded || stat == StatusRuntimeError
 }
 
 func (s *Submission) FetchUser() {

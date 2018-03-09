@@ -15,16 +15,16 @@ type caseSetEvaluator interface {
 
 func evaluateStatuses(statuses map[JudgementStatus]int) JudgementStatus {
 	max := 0
-	maxSt := Accepted
+	maxSt := StatusAccepted
 	ac := true
 	for k, v := range statuses {
-		if k != Accepted && 0 < v {
+		if k != StatusAccepted && 0 < v {
 			ac = false
 			break
 		}
 	}
 	for k, v := range statuses {
-		if max < v && (!ac || k != Accepted) {
+		if max < v && (!ac || k != StatusAccepted) {
 			max = v
 			maxSt = k
 		}

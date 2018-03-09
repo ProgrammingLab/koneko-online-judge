@@ -58,7 +58,7 @@ func (j *judgementJob) Run() {
 		logger.AppLog.Infof("submission(id = %v) is deleted", j.submissionID)
 		return
 	}
-	j.submission.Status = Judging
+	j.submission.Status = StatusJudging
 	db.Model(j.submission).Update("status", j.submission.Status)
 	j.submission.FetchLanguage()
 	j.submission.FetchProblem()
@@ -68,7 +68,7 @@ func (j *judgementJob) Run() {
 		execTime    time.Duration
 		memoryUsage int64
 		point       = 0
-		finalStatus = UnknownError
+		finalStatus = StatusUnknownError
 	)
 
 	defer func() {
@@ -87,7 +87,7 @@ func (j *judgementJob) Run() {
 		eval = newSimpleEvaluator()
 	case JudgeTypePrecision:
 		logger.AppLog.Errorf("'JudgeTypePrecision' is not implemented")
-		finalStatus = UnknownError
+		finalStatus = StatusUnknownError
 		markAs(j.submission.JudgeSetResults, finalStatus)
 		return
 	case JudgeTypeSpecial:
@@ -95,13 +95,13 @@ func (j *judgementJob) Run() {
 		eval, err = newSpecialEvaluator(j.submission.Problem.JudgementConfig, j.submission)
 		if err != nil {
 			logger.AppLog.Errorf("judge source code compile error: %+v", err)
-			finalStatus = UnknownError
+			finalStatus = StatusUnknownError
 			markAs(j.submission.JudgeSetResults, finalStatus)
 			return
 		}
 	default:
 		logger.AppLog.Errorf("%v is not implemented", j.submission.Problem.JudgeType)
-		finalStatus = UnknownError
+		finalStatus = StatusUnknownError
 		markAs(j.submission.JudgeSetResults, finalStatus)
 		return
 	}
@@ -111,13 +111,13 @@ func (j *judgementJob) Run() {
 	var compileRes *workers.ExecResult
 	j.compiled, compileRes = compile(j.submission.SourceCode[:], &j.submission.Language)
 	if j.compiled == nil || compileRes == nil {
-		finalStatus = UnknownError
+		finalStatus = StatusUnknownError
 		markAs(j.submission.JudgeSetResults, finalStatus)
 	} else {
 		logger.AppLog.Debugf("%v %v", compileRes.Status, compileRes.Stderr)
 
 		if compileRes.Status != workers.StatusFinished {
-			finalStatus = CompileError
+			finalStatus = StatusCompileError
 			markAs(j.submission.JudgeSetResults, finalStatus)
 			logger.AppLog.Debugf("compile error: worker status %v", compileRes.Status, compileRes.Stderr)
 		} else {
@@ -197,7 +197,7 @@ func (j *judgementJob) judgeCaseSet(evaluator caseSetEvaluator, result *JudgeSet
 }
 
 func (j *judgementJob) judgeTestCase(evaluator caseSetEvaluator, result *JudgeResult) int {
-	result.Status = Judging
+	result.Status = StatusJudging
 	db.Model(result).Update("status", result.Status)
 	result.FetchTestCase()
 	testCase := &result.TestCase
