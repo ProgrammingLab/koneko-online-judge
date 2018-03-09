@@ -46,7 +46,7 @@ func (e specialEvaluator) next(set *CaseSet, factory func(set *CaseSet) caseSetE
 	}
 
 	f := func(set *CaseSet) caseSetEvaluator {
-		return newSpecialCaseSetEvaluator(e.verifier, e.config, e.submission)
+		return newSpecialCaseSetEvaluator(set, e.verifier, e.config, e.submission)
 	}
 	return e.simple.next(set, f)
 }
