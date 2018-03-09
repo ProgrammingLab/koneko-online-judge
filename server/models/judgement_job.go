@@ -1,8 +1,6 @@
 package models
 
 import (
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
@@ -69,9 +67,46 @@ func (j *judgementJob) Run() {
 	var (
 		execTime    time.Duration
 		memoryUsage int64
-		point       int
-		finalStatus = Accepted
+		point       = 0
+		finalStatus = UnknownError
 	)
+
+	defer func() {
+		query := map[string]interface{}{
+			"point":        point,
+			"status":       finalStatus,
+			"exec_time":    execTime,
+			"memory_usage": memoryUsage,
+		}
+		db.Model(&Submission{ID: j.submission.ID}).Updates(query)
+	}()
+
+	var eval evaluator
+	switch j.submission.Problem.JudgeType {
+	case JudgeTypeNormal:
+		eval = newSimpleEvaluator()
+	case JudgeTypePrecision:
+		logger.AppLog.Errorf("'JudgeTypePrecision' is not implemented")
+		finalStatus = UnknownError
+		markAs(j.submission.JudgeSetResults, finalStatus)
+		return
+	case JudgeTypeSpecial:
+		var err error
+		eval, err = newSpecialEvaluator(j.submission.Problem.JudgementConfig, j.submission)
+		if err != nil {
+			logger.AppLog.Errorf("judge source code compile error: %+v", err)
+			finalStatus = UnknownError
+			markAs(j.submission.JudgeSetResults, finalStatus)
+			return
+		}
+	default:
+		logger.AppLog.Errorf("%v is not implemented", j.submission.Problem.JudgeType)
+		finalStatus = UnknownError
+		markAs(j.submission.JudgeSetResults, finalStatus)
+		return
+	}
+
+	defer eval.remove()
 
 	var compileRes *workers.ExecResult
 	j.compiled, compileRes = compile(j.submission.SourceCode[:], &j.submission.Language)
@@ -87,29 +122,21 @@ func (j *judgementJob) Run() {
 			logger.AppLog.Debugf("compile error: worker status %v", compileRes.Status, compileRes.Stderr)
 		} else {
 			for _, r := range j.submission.JudgeSetResults {
-				status, t, m := j.judgeCaseSet(&r)
-				execTime = MaxDuration(execTime, t)
-				memoryUsage = MaxLong(memoryUsage, m)
-				point += r.Point
-				if status == Accepted {
-					continue
-				}
-				finalStatus = status
+				r.FetchCaseSet()
+				setEval := eval.next(&r.CaseSet, nil)
+				j.judgeCaseSet(setEval, &r)
+				execTime = MaxDuration(execTime, r.ExecTime)
+				memoryUsage = MaxLong(memoryUsage, r.MemoryUsage)
 			}
 		}
 	}
+
+	finalStatus, point = eval.evaluate()
 
 	j.submission.Point = point
 	j.submission.Status = finalStatus
 	j.submission.ExecTime = execTime
 	j.submission.MemoryUsage = memoryUsage
-	query := map[string]interface{}{
-		"point":        point,
-		"status":       finalStatus,
-		"exec_time":    execTime,
-		"memory_usage": memoryUsage,
-	}
-	db.Model(&Submission{ID: j.submission.ID}).Updates(query)
 
 	if j.submission.Problem.ContestID != nil {
 		p := &j.submission.Problem
@@ -142,52 +169,34 @@ func markAs(setResults []JudgeSetResult, status JudgementStatus) {
 	}
 }
 
-func (j *judgementJob) judgeCaseSet(result *JudgeSetResult) (JudgementStatus, time.Duration, int64) {
+func (j *judgementJob) judgeCaseSet(evaluator caseSetEvaluator, result *JudgeSetResult) {
 	result.FetchCaseSet()
 	result.FetchJudgeResults(false)
 
-	setStatus := Accepted
 	var (
 		execTime    time.Duration
 		memoryUsage int64
 	)
-	specialPoint := 0
 	for _, r := range result.JudgeResults {
-		specialPoint += j.judgeTestCase(&r)
+		j.judgeTestCase(evaluator, &r)
 		execTime = MaxDuration(execTime, r.ExecTime)
 		memoryUsage = MaxLong(memoryUsage, r.MemoryUsage)
-		if r.Status != Accepted {
-			setStatus = r.Status
-		}
 	}
 
-	if setStatus == Accepted {
-		switch j.submission.Problem.JudgeType {
-		case JudgeTypeNormal:
-			result.Point = result.CaseSet.Point
-		case JudgeTypePrecision:
-			logger.AppLog.Errorf("'JudgeTypePrecision' is not implemented")
-			setStatus = UnknownError
-		case JudgeTypeSpecial:
-			result.Point = specialPoint
-		}
-	}
-
-	result.Status = setStatus
+	result.Status, result.Point = evaluator.evaluate()
 	result.ExecTime = execTime
 	result.MemoryUsage = memoryUsage
+
 	query := map[string]interface{}{
 		"point":        result.Point,
-		"status":       setStatus,
-		"exec_time":    execTime,
-		"memory_usage": memoryUsage,
+		"status":       result.Status,
+		"exec_time":    result.ExecTime,
+		"memory_usage": result.MemoryUsage,
 	}
 	db.Model(&JudgeSetResult{ID: result.ID}).Updates(query)
-
-	return setStatus, execTime, memoryUsage
 }
 
-func (j *judgementJob) judgeTestCase(result *JudgeResult) int {
+func (j *judgementJob) judgeTestCase(evaluator caseSetEvaluator, result *JudgeResult) int {
 	result.Status = Judging
 	db.Model(result).Update("status", result.Status)
 	result.FetchTestCase()
@@ -195,7 +204,7 @@ func (j *judgementJob) judgeTestCase(result *JudgeResult) int {
 
 	res := j.execSubmission(testCase)
 	var point int
-	result.Status, point = j.judgeExecResult(res, testCase)
+	result.Status, point = evaluator.next(res, testCase)
 	result.ExecTime = res.ExecTime
 	result.MemoryUsage = res.MemoryUsage / 1024
 
@@ -230,88 +239,4 @@ func (j *judgementJob) execSubmission(testCase *TestCase) *workers.ExecResult {
 		logger.AppLog.Errorf("exec: container attach error %+v", err)
 	}
 	return res
-}
-
-func (j *judgementJob) judgeExecResult(res *workers.ExecResult, testCase *TestCase) (JudgementStatus, int) {
-	problem := &j.submission.Problem
-
-	switch problem.JudgeType {
-	case JudgeTypeNormal:
-		return j.judgeExecResultNormal(res, testCase), 0
-	case JudgeTypePrecision:
-		logger.AppLog.Errorf("'JudgeTypePrecision' is not implemented")
-		return UnknownError, 0
-	case JudgeTypeSpecial:
-		return j.judgeExecResultSpecial(res, testCase, problem.JudgementConfig)
-	default:
-		logger.AppLog.Errorf("judge type %v is not implemented", problem.JudgeType)
-		return UnknownError, 0
-	}
-}
-
-func (j *judgementJob) judgeExecResultNormal(res *workers.ExecResult, testCase *TestCase) JudgementStatus {
-	if res == nil {
-		return UnknownError
-	}
-
-	switch res.Status {
-	case workers.StatusMemoryLimitExceeded:
-		return MemoryLimitExceeded
-	case workers.StatusTimeLimitExceeded:
-		return TimeLimitExceeded
-	case workers.StatusRuntimeError:
-		return RuntimeError
-	case workers.StatusFinished:
-		if res.Stdout == testCase.Output {
-			return Accepted
-		}
-		if strings.TrimSpace(res.Stdout) == strings.TrimSpace(testCase.Output) {
-			return PresentationError
-		}
-		return WrongAnswer
-	default:
-		return UnknownError
-	}
-}
-
-func (j *judgementJob) judgeExecResultSpecial(res *workers.ExecResult, testCase *TestCase, config *JudgementConfig) (JudgementStatus, int) {
-	compiled, compileRes := compile(*config.JudgeSourceCode, config.Language)
-	if compiled == nil || compileRes == nil {
-		return UnknownError, 0
-	}
-	defer compiled.Remove()
-	if compileRes.Status != workers.StatusFinished {
-		return CompileError, 0
-	}
-
-	l := j.submission.Language
-	const (
-		input      = "in"
-		output     = "out"
-		userOutput = "submission"
-	)
-	cmd := append(config.Language.GetExecCommandSlice(), input, output, userOutput, l.FileName)
-	w, err := workers.NewWorker(imageNamePrefix+config.Language.ImageName, compileTimeLimit, compileMemoryLimit, cmd)
-	if err != nil {
-		logger.AppLog.Errorf("error: %+v", err)
-		return UnknownError, 0
-	}
-	defer w.Remove()
-
-	w.CopyContentToContainer([]byte(testCase.Input), input)
-	w.CopyContentToContainer([]byte(testCase.Output), output)
-	w.CopyContentToContainer([]byte(res.Stdout), userOutput)
-	w.CopyContentToContainer([]byte(j.submission.SourceCode), l.FileName)
-
-	judged, err := w.Run("")
-	if err != nil {
-		logger.AppLog.Errorf("error: %+v", err)
-		return UnknownError, 0
-	}
-
-	point, _ := strconv.Atoi(judged.Stdout)
-	if judged.Status == workers.StatusFinished {
-		return Accepted, point
-	}
-	return WrongAnswer, 0
 }

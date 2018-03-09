@@ -51,6 +51,10 @@ func (e specialEvaluator) next(set *CaseSet, factory func(set *CaseSet) caseSetE
 	return e.simple.next(set, f)
 }
 
+func (e specialEvaluator) evaluate() (JudgementStatus, int) {
+	return e.simple.evaluate()
+}
+
 func (e specialEvaluator) remove() {
 	if e.verifier != nil {
 		e.verifier.Remove()
