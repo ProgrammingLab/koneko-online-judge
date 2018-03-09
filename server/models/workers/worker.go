@@ -84,7 +84,7 @@ func NewWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []str
 	hcfg := &container.HostConfig{
 		Resources: container.Resources{
 			CpusetCpus: "0",
-			PidsLimit:  10,
+			PidsLimit:  15,
 			Memory:     memoryLimit + 10*1024*1024,
 		},
 		NetworkMode: "none",
