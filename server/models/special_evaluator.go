@@ -63,14 +63,16 @@ func (e specialEvaluator) remove() {
 
 type specialCaseSetEvaluator struct {
 	point      int
+	setPoint   int
 	statuses   map[JudgementStatus]int
 	verifier   *workers.Worker
 	config     *JudgementConfig
 	submission *Submission
 }
 
-func newSpecialCaseSetEvaluator(verifier *workers.Worker, config *JudgementConfig, submission *Submission) *specialCaseSetEvaluator {
+func newSpecialCaseSetEvaluator(set *CaseSet, verifier *workers.Worker, config *JudgementConfig, submission *Submission) *specialCaseSetEvaluator {
 	return &specialCaseSetEvaluator{
+		setPoint:   set.Point,
 		statuses:   map[JudgementStatus]int{},
 		verifier:   verifier,
 		config:     config,
@@ -108,7 +110,8 @@ func (e *specialCaseSetEvaluator) next(res *workers.ExecResult, testCase *TestCa
 
 	point, _ := strconv.Atoi(judged.Stdout)
 	if judged.Status == workers.StatusFinished {
-		return StatusAccepted, point
+		e.point += point
+		return StatusAccepted, e.point
 	}
 	return StatusWrongAnswer, 0
 }
@@ -116,7 +119,7 @@ func (e *specialCaseSetEvaluator) next(res *workers.ExecResult, testCase *TestCa
 func (e *specialCaseSetEvaluator) evaluate() (JudgementStatus, int) {
 	st := evaluateStatuses(e.statuses)
 	if st == StatusAccepted {
-		return st, e.point
+		return st, MaxInt(e.point, e.setPoint)
 	}
 	return st, 0
 }
