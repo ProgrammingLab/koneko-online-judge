@@ -4,6 +4,9 @@
 ## Requirements
 - Docker
 
+## Documents
+[GitHub Wiki](https://github.com/gedorinku/koneko-online-judge/wiki)
+
 ## Usage(with Docker Compose)
 
 ### Set environment variable
