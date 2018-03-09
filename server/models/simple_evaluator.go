@@ -3,7 +3,7 @@ package models
 import (
 	"strings"
 
-	"github.com/gedorinku/koneko-online-judge/server/models/workers"
+	"github.com/gedorinku/koneko-online-judge/server/modules/workers"
 )
 
 type simpleEvaluator struct {

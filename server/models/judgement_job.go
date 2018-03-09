@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
-	"github.com/gedorinku/koneko-online-judge/server/models/workers"
 	"github.com/gedorinku/koneko-online-judge/server/modules/jobs"
+	"github.com/gedorinku/koneko-online-judge/server/modules/workers"
 )
 
 type judgementJob struct {

@@ -1,6 +1,6 @@
 package models
 
-import "github.com/gedorinku/koneko-online-judge/server/models/workers"
+import "github.com/gedorinku/koneko-online-judge/server/modules/workers"
 
 type evaluator interface {
 	next(set *CaseSet, factory func(set *CaseSet) caseSetEvaluator) caseSetEvaluator
