@@ -7,6 +7,14 @@ import (
 	"github.com/gedorinku/koneko-online-judge/server/models/workers"
 )
 
+type ErrJudgeSourceCodeCompile struct {
+	message string
+}
+
+func (e ErrJudgeSourceCodeCompile) Error() string {
+	return e.message
+}
+
 type specialEvaluator struct {
 	verifier   *workers.Worker
 	simple     *simpleEvaluator
@@ -15,8 +23,16 @@ type specialEvaluator struct {
 }
 
 func newSpecialEvaluator(config *JudgementConfig, submission *Submission) (specialEvaluator, error) {
+	compiled, compileRes := compile(*config.JudgeSourceCode, config.Language)
+	if compiled == nil || compileRes == nil {
+		return specialEvaluator{}, ErrJudgeSourceCodeCompile{"unknown (｡>﹏<｡)"}
+	}
+	if compileRes.Status != workers.StatusFinished {
+		return specialEvaluator{}, ErrJudgeSourceCodeCompile{compileRes.Stderr}
+	}
+
 	e := specialEvaluator{
-		verifier:   nil,
+		verifier:   compiled,
 		simple:     newSimpleEvaluator(),
 		config:     config,
 		submission: submission,
@@ -59,15 +75,6 @@ func newSpecialCaseSetEvaluator(verifier *workers.Worker, config *JudgementConfi
 }
 
 func (e *specialCaseSetEvaluator) next(res *workers.ExecResult, testCase *TestCase) (JudgementStatus, int) {
-	compiled, compileRes := compile(*e.config.JudgeSourceCode, e.config.Language)
-	if compiled == nil || compileRes == nil {
-		return UnknownError, 0
-	}
-	defer compiled.Remove()
-	if compileRes.Status != workers.StatusFinished {
-		return CompileError, 0
-	}
-
 	l := e.submission.Language
 	const (
 		input      = "in"
@@ -81,6 +88,8 @@ func (e *specialCaseSetEvaluator) next(res *workers.ExecResult, testCase *TestCa
 		return UnknownError, 0
 	}
 	defer w.Remove()
+
+	e.verifier.CopyTo(e.config.Language.ExeFileName, w)
 
 	w.CopyContentToContainer([]byte(testCase.Input), input)
 	w.CopyContentToContainer([]byte(testCase.Output), output)
