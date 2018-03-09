@@ -225,15 +225,15 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	}, nil
 }
 
-func (w Worker) CopyTo(basename string, dist *Worker) error {
+func (w Worker) CopyTo(filename string, dist *Worker) error {
 	const limit = 10 * 1024 * 1024
-	name := Workspace + basename
+	name := Workspace + filename
 	content, err := w.getFromContainer(name, limit)
 	if err != nil && err != io.EOF {
 		logger.AppLog.Errorf("%+v", err)
 		return err
 	}
-	return dist.CopyContentToContainer(content, basename)
+	return dist.CopyContentToContainer(content, filename)
 }
 
 func (w Worker) CopyContentToContainer(content []byte, name string) error {
