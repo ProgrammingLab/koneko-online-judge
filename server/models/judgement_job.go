@@ -64,6 +64,7 @@ func (j *judgementJob) Run() {
 	db.Model(j.submission).Update("status", j.submission.Status)
 	j.submission.FetchLanguage()
 	j.submission.FetchProblem()
+	j.submission.Problem.FetchJudgementConfig()
 	j.submission.FetchJudgeSetResults(false)
 	var (
 		execTime    time.Duration

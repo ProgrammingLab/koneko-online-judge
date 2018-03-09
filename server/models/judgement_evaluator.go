@@ -3,7 +3,7 @@ package models
 import "github.com/gedorinku/koneko-online-judge/server/models/workers"
 
 type evaluator interface {
-	next(set *CaseSet) caseSetEvaluator
+	next(set *CaseSet, factory func(set *CaseSet) caseSetEvaluator) caseSetEvaluator
 	evaluate() (JudgementStatus, int)
 	remove()
 }

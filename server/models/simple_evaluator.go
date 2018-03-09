@@ -9,7 +9,7 @@ import (
 type simpleEvaluator struct {
 	point    int
 	statuses map[JudgementStatus]int
-	lastSet  *simpleCaseSetEvaluator
+	lastSet  caseSetEvaluator
 }
 
 func newSimpleEvaluator() *simpleEvaluator {
@@ -18,7 +18,7 @@ func newSimpleEvaluator() *simpleEvaluator {
 	}
 }
 
-func (e *simpleEvaluator) next(set *CaseSet) caseSetEvaluator {
+func (e *simpleEvaluator) next(set *CaseSet, factory func(set *CaseSet) caseSetEvaluator) caseSetEvaluator {
 	if e.lastSet != nil {
 		st, pt := e.lastSet.evaluate()
 		e.point += pt
@@ -29,7 +29,11 @@ func (e *simpleEvaluator) next(set *CaseSet) caseSetEvaluator {
 		return nil
 	}
 
-	e.lastSet = newSimpleCaseSetEvaluator(set)
+	if factory == nil {
+		e.lastSet = newSimpleCaseSetEvaluator(set)
+	} else {
+		e.lastSet = factory(set)
+	}
 	return e.lastSet
 }
 
@@ -38,7 +42,7 @@ func (e *simpleEvaluator) evaluate() (JudgementStatus, int) {
 		return UnknownError, 0
 	}
 
-	e.next(nil)
+	e.next(nil, nil)
 	st := evaluateStatuses(e.statuses)
 	return st, e.point
 }
