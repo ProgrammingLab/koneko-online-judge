@@ -86,10 +86,7 @@ func (j *judgementJob) Run() {
 	case JudgeTypeNormal:
 		eval = newSimpleEvaluator()
 	case JudgeTypePrecision:
-		logger.AppLog.Errorf("'JudgeTypePrecision' is not implemented")
-		finalStatus = StatusUnknownError
-		markAs(j.submission.JudgeSetResults, finalStatus)
-		return
+		eval = newPrecisionEvaluator(j.submission.Problem.JudgementConfig)
 	case JudgeTypeSpecial:
 		var err error
 		eval, err = newSpecialEvaluator(j.submission.Problem.JudgementConfig, j.submission)
