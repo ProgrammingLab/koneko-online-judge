@@ -364,7 +364,7 @@ func checkRuntimeError(stderr *os.File) error {
 func createTempDir() error {
 	_, err := os.Stat(Workspace)
 	if err != nil {
-		return os.Mkdir(Workspace, os.ModePerm)
+		return os.Mkdir(Workspace, 0700)
 	}
 
 	return nil
