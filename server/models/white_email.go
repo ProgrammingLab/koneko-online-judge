@@ -7,7 +7,7 @@ type WhiteEmail struct {
 	CreatedAt   time.Time     `json:"createdAt"`
 	UpdatedAt   time.Time     `json:"updatedAt"`
 	LifeTime    time.Duration `json:"lifeTime"`
-	Email       string        `gorm:"not null" json:"email"`
+	Email       string        `gorm:"not null; unique_index" json:"email"`
 	CreatedByID uint          `gorm:"not null" json:"createdByID"`
 	CreatedBy   User          `gorm:"ForeignKey:CreatedByID" json:"createdBy"`
 }
@@ -30,6 +30,15 @@ func NewWhiteEmail(email string, user *User) *WhiteEmail {
 func GetWhiteEmails() []WhiteEmail {
 	res := make([]WhiteEmail, 0, 0)
 	db.Order("id ASC").Find(&res)
+	return res
+}
+
+func GetWhiteEmail(email string) *WhiteEmail {
+	res := &WhiteEmail{}
+	nf := db.Table("white_emails").Where("email = ?", email).Scan(res).RecordNotFound()
+	if nf {
+		return nil
+	}
 	return res
 }
 
