@@ -38,4 +38,8 @@ func Routes(e *echo.Echo) {
 	e.POST("/password_reset", controllers.SendPasswordResetMail)
 	e.GET("/password_reset/:token", controllers.VerifyPasswordResetToken)
 	e.POST("/password_reset/:token", controllers.ResetPassword)
+
+	e.POST("/white_emails", controllers.AddWhiteEmail)
+	e.GET("/white_emails", controllers.GetWhiteEmails)
+	e.DELETE("/white_emails/:id", controllers.DeleteWhiteEmail)
 }

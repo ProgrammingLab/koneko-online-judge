@@ -109,3 +109,7 @@ func (u *User) SetPassword(password string, notification bool) error {
 	}
 	return err
 }
+
+func (u *User) IsAdmin() bool {
+	return u.Authority == Admin
+}

@@ -9,5 +9,37 @@ type WhiteEmail struct {
 	LifeTime    time.Duration `json:"lifeTime"`
 	Email       string        `gorm:"not null" json:"email"`
 	CreatedByID uint          `gorm:"not null" json:"createdByID"`
-	CreatedBy   User          `json:"createdBy"`
+	CreatedBy   User          `gorm:"ForeignKey:CreatedByID" json:"createdBy"`
+}
+
+const (
+	WhiteEmailPermanentLifeTime time.Duration = -1
+)
+
+func NewWhiteEmail(email string, user *User) *WhiteEmail {
+	e := &WhiteEmail{
+		LifeTime:    WhiteEmailPermanentLifeTime,
+		Email:       email,
+		CreatedByID: user.ID,
+	}
+	db.Create(e)
+	e.CreatedBy = *user
+	return e
+}
+
+func GetWhiteEmails() []WhiteEmail {
+	res := make([]WhiteEmail, 0, 0)
+	db.Order("id ASC").Find(&res)
+	return res
+}
+
+func DeleteWhiteEmail(id uint) error {
+	return db.Delete(&WhiteEmail{}, "id = ?", id).Error
+}
+
+func (e *WhiteEmail) FetchCreatedBy(email bool) {
+	db.Table("users").Where("id = ?", e.CreatedByID).Scan(&e.CreatedBy)
+	if !email {
+		e.CreatedBy.Email = ""
+	}
 }

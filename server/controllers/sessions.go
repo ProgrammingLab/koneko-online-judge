@@ -53,3 +53,15 @@ func getSession(c echo.Context) *models.UserSession {
 	}
 	return nil
 }
+
+func getAdminSession(c echo.Context) (*models.UserSession, error) {
+	s := getSession(c)
+	if s == nil {
+		return nil, echo.ErrUnauthorized
+	}
+	s.FetchUser()
+	if !s.User.IsAdmin() {
+		return nil, echo.ErrNotFound
+	}
+	return s, nil
+}
