@@ -86,6 +86,12 @@ func createTables() {
 
 	db.AutoMigrate(&PasswordResetToken{})
 	db.Model(&PasswordResetToken{}).AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
+
+	db.AutoMigrate(&WhiteEmail{})
+	db.Model(&WhiteEmail{}).AddForeignKey("created_by_id", "users(id)", "RESTRICT", "RESTRICT")
+
+	db.AutoMigrate(&EmailConfirmation{})
+	db.Model(&EmailConfirmation{}).AddForeignKey("white_email_id", "white_emails(id)", "RESTRICT", "RESTRICT")
 }
 
 func seedLanguages() {
