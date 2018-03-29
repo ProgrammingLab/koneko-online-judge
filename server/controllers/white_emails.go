@@ -31,6 +31,9 @@ func AddWhiteEmail(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return err
 	}
+	if err := c.Validate(&req); err != nil {
+		return err
+	}
 
 	e := models.NewWhiteEmail(req.Email, &s.User)
 	return c.JSON(http.StatusCreated, e)
