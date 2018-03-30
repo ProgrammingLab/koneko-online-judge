@@ -44,4 +44,5 @@ func Routes(e *echo.Echo) {
 	e.DELETE("/white_emails/:id", controllers.DeleteWhiteEmail)
 
 	e.POST("/registrations", controllers.StartRegistration)
+	e.GET("/registrations/:token", controllers.VerifyEmailConfirmationToken)
 }

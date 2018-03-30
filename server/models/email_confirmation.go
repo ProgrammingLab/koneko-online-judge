@@ -13,7 +13,7 @@ type EmailConfirmation struct {
 	CreatedAt    time.Time     `json:"createdAt"`
 	UpdatedAt    time.Time     `json:"updatedAt"`
 	LifeTime     time.Duration `json:"lifeTime"`
-	Token        string        `gorm:"not null" json:"-"`
+	Token        string        `gorm:"not null; index" json:"-"`
 	WhiteEmailID uint          `gorm:"not null" json:"whiteEmailID"`
 	WhiteEmail   WhiteEmail    `json:"whiteEmail"`
 }
@@ -61,4 +61,18 @@ func newEmailConfirmation(email *WhiteEmail) (*EmailConfirmation, error) {
 	}
 
 	return c, nil
+}
+
+func GetEmailConfirmation(token string) *EmailConfirmation {
+	res := &EmailConfirmation{}
+	nf := db.Model(EmailConfirmation{}).Where("token = ?", token).Scan(res).RecordNotFound()
+	if nf {
+		return nil
+	}
+	if time.Now().After(res.CreatedAt.Add(res.LifeTime)) {
+		db.Where("id = ?", res.ID)
+		return nil
+	}
+
+	return res
 }

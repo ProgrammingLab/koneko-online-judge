@@ -27,3 +27,13 @@ func StartRegistration(c echo.Context) error {
 
 	return c.NoContent(http.StatusNoContent)
 }
+
+func VerifyEmailConfirmationToken(c echo.Context) error {
+	req := c.Param("token")
+	token := models.GetEmailConfirmation(req)
+	if token == nil {
+		return c.JSON(http.StatusNotFound, ErrorResponse{"Invalid Token"})
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
