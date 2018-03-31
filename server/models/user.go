@@ -49,6 +49,12 @@ func NewUser(name, displayName, email, password string, token *EmailConfirmation
 	}
 
 	tx := db.Begin()
+	defer func() {
+		if err := recover(); err != nil {
+			tx.Rollback()
+			panic(err)
+		}
+	}()
 	nf := tx.Model(User{}).Where("name = ?", name).Limit(1).Scan(&User{}).RecordNotFound()
 	if !nf {
 		tx.Rollback()
