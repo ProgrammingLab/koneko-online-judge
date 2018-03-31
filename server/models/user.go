@@ -79,6 +79,13 @@ func NewUser(name, displayName, email, password string, token *EmailConfirmation
 		return nil, err
 	}
 
+	err = tx.Where("email = ?", email).Delete(WhiteEmail{}).Error
+	if err != nil {
+		tx.Rollback()
+		logger.AppLog.Errorf("error: %+v", err)
+		return nil, err
+	}
+
 	tx.Commit()
 	return u, nil
 }
