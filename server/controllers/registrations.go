@@ -67,10 +67,10 @@ func RegisterUser(c echo.Context) error {
 
 	req := registrationRequest{}
 	if err := c.Bind(&req); err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, ErrorResponse{err.Error()})
 	}
 	if err := c.Validate(&req); err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, ErrorResponse{err.Error()})
 	}
 	if !isValidUserName(req.Name) {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{"user nameは半角英数、'_'、'.'、'-'のみ使用可能で、3文字以上15文字以下である必要があります"})
