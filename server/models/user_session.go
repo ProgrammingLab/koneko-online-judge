@@ -70,7 +70,7 @@ func CheckLogin(token string) *UserSession {
 	}
 	duration := time.Now().Sub(session.CreatedAt)
 	if lifetimeTicks < duration {
-		db.Delete(session)
+		session.Delete()
 		return nil
 	}
 
@@ -93,7 +93,7 @@ func GetSession(id uint) *UserSession {
 }
 
 func (s *UserSession) Delete() {
-	db.Delete(s)
+	db.Delete(UserSession{}, "id = ?", s.ID)
 	s.TokenDigest = GenerateRandomBase64String(16)
 }
 

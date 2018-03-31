@@ -64,5 +64,5 @@ func (r *JudgeSetResult) Delete() {
 	for _, res := range r.JudgeResults {
 		res.Delete()
 	}
-	db.Delete(r)
+	db.Delete(JudgeSetResult{}, "id = ?", r.ID)
 }

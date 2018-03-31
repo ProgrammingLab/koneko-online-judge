@@ -43,7 +43,7 @@ func GetWhiteEmail(email string) *WhiteEmail {
 }
 
 func DeleteWhiteEmail(id uint) error {
-	return db.Delete(&WhiteEmail{}, "id = ?", id).Error
+	return db.Delete(WhiteEmail{}, "id = ?", id).Error
 }
 
 func (e *WhiteEmail) FetchCreatedBy(email bool) {

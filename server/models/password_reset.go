@@ -62,7 +62,7 @@ func GetPasswordResetToken(token string) *PasswordResetToken {
 		return nil
 	}
 	if PasswordResetTokenLifeTime < time.Now().Sub(t.CreatedAt) {
-		db.Delete(t)
+		db.Delete(PasswordResetToken{}, "id = ?", t.ID)
 		return nil
 	}
 	return t
@@ -75,7 +75,7 @@ func ResetPassword(token, password string) error {
 	}
 
 	t.FetchUser()
-	defer db.Delete(t)
+	defer db.Delete(PasswordResetToken{}, "id = ?", t.ID)
 	if err := t.User.SetPassword(password, true); err != nil {
 		logger.AppLog.Errorf("err %+v", err)
 		return err

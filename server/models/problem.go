@@ -89,7 +89,7 @@ func (p *Problem) Update(request *Problem) {
 	}
 
 	if p.JudgementConfigID != nil {
-		db.Delete(&JudgementConfig{}, "id = ?", *p.JudgementConfigID)
+		db.Delete(JudgementConfig{}, "id = ?", *p.JudgementConfigID)
 	}
 	if request.JudgementConfig != nil {
 		db.Create(request.JudgementConfig)
@@ -195,5 +195,5 @@ func (p *Problem) Delete() {
 		s.DeletePermanently()
 	}
 
-	db.Delete(p)
+	db.Delete(Problem{}, "id = ?", p.ID)
 }

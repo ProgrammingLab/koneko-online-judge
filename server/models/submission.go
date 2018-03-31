@@ -108,5 +108,5 @@ func (s *Submission) Delete() {
 		r.Delete()
 	}
 
-	db.Delete(s)
+	db.Delete(Submission{}, "id = ?", s.ID)
 }

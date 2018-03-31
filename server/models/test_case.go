@@ -53,9 +53,9 @@ func readStringFull(file *zip.File) (*string, error) {
 }
 
 func (c TestCase) Delete() {
-	db.Delete(&c)
+	db.Delete(TestCase{}, "id = ?", c.ID)
 }
 
 func (c TestCase) DeletePermanently() {
-	db.Unscoped().Delete(&c)
+	db.Unscoped().Delete(TestCase{}, "id = ?", c.ID)
 }

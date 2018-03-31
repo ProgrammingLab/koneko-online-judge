@@ -27,5 +27,5 @@ func (r *JudgeResult) FetchTestCase() {
 }
 
 func (r *JudgeResult) Delete() {
-	db.Delete(r)
+	db.Delete(JudgeResult{}, "id = ?", r.ID)
 }

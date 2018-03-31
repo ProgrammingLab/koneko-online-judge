@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
 	"time"
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
@@ -129,7 +128,7 @@ func (s *CaseSet) Delete() {
 		c.Delete()
 	}
 
-	db.Delete(s)
+	db.Delete(CaseSet{}, "id = ?", s.ID)
 }
 
 func (s *CaseSet) DeletePermanently() {
@@ -139,7 +138,7 @@ func (s *CaseSet) DeletePermanently() {
 		c.DeletePermanently()
 	}
 
-	db.Unscoped().Delete(s)
+	db.Unscoped().Delete(CaseSet{}, "id = ?", s.ID)
 }
 
 func (s *CaseSet) FetchTestCases() {

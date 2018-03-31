@@ -9,5 +9,5 @@ type Sample struct {
 }
 
 func (s *Sample) Delete() {
-	db.Delete(s)
+	db.Delete(Sample{}, "id = ?", s.ID)
 }
