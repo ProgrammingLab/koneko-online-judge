@@ -83,7 +83,7 @@ func RegisterUser(c echo.Context) error {
 	}
 
 	token.FetchWhiteEmail()
-	user, err := models.NewUser(req.Name, req.DisplayName, token.WhiteEmail.Email, req.Password)
+	user, err := models.NewUser(req.Name, req.DisplayName, token.WhiteEmail.Email, req.Password, token)
 	switch err {
 	case models.ErrUserNameAlreadyExists:
 		return c.JSON(http.StatusBadRequest, ErrorResponse{"ユーザー名はすでに使われています"})

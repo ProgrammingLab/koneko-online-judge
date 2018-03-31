@@ -6,6 +6,7 @@ import (
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"github.com/gedorinku/koneko-online-judge/server/modules/mail"
+	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -40,7 +41,7 @@ var (
 	ErrEmailAlreadyExists    = errors.New("emailはすでに使用されています")
 )
 
-func NewUser(name, displayName, email, password string) (*User, error) {
+func NewUser(name, displayName, email, password string, token *EmailConfirmation) (*User, error) {
 	u := &User{
 		Name:        name,
 		DisplayName: displayName,
@@ -65,8 +66,16 @@ func NewUser(name, displayName, email, password string) (*User, error) {
 		return nil, err
 	}
 
-	if err := u.SetPassword(password, false); err != nil {
+	if err := u.setPasswordWithinTransaction(tx, password, false); err != nil {
 		tx.Rollback()
+		logger.AppLog.Errorf("error: %+v", err)
+		return nil, err
+	}
+
+	err := tx.Where("id = ?", token.ID).Delete(EmailConfirmation{}).Error
+	if err != nil {
+		tx.Rollback()
+		logger.AppLog.Errorf("error: %+v", err)
 		return nil, err
 	}
 
@@ -124,13 +133,17 @@ func (u *User) IsCorrectPassword(password string) bool {
 }
 
 func (u *User) SetPassword(password string, notification bool) error {
+	return u.setPasswordWithinTransaction(db, password, notification)
+}
+
+func (u *User) setPasswordWithinTransaction(tx *gorm.DB, password string, notification bool) error {
 	d, err := bcrypt.GenerateFromPassword([]byte(password), GetBcryptCost())
 	if err != nil {
 		return err
 	}
 
 	u.PasswordDigest = string(d)
-	err = db.Model(u).Update("password_digest", string(d)).Error
+	err = tx.Model(u).Update("password_digest", string(d)).Error
 	if err != nil {
 		logger.AppLog.Errorf("error: %+v", err)
 		return err

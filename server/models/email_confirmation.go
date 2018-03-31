@@ -70,7 +70,7 @@ func GetEmailConfirmation(token string) *EmailConfirmation {
 		return nil
 	}
 	if time.Now().After(res.CreatedAt.Add(res.LifeTime)) {
-		db.Where("id = ?", res.ID)
+		db.Where("id = ?", res.ID).Delete(EmailConfirmation{})
 		return nil
 	}
 
@@ -79,6 +79,6 @@ func GetEmailConfirmation(token string) *EmailConfirmation {
 
 func (c *EmailConfirmation) FetchWhiteEmail() {
 	res := WhiteEmail{}
-	db.Model(res).Where("id = ?", c.WhiteEmailID).Scan(res)
+	db.Model(res).Where("id = ?", c.WhiteEmailID).Scan(&res)
 	c.WhiteEmail = res
 }
