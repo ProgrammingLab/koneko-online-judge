@@ -6,6 +6,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"github.com/gedorinku/koneko-online-judge/server/models"
 	"github.com/labstack/echo"
 )
@@ -14,6 +15,11 @@ type registrationRequest struct {
 	Name        string `json:"name" validate:"required"`
 	DisplayName string `json:"displayName" validate:"required"`
 	Password    string `json:"password" validate:"required"`
+}
+
+type registrationResponse struct {
+	User  models.User `json:"user"`
+	Token string      `json:"token"`
 }
 
 var (
@@ -84,7 +90,16 @@ func RegisterUser(c echo.Context) error {
 	case models.ErrEmailAlreadyExists:
 		return c.JSON(http.StatusBadRequest, ErrorResponse{"メールアドレスはすでに使われています"})
 	case nil:
-		return c.JSON(http.StatusCreated, user)
+		_, t, err := models.NewSession(user.Email, req.Password)
+		if err != nil {
+			logger.AppLog.Errorf("registration error: %+v", err)
+			return ErrInternalServer
+		}
+		resp := registrationResponse{
+			User:  *user,
+			Token: t,
+		}
+		return c.JSON(http.StatusCreated, resp)
 	default:
 		return c.JSON(http.StatusInternalServerError, ErrInternalServer)
 	}
