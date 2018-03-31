@@ -76,3 +76,9 @@ func GetEmailConfirmation(token string) *EmailConfirmation {
 
 	return res
 }
+
+func (c *EmailConfirmation) FetchWhiteEmail() {
+	res := WhiteEmail{}
+	db.Model(res).Where("id = ?", c.WhiteEmailID).Scan(res)
+	c.WhiteEmail = res
+}

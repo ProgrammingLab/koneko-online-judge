@@ -34,7 +34,45 @@ const (
 <p>お使いのKoneko Online Judgeアカウントのパスワードが変更されましたので、お知らせいたします。</p>`
 )
 
-var ErrUserIDIsZero = errors.New("User IDが0です")
+var (
+	ErrUserIDIsZero          = errors.New("User IDが0です")
+	ErrUserNameAlreadyExists = errors.New("user nameはすでに使用されています")
+	ErrEmailAlreadyExists    = errors.New("emailはすでに使用されています")
+)
+
+func NewUser(name, displayName, email, password string) (*User, error) {
+	u := &User{
+		Name:        name,
+		DisplayName: displayName,
+		Email:       email,
+	}
+
+	tx := db.Begin()
+	nf := tx.Model(User{}).Where("name = ?", name).Limit(1).Scan(&User{}).RecordNotFound()
+	if !nf {
+		tx.Rollback()
+		return nil, ErrUserNameAlreadyExists
+	}
+	nf = tx.Model(User{}).Where("email = ?", email).Limit(1).Scan(&User{}).RecordNotFound()
+	if !nf {
+		tx.Rollback()
+		return nil, ErrEmailAlreadyExists
+	}
+
+	if err := tx.Create(u).Error; err != nil {
+		tx.Rollback()
+		logger.AppLog.Errorf("error: %+v", err)
+		return nil, err
+	}
+
+	if err := u.SetPassword(password, false); err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	tx.Commit()
+	return u, nil
+}
 
 func GetUser(id uint, email bool) *User {
 	user := &User{}
