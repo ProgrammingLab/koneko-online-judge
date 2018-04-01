@@ -31,6 +31,7 @@ func main() {
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
 	e.Use(controllers.CheckLogin)
 
 	conf.Routes(e)
