@@ -24,6 +24,7 @@ func NewWhiteEmail(email string, user *User) *WhiteEmail {
 	}
 	db.Create(e)
 	e.CreatedBy = *user
+	e.CreatedBy.Email = ""
 	return e
 }
 
