@@ -15,7 +15,7 @@ RUN apk --no-cache add bash git mercurial
 RUN go get github.com/golang/dep/cmd/dep
 COPY . /go/src/github.com/gedorinku/koneko-online-judge/server
 RUN cd /go/src/github.com/gedorinku/koneko-online-judge/server/ \
-    && dep ensure \
+    && dep ensure -vendor-only \
     && go build main.go
 
 WORKDIR /go/src/github.com/gedorinku/koneko-online-judge/server/
