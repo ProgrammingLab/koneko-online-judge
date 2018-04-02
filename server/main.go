@@ -5,7 +5,6 @@ import (
 	"github.com/gedorinku/koneko-online-judge/server/controllers"
 	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"github.com/gedorinku/koneko-online-judge/server/models"
-	"github.com/gedorinku/koneko-online-judge/server/modules/jobs"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"
@@ -25,7 +24,6 @@ func main() {
 	e.Logger.SetLevel(log.DEBUG)
 	logger.AppLog = e.Logger
 	models.InitDB()
-	jobs.InitRunner()
 
 	e.Validator = &CustomValidator{validator: validator.New()}
 
@@ -35,6 +33,9 @@ func main() {
 	e.Use(controllers.CheckLogin)
 
 	conf.Routes(e)
+
+	models.InitJobs()
+	defer models.StopPool()
 
 	e.Logger.Fatal(e.Start(":9000"))
 }

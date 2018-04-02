@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
-	"github.com/gedorinku/koneko-online-judge/server/modules/jobs"
 	"github.com/gedorinku/koneko-online-judge/server/modules/workers"
+	"github.com/gocraft/work"
 )
 
 type judgementJob struct {
@@ -21,11 +21,12 @@ const (
 	compileMemoryLimit = 256 * 1024 * 1024
 )
 
-func judge(submissionID uint) {
-	jobs.Now(&judgementJob{
-		submissionID: submissionID,
-		compiled:     nil,
-	})
+func judge(submissionID uint) error {
+	_, err := enqueuer.Enqueue(judgementJobName, work.Q{submissionJobArgKey: submissionID})
+	if err != nil {
+		logger.AppLog.Errorf("job error: %+v", err)
+	}
+	return err
 }
 
 func compile(sourceCode string, language *Language) (*workers.Worker, *workers.ExecResult) {

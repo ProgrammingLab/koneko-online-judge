@@ -52,9 +52,8 @@ func Submit(submission *Submission) error {
 	}
 
 	initJudgeSetResults(submission)
-	judge(submission.ID)
 
-	return nil
+	return judge(submission.ID)
 }
 
 func GetSubmission(submissionID uint) *Submission {
