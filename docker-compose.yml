@@ -36,6 +36,15 @@ services:
     ports:
       - "33060:3306"
 
+  redis:
+    image: redis:4.0.9-alpine
+    hostname: redis
+    restart: always
+    logging:
+      options:
+        max-size: 5m
+        max-file: "10"
+
 volumes:
   db-data:
     driver: local
