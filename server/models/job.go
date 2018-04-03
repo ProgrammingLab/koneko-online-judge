@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/garyburd/redigo/redis"
+	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"github.com/gocraft/work"
 )
 
@@ -22,8 +23,9 @@ var (
 			return redis.Dial("tcp", ":6379")
 		},
 	}
-	enqueuer   = work.NewEnqueuer(redisNamespace, redisPool)
-	workerPool = work.NewWorkerPool(jobContext{}, 1, redisNamespace, redisPool)
+	enqueuer     = work.NewEnqueuer(redisNamespace, redisPool)
+	workerPool   = work.NewWorkerPool(jobContext{}, 1, redisNamespace, redisPool)
+	workerClient = work.NewClient(redisNamespace, redisPool)
 )
 
 func InitJobs() {
@@ -33,6 +35,14 @@ func InitJobs() {
 
 func StopPool() {
 	workerPool.Stop()
+}
+
+func GetWorkers() ([]*work.WorkerObservation, error) {
+	w, err := workerClient.WorkerObservations()
+	if err != nil {
+		logger.AppLog.Errorf("error: %+v", err)
+	}
+	return w, err
 }
 
 func (c *jobContext) Judge(job *work.Job) error {

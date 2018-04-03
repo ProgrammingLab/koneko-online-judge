@@ -46,4 +46,6 @@ func Routes(e *echo.Echo) {
 	e.POST("/registrations", controllers.StartRegistration)
 	e.GET("/registrations/:token", controllers.VerifyEmailConfirmationToken)
 	e.POST("/registrations/:token", controllers.RegisterUser)
+
+	e.GET("/workers", controllers.GetWorkerStatus)
 }
