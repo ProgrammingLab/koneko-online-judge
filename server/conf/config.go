@@ -29,16 +29,16 @@ type ClientConfig struct {
 	RegistrationPath  string `toml:"registrationPath"`
 }
 
-var config Config
+var cfg = &Config{}
 
 func LoadConfig() error {
-	_, err := toml.DecodeFile("koneko.toml", &config)
+	_, err := toml.DecodeFile("koneko.toml", cfg)
 	if err != nil {
 		logger.AppLog.Errorf("load config error: %+v", err)
 	}
 	return err
 }
 
-func GetConfig() Config {
-	return config
+func GetConfig() *Config {
+	return cfg
 }

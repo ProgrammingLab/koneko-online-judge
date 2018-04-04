@@ -1,8 +1,9 @@
 package models
 
 import (
-	"os"
+	"fmt"
 
+	"github.com/gedorinku/koneko-online-judge/server/conf"
 	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -12,8 +13,13 @@ import (
 var db *gorm.DB
 
 func InitDB() {
-	driver := os.Getenv("KOJ_DB_DRIVER")
-	spec := os.Getenv("KOJ_DB_SPEC")
+	const driver = "mysql"
+	cfg := conf.GetConfig().Koneko
+	user := cfg.DBUser
+	pass := cfg.DBPassword
+	host := cfg.DBHost
+	name := cfg.DBName
+	spec := fmt.Sprintf("%v:%v@tcp(%v)/%v?charset=utf8&parseTime=True&loc=Local", user, pass, host, name)
 
 	err := connectDB(driver, spec)
 	if err != nil {

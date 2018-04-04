@@ -38,7 +38,7 @@ func main() {
 	e.Use(middleware.CORS())
 	e.Use(controllers.CheckLogin)
 
-	conf.Routes(e)
+	controllers.Routes(e)
 
 	models.InitJobs()
 	defer models.StopPool()
