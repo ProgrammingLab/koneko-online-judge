@@ -7,12 +7,11 @@
 ## Documents
 [GitHub Wiki](https://github.com/gedorinku/koneko-online-judge/wiki)
 
-## Usage(with Docker Compose)
+## Config
+こねこの設定ファイルは、`./server/koneko.toml`です。
+`./server/koneko.sample.toml`を`./server/koneko.toml`にリネームしていい感じに設定してください。
 
-### Set environment variable
-```
-export KOJ_DB_PASSWORD="password"
-```
+## Usage(with Docker Compose)
 
 ### Start the backend server
 ```
@@ -33,8 +32,6 @@ dep ensure
 
 ### Set environment variables
 ```
-export KOJ_DB_DRIVER="mysql"
-export KOJ_DB_SPEC="user:password@/dbName?charset=utf8&parseTime=True&loc=Local"
 # DOCKER_API_VERSIONにはインストールされているバージョンを指定
 # 指定しないと'client version 1.36 is too new.'とか怒られる
 export DOCKER_API_VERSION="1.35"
