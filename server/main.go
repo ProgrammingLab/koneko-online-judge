@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/gedorinku/koneko-online-judge/server/conf"
 	"github.com/gedorinku/koneko-online-judge/server/controllers"
 	"github.com/gedorinku/koneko-online-judge/server/logger"
@@ -23,6 +25,10 @@ func main() {
 	e := echo.New()
 	e.Logger.SetLevel(log.DEBUG)
 	logger.AppLog = e.Logger
+
+	if err := conf.LoadConfig(); err != nil {
+		os.Exit(1)
+	}
 	models.InitDB()
 
 	e.Validator = &CustomValidator{validator: validator.New()}
