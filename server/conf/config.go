@@ -7,6 +7,7 @@ import (
 
 type Config struct {
 	Koneko    KoneConfig      `toml:"Koneko"`
+	SMTP      SMTPConfig      `toml:"SMTP"`
 	Judgement JudgementConfig `toml:"Judgement"`
 	Client    ClientConfig    `toml:"Client"`
 }
@@ -17,6 +18,14 @@ type KoneConfig struct {
 	DBUser     string `toml:"dbUser"`
 	DBPassword string `toml:"dbPassword"`
 	RedisHost  string `toml:"redisHost"`
+}
+
+type SMTPConfig struct {
+	Host     string `toml:"host"`
+	Port     int    `toml:"port"`
+	User     string `toml:"user"`
+	Password string `toml:"password"`
+	From     string `toml:"from"`
 }
 
 type JudgementConfig struct {

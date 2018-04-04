@@ -5,6 +5,13 @@ dbUser = "root"
 dbPassword = "password"
 redisHost = "redis:6379"
 
+[SMTP]
+host = "smtp"
+port = 1025
+user = "user"
+password = "password"
+from = "hoge@example.com"
+
 [Judgement]
 # 同時に実行されるジャッジジョブの数
 concurrently = 1
