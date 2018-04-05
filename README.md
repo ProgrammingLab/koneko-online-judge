@@ -13,6 +13,11 @@
 
 ## Usage(with Docker Compose)
 
+### Set environment variable
+```
+export KOJ_DB_PASSWORD="password"
+```
+
 ### Start the backend server
 ```
 go get github.com/gedorinku/koneko-online-judge/...
