@@ -1,18 +1,19 @@
 package models
 
 import (
+	"crypto/rand"
 	"errors"
-	"time"
-
+	"math"
+	"math/big"
 	"strconv"
-
 	"strings"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserSession struct {
-	ID          uint `gorm:"primary_key"`
+	ID          uint   `gorm:"primary_key"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	User        User
@@ -20,10 +21,15 @@ type UserSession struct {
 	TokenDigest string `gorm:"not null"`
 }
 
+const retryLimit = 100
+
 var (
-	ErrLogin = errors.New("incorrect username or password")
+	ErrLogin               = errors.New("incorrect username or password")
+	ErrSessionCreateFailed = errors.New("retry limit exceeded")
+	errSessionIDDuplicated = errors.New("session id is duplicated")
 
 	lifetimeTicks = time.Duration(24 * time.Hour)
+	maxID         = big.NewInt(math.MaxUint32 - 1)
 )
 
 // emailとpasswordが正しければ新しいUserSessionとTokenを返す
@@ -42,17 +48,35 @@ func NewSession(email, password string) (*UserSession, string, error) {
 	}
 
 	session := &UserSession{
-		User:        *user,
+		UserID:      user.ID,
 		TokenDigest: string(digest),
 	}
-	err = db.Create(session).Error
-	if err != nil {
-		return nil, "", err
+	for i := 0; i < retryLimit; i++ {
+		err := tryCreateSession(session)
+		if err == nil {
+			break
+		}
 	}
 
+	session.User = *user
 	token := strconv.Itoa(int(session.ID)) + "_" + string(secret)
 
 	return session, token, nil
+}
+
+func tryCreateSession(session *UserSession) error {
+	bn, err := rand.Int(rand.Reader, maxID)
+	if err != nil {
+		return err
+	}
+	n := uint(bn.Int64()) + 1
+	nf := db.Table("user_sessions").Where("id = ?", n).Scan(&UserSession{}).RecordNotFound()
+	if !nf {
+		return errSessionIDDuplicated
+	}
+
+	session.ID = n
+	return db.Create(session).Error
 }
 
 func CheckLogin(token string) *UserSession {
