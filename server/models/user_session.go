@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -51,11 +52,9 @@ func NewSession(email, password string) (*UserSession, string, error) {
 		UserID:      user.ID,
 		TokenDigest: string(digest),
 	}
-	for i := 0; i < retryLimit; i++ {
-		err := tryCreateSession(session)
-		if err == nil {
-			break
-		}
+	if err := tryCreateSession(session); err != nil {
+		logger.AppLog.Errorf("error %+v", err)
+		return nil, "", err
 	}
 
 	session.User = *user
@@ -65,18 +64,22 @@ func NewSession(email, password string) (*UserSession, string, error) {
 }
 
 func tryCreateSession(session *UserSession) error {
-	bn, err := rand.Int(rand.Reader, maxID)
-	if err != nil {
-		return err
-	}
-	n := uint(bn.Int64()) + 1
-	nf := db.Table("user_sessions").Where("id = ?", n).Scan(&UserSession{}).RecordNotFound()
-	if !nf {
-		return errSessionIDDuplicated
+	for i := 0; i < retryLimit; i++ {
+		bn, err := rand.Int(rand.Reader, maxID)
+		if err != nil {
+			return err
+		}
+		n := uint(bn.Int64()) + 1
+		nf := db.Table("user_sessions").Where("id = ?", n).Scan(&UserSession{}).RecordNotFound()
+		if !nf {
+			continue
+		}
+
+		session.ID = n
+		return db.Create(session).Error
 	}
 
-	session.ID = n
-	return db.Create(session).Error
+	return ErrSessionCreateFailed
 }
 
 func CheckLogin(token string) *UserSession {
