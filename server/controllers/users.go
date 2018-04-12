@@ -10,7 +10,10 @@ import (
 var userNotFound = ErrorResponse{"ユーザーが見つかりません"}
 
 func GetMyUser(c echo.Context) error {
-	s, _ := c.Get("session").(models.UserSession)
+	s := getSession(c)
+	if s == nil {
+		return echo.ErrNotFound
+	}
 	s.FetchUser()
 	return c.JSON(http.StatusOK, s.User)
 }
