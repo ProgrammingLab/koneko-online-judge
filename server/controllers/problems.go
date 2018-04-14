@@ -181,14 +181,18 @@ func SetTestCasePoint(c echo.Context) error {
 }
 
 func RejudgeProblem(c echo.Context) error {
-	_, err := getAdminSession(c)
-	if err != nil {
-		return err
+	s := getSession(c)
+	if s == nil {
+		return echo.ErrUnauthorized
 	}
 
 	p := getProblemFromContext(c)
 	if p == nil {
 		return echo.ErrNotFound
+	}
+
+	if !p.CanEdit(s) {
+		return echo.ErrForbidden
 	}
 
 	if err := p.Rejudge(); err != nil {

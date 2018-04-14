@@ -61,14 +61,19 @@ func GetSubmissions(c echo.Context) error {
 }
 
 func Rejudge(c echo.Context) error {
-	_, err := getAdminSession(c)
-	if err != nil {
-		return err
+	s := getSession(c)
+	if s == nil {
+		return echo.ErrUnauthorized
 	}
 
 	submission := getSubmissionFromContext(c)
 	if submission == nil {
 		return echo.ErrNotFound
+	}
+
+	submission.FetchProblem()
+	if !submission.Problem.CanEdit(s) {
+		return echo.ErrForbidden
 	}
 
 	if err := submission.Rejudge(); err != nil {
