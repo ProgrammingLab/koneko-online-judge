@@ -29,3 +29,8 @@ func (r *JudgeResult) FetchTestCase() {
 func (r *JudgeResult) Delete() {
 	db.Delete(JudgeResult{}, "id = ?", r.ID)
 }
+
+func (r *JudgeResult) setJudgementStatus(status JudgementStatus) error {
+	r.Status = status
+	return db.Model(JudgeResult{}).Where("id = ?", r.ID).Update("status", r.Status).Error
+}

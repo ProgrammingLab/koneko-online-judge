@@ -23,6 +23,8 @@ func Routes(e *echo.Echo) {
 	e.POST("/problems/:id/submissions", Submit)
 	e.GET("/problems/:id/submissions", GetSubmissions)
 
+	e.POST("/submissions/:id/rejudge", Rejudge)
+
 	e.GET("/languages", GetLanguages)
 
 	e.POST("/contests", NewContest)

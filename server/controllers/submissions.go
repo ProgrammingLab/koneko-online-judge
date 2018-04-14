@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gedorinku/koneko-online-judge/server/models"
 	"github.com/labstack/echo"
@@ -59,6 +60,24 @@ func GetSubmissions(c echo.Context) error {
 	return c.JSON(http.StatusOK, problem.Submissions)
 }
 
+func Rejudge(c echo.Context) error {
+	_, err := getAdminSession(c)
+	if err != nil {
+		return err
+	}
+
+	submission := getSubmissionFromContext(c)
+	if submission == nil {
+		return echo.ErrNotFound
+	}
+
+	if err := submission.Rejudge(); err != nil {
+		return ErrInternalServer
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
 func fetchSubmission(out *models.Submission, s *models.UserSession) {
 	out.FetchUser()
 	out.User.Email = ""
@@ -66,4 +85,13 @@ func fetchSubmission(out *models.Submission, s *models.UserSession) {
 	out.Problem.ContestID = new(uint)
 	out.FetchJudgeSetResultsDeeply(true)
 	out.FetchLanguage()
+}
+
+func getSubmissionFromContext(c echo.Context) *models.Submission {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return nil
+	}
+
+	return models.GetSubmission(uint(id))
 }

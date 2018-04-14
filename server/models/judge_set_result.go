@@ -2,6 +2,8 @@ package models
 
 import (
 	"time"
+
+	"github.com/gedorinku/koneko-online-judge/server/logger"
 )
 
 type JudgeSetResult struct {
@@ -65,4 +67,24 @@ func (r *JudgeSetResult) Delete() {
 		res.Delete()
 	}
 	db.Delete(JudgeSetResult{}, "id = ?", r.ID)
+}
+
+func (r *JudgeSetResult) setJudgementStatus(status JudgementStatus) error {
+	r.Status = status
+	err := db.Model(JudgeSetResult{}).Where("id = ?", r.ID).Update("status", r.Status).Error
+	if err != nil {
+		logger.AppLog.Errorf("error: %+v", err)
+		return err
+	}
+
+	r.FetchJudgeResults(false)
+	for i := range r.JudgeResults {
+		err := r.JudgeResults[i].setJudgementStatus(r.Status)
+		if err != nil {
+			logger.AppLog.Errorf("error: %+v", err)
+			return err
+		}
+	}
+
+	return nil
 }

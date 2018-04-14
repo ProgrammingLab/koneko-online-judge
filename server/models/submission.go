@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"github.com/pkg/errors"
 )
 
@@ -101,6 +102,11 @@ func (s *Submission) FetchJudgeSetResultsDeeply(sorted bool) {
 	}
 }
 
+func (s *Submission) Rejudge() error {
+	s.resetJudgeSetResults()
+	return judge(s.ID)
+}
+
 func (s *Submission) Delete() {
 	s.FetchJudgeSetResults(false)
 	for _, r := range s.JudgeSetResults {
@@ -108,4 +114,24 @@ func (s *Submission) Delete() {
 	}
 
 	db.Delete(Submission{}, "id = ?", s.ID)
+}
+
+func (s *Submission) resetJudgeSetResults() error {
+	s.Status = StatusInQueue
+	err := db.Model(Submission{}).Where("id = ?", s.ID).Update("status", s.Status).Error
+	if err != nil {
+		logger.AppLog.Errorf("error: %+v", err)
+		return err
+	}
+
+	s.FetchJudgeSetResults(false)
+	for i := range s.JudgeSetResults {
+		err := s.JudgeSetResults[i].setJudgementStatus(s.Status)
+		if err != nil {
+			logger.AppLog.Errorf("error: %+v", err)
+			return err
+		}
+	}
+
+	return nil
 }
