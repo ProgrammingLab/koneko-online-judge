@@ -180,6 +180,24 @@ func SetTestCasePoint(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+func RejudgeProblem(c echo.Context) error {
+	_, err := getAdminSession(c)
+	if err != nil {
+		return err
+	}
+
+	p := getProblemFromContext(c)
+	if p == nil {
+		return echo.ErrNotFound
+	}
+
+	if err := p.Rejudge(); err != nil {
+		return ErrInternalServer
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
 func fetchProblem(out *models.Problem, s *models.UserSession) {
 	out.FetchWriter()
 	out.FetchSamples()

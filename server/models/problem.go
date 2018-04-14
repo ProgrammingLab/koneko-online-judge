@@ -2,6 +2,8 @@ package models
 
 import (
 	"time"
+
+	"github.com/gedorinku/koneko-online-judge/server/logger"
 )
 
 type Problem struct {
@@ -109,6 +111,18 @@ func (p *Problem) ReplaceTestCases(archive []byte) error {
 
 	_, err := newCaseSets(p, archive)
 	return err
+}
+
+func (p *Problem) Rejudge() error {
+	p.FetchSubmissions()
+	for i := range p.Submissions {
+		if err := p.Submissions[i].Rejudge(); err != nil {
+			logger.AppLog.Errorf("error: %+v", err)
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (p *Problem) FetchSamples() {

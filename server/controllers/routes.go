@@ -19,6 +19,7 @@ func Routes(e *echo.Echo) {
 	e.GET("/problems/:id", GetProblem)
 	e.POST("/problems/:id/cases/upload", UpdateCases)
 	e.PUT("/problems/:id/cases", SetTestCasePoint)
+	e.POST("/problems/:id/rejudge", RejudgeProblem)
 
 	e.POST("/problems/:id/submissions", Submit)
 	e.GET("/problems/:id/submissions", GetSubmissions)
