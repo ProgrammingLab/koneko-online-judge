@@ -24,7 +24,7 @@ type Submission struct {
 	ExecTime        time.Duration    `json:"execTime"`
 	MemoryUsage     int64            `json:"memoryUsage"`
 	CodeBytes       uint             `json:"codeBytes"`
-	JudgeSetResults []JudgeSetResult `json:"judgeSetResults"`
+	JudgeSetResults []JudgeSetResult `json:"judgeSetResults,omitempty"`
 }
 
 type JudgementStatus int
@@ -100,6 +100,16 @@ func (s *Submission) FetchJudgeSetResultsDeeply(sorted bool) {
 	for i := range s.JudgeSetResults {
 		s.JudgeSetResults[i].FetchJudgeResults(sorted)
 	}
+}
+
+func (s *Submission) CanView(session *UserSession) bool {
+	s.FetchProblem()
+	if s.Problem.ContestID == nil || s.Problem.CanEdit(session) {
+		return true
+	}
+
+	s.Problem.FetchContest()
+	return s.Problem.CanView(session) && s.Problem.Contest.Started() && !s.Problem.Contest.IsOpen(time.Now())
 }
 
 func (s *Submission) Rejudge() error {

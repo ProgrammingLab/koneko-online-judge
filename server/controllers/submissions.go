@@ -60,6 +60,31 @@ func GetSubmissions(c echo.Context) error {
 	return c.JSON(http.StatusOK, problem.Submissions)
 }
 
+func GetSubmission(c echo.Context) error {
+	submission := getSubmissionFromContext(c)
+	if submission == nil {
+		return echo.ErrNotFound
+	}
+
+	s := getSession(c)
+	if !submission.CanView(s) {
+		return echo.ErrNotFound
+	}
+
+	cases := c.QueryParam("cases")
+	switch {
+	case cases == "true" || cases == "":
+		submission.FetchJudgeSetResultsDeeply(true)
+	case cases == "false":
+		submission.FetchLanguage()
+		submission.FetchUser()
+	default:
+		return c.JSON(http.StatusBadRequest, ErrorResponse{"cases"})
+	}
+
+	return c.JSON(http.StatusOK, submission)
+}
+
 func Rejudge(c echo.Context) error {
 	s := getSession(c)
 	if s == nil {
