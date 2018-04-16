@@ -25,9 +25,9 @@ var (
 			return redis.Dial("tcp", cfg.RedisHost)
 		},
 	}
-	enqueuer          = work.NewEnqueuer(redisNamespace, redisPool)
+	enqueuer     = work.NewEnqueuer(redisNamespace, redisPool)
 	workerPool   *work.WorkerPool
-	workerClient  = work.NewClient(redisNamespace, redisPool)
+	workerClient = work.NewClient(redisNamespace, redisPool)
 )
 
 func InitJobs() {

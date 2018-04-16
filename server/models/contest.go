@@ -1,9 +1,8 @@
 package models
 
 import (
-	"time"
-
 	"sort"
+	"time"
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"github.com/jinzhu/gorm"

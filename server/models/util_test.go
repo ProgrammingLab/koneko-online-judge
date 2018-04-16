@@ -2,11 +2,9 @@ package models
 
 import (
 	"encoding/base64"
+	"reflect"
 	"regexp"
 	"testing"
-
-	"reflect"
-
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
