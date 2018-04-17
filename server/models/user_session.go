@@ -112,7 +112,7 @@ func CheckLogin(token string) *UserSession {
 
 func GetSession(id uint) *UserSession {
 	s := &UserSession{}
-	nf := db.Where(id).First(s).RecordNotFound()
+	nf := db.Model(s).Where(id).Scan(s).RecordNotFound()
 	if nf {
 		return nil
 	}
