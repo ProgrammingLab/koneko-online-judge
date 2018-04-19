@@ -8,7 +8,7 @@ go:
   - "1.9"
 
 before_install:
-  - mysql -e 'CREATE DATABASE koj_test CHARACTER SET utf8;'
+  - mysql -e 'CREATE DATABASE koj_test CHARACTER SET utf8mb4;'
 
 install:
   - ./setup.sh
