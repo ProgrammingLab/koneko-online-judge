@@ -6,7 +6,7 @@ services:
     command: ["./wait-for-it.sh", "mysql:3306", "--", "./run.sh"]
     environment:
       KOJ_DB_DRIVER: "mysql"
-      KOJ_DB_SPEC: "root:${KOJ_DB_PASSWORD}@tcp(mysql:3306)/koj?charset=utf8&parseTime=True&loc=Local"
+      KOJ_DB_SPEC: "root:${KOJ_DB_PASSWORD}@tcp(mysql:3306)/koj?charset=utf8mb4&parseTime=True&loc=Local"
       DOCKER_API_VERSION: "1.35"
     depends_on:
       - mysql

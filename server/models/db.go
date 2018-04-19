@@ -19,7 +19,7 @@ func InitDB() {
 	pass := cfg.DBPassword
 	host := cfg.DBHost
 	name := cfg.DBName
-	spec := fmt.Sprintf("%v:%v@tcp(%v)/%v?charset=utf8&parseTime=True&loc=Local", user, pass, host, name)
+	spec := fmt.Sprintf("%v:%v@tcp(%v)/%v?charset=utf8mb4&parseTime=True&loc=Local", user, pass, host, name)
 
 	err := connectDB(driver, spec)
 	if err != nil {
