@@ -42,58 +42,62 @@ func connectDB(driver, spec string) error {
 	return err
 }
 
+func utf8mb4() *gorm.DB {
+	return db.Set("gorm:table_options", "CHARACTER SET utf8mb4")
+}
+
 func createTables() {
 	// リファレンス通りにやってもforeign keyにならなかったので、自分でAddForeignKeyしてる
-	db.AutoMigrate(&User{})
-	db.AutoMigrate(&UserSession{})
+	utf8mb4().AutoMigrate(&User{})
+	utf8mb4().AutoMigrate(&UserSession{})
 	db.Model(&UserSession{}).AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
 
-	db.AutoMigrate(&JudgementConfig{})
+	utf8mb4().AutoMigrate(&JudgementConfig{})
 
-	db.AutoMigrate(&Problem{})
+	utf8mb4().AutoMigrate(&Problem{})
 	db.Model(&Problem{}).AddForeignKey("writer_id", "users(id)", "RESTRICT", "RESTRICT")
 	db.Model(&Problem{}).AddForeignKey("judgement_config_id", "judgement_configs(id)", "RESTRICT", "RESTRICT")
-	db.AutoMigrate(&Sample{})
+	utf8mb4().AutoMigrate(&Sample{})
 	db.Model(&Sample{}).AddForeignKey("problem_id", "problems(id)", "RESTRICT", "RESTRICT")
 
-	db.AutoMigrate(&CaseSet{})
+	utf8mb4().AutoMigrate(&CaseSet{})
 	db.Model(&CaseSet{}).AddForeignKey("problem_id", "problems(id)", "RESTRICT", "RESTRICT")
-	db.AutoMigrate(&TestCase{})
+	utf8mb4().AutoMigrate(&TestCase{})
 	db.Model(&TestCase{}).AddForeignKey("case_set_id", "case_sets(id)", "RESTRICT", "RESTRICT")
 
-	db.AutoMigrate(&Language{})
-	db.AutoMigrate(&Submission{})
+	utf8mb4().AutoMigrate(&Language{})
+	utf8mb4().AutoMigrate(&Submission{})
 	db.Model(&Submission{}).AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
 	db.Model(&Submission{}).AddForeignKey("language_id", "languages(id)", "RESTRICT", "RESTRICT")
 	db.Model(&Submission{}).AddForeignKey("problem_id", "problems(id)", "RESTRICT", "RESTRICT")
 	db.Model(&JudgementConfig{}).AddForeignKey("language_id", "languages(id)", "RESTRICT", "RESTRICT")
 
-	db.AutoMigrate(&JudgeSetResult{})
-	db.AutoMigrate(&JudgeResult{})
+	utf8mb4().AutoMigrate(&JudgeSetResult{})
+	utf8mb4().AutoMigrate(&JudgeResult{})
 	db.Model(&JudgeSetResult{}).AddForeignKey("submission_id", "submissions(id)", "RESTRICT", "RESTRICT")
 	db.Model(&JudgeSetResult{}).AddForeignKey("case_set_id", "case_sets(id)", "RESTRICT", "RESTRICT")
 	db.Model(&JudgeResult{}).AddForeignKey("judge_set_result_id", "judge_set_results(id)", "RESTRICT", "RESTRICT")
 	db.Model(&JudgeResult{}).AddForeignKey("test_case_id", "test_cases(id)", "RESTRICT", "RESTRICT")
 
-	db.AutoMigrate(&Contest{})
+	utf8mb4().AutoMigrate(&Contest{})
 	db.Model(&Problem{}).AddForeignKey("contest_id", "contests(id)", "RESTRICT", "RESTRICT")
 	db.Table("contests_writers").AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
 	db.Table("contests_writers").AddForeignKey("contest_id", "contests(id)", "RESTRICT", "RESTRICT")
 	db.Table("contests_participants").AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
 	db.Table("contests_participants").AddForeignKey("contest_id", "contests(id)", "RESTRICT", "RESTRICT")
 
-	db.AutoMigrate(&Score{})
+	utf8mb4().AutoMigrate(&Score{})
 	db.Model(&Score{}).AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
 	db.Model(&Score{}).AddForeignKey("contest_id", "contests(id)", "RESTRICT", "RESTRICT")
 
-	db.AutoMigrate(&ScoreDetail{})
+	utf8mb4().AutoMigrate(&ScoreDetail{})
 	db.Model(&ScoreDetail{}).AddForeignKey("score_id", "scores(id)", "RESTRICT", "RESTRICT")
 	db.Model(&ScoreDetail{}).AddForeignKey("problem_id", "problems(id)", "RESTRICT", "RESTRICT")
 
 	db.Set("gorm:table_options", "COLLATE utf8_bin").AutoMigrate(&PasswordResetToken{})
 	db.Model(&PasswordResetToken{}).AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
 
-	db.AutoMigrate(&WhiteEmail{})
+	utf8mb4().AutoMigrate(&WhiteEmail{})
 	db.Model(&WhiteEmail{}).AddForeignKey("created_by_id", "users(id)", "RESTRICT", "RESTRICT")
 
 	db.Set("gorm:table_options", "COLLATE utf8_bin").AutoMigrate(&EmailConfirmation{})
