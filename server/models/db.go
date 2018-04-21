@@ -90,13 +90,13 @@ func createTables() {
 	db.Model(&ScoreDetail{}).AddForeignKey("score_id", "scores(id)", "RESTRICT", "RESTRICT")
 	db.Model(&ScoreDetail{}).AddForeignKey("problem_id", "problems(id)", "RESTRICT", "RESTRICT")
 
-	db.AutoMigrate(&PasswordResetToken{})
+	db.Set("gorm:table_options", "COLLATE utf8_bin").AutoMigrate(&PasswordResetToken{})
 	db.Model(&PasswordResetToken{}).AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
 
 	db.AutoMigrate(&WhiteEmail{})
 	db.Model(&WhiteEmail{}).AddForeignKey("created_by_id", "users(id)", "RESTRICT", "RESTRICT")
 
-	db.AutoMigrate(&EmailConfirmation{})
+	db.Set("gorm:table_options", "COLLATE utf8_bin").AutoMigrate(&EmailConfirmation{})
 	db.Model(&EmailConfirmation{}).AddForeignKey("white_email_id", "white_emails(id)", "RESTRICT", "RESTRICT")
 }
 
