@@ -79,6 +79,7 @@ func GetContestDeeply(id uint) *Contest {
 	}
 	contest.FetchWriters()
 	contest.FetchParticipants()
+	contest.FetchProblems()
 	return contest
 }
 
