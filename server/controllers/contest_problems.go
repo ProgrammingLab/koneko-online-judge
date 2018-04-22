@@ -27,7 +27,7 @@ func NewContestProblem(c echo.Context) error {
 func GetContestProblems(c echo.Context) error {
 	s := getSession(c)
 	if s == nil {
-		return nil
+		return echo.ErrUnauthorized
 	}
 
 	contest := getContestFromContext(c)
