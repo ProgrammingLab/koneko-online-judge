@@ -23,7 +23,7 @@ func TestNewContest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if c := GetContestDeeply(contest.ID); !deepEqualContest(*contest, *c) {
+	if c := GetContestDeeply(contest.ID, nil); !deepEqualContest(*contest, *c) {
 		t.Fatalf("DeepEqual error: GetContestDeeply %+v %+v", contest, c)
 	}
 

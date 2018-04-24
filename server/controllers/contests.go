@@ -44,12 +44,13 @@ func NewContest(c echo.Context) error {
 }
 
 func GetContest(c echo.Context) error {
+	s := getSession(c)
 	id, err := getContestIDFromContext(c)
 	if err != nil {
 		return echo.ErrNotFound
 	}
 
-	contest := models.GetContestDeeply(uint(id))
+	contest := models.GetContestDeeply(uint(id), s)
 	if contest == nil {
 		return echo.ErrNotFound
 	}
@@ -89,7 +90,7 @@ func UpdateContest(c echo.Context) error {
 		}
 	}
 
-	res := models.GetContestDeeply(contest.ID)
+	res := models.GetContestDeeply(contest.ID, s)
 
 	return c.JSON(http.StatusOK, res)
 }

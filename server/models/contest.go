@@ -71,7 +71,7 @@ func GetContest(id uint) *Contest {
 	return contest
 }
 
-func GetContestDeeply(id uint) *Contest {
+func GetContestDeeply(id uint, session *UserSession) *Contest {
 	contest := &Contest{}
 	notFound := db.Where(id).First(contest).RecordNotFound()
 	if notFound {
@@ -79,7 +79,9 @@ func GetContestDeeply(id uint) *Contest {
 	}
 	contest.FetchWriters()
 	contest.FetchParticipants()
-	contest.FetchProblems()
+	if contest.CanViewProblems(session) {
+		contest.FetchProblems()
+	}
 	return contest
 }
 
