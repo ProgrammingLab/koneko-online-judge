@@ -11,8 +11,8 @@ import (
 )
 
 type contestRequest struct {
-	Title        string      `json:"title"`
-	Description  string      `json:"description"`
+	Title        string      `json:"title" validate:"required,max=128"`
+	Description  string      `json:"description" validate:"max=65535"`
 	StartAt      time.Time   `json:"startAt"`
 	EndAt        time.Time   `json:"endAt"`
 	Writers      []idRequest `json:"writers"`
