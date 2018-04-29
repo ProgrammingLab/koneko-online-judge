@@ -102,6 +102,11 @@ func createTables() {
 
 	db.Set("gorm:table_options", "COLLATE utf8_bin").AutoMigrate(&EmailConfirmation{})
 	db.Model(&EmailConfirmation{}).AddForeignKey("white_email_id", "white_emails(id)", "RESTRICT", "RESTRICT")
+
+	utf8mb4().AutoMigrate(&ContestJudgementStatus{})
+	db.Model(&ContestJudgementStatus{}).AddForeignKey("contest_id", "contests(id)", "CASCADE", "CASCADE")
+	db.Model(&ContestJudgementStatus{}).AddForeignKey("user_id", "users(id)", "CASCADE", "CASCADE")
+	db.Model(&ContestJudgementStatus{}).AddForeignKey("problem_id", "problems(id)", "CASCADE", "CASCADE")
 }
 
 func seedLanguages() {
