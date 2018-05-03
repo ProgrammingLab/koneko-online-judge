@@ -149,7 +149,11 @@ func GetContestJudgeStatuses(c echo.Context) error {
 		return echo.ErrNotFound
 	}
 
-	return nil
+	res, err := models.GetContestJudgementStatuses(contest.ID, s.UserID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrInternalServer)
+	}
+	return c.JSON(http.StatusOK, res)
 }
 
 func toContest(request *contestRequest) *models.Contest {

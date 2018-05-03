@@ -52,6 +52,8 @@ func Submit(submission *Submission) error {
 		return errors.New("something wrong")
 	}
 
+	submission.FetchProblem()
+	onUpdateJudgementStatuses(submission.Problem.ContestID, *submission)
 	initJudgeSetResults(submission)
 
 	return judge(submission.ID)
@@ -117,6 +119,22 @@ func (s *Submission) Rejudge() error {
 	return judge(s.ID)
 }
 
+func (s *Submission) SetStatus(status JudgementStatus) error {
+	s.Status = status
+	err := db.Model(Submission{}).Where("id = ?", s.ID).Update("status", s.Status).Error
+	if err != nil {
+		logger.AppLog.Errorf("error: %+v", err)
+		return err
+	}
+
+	s.FetchProblem()
+	err = onUpdateJudgementStatuses(s.Problem.ContestID, *s)
+	if err != nil {
+		logger.AppLog.Errorf("error: %+v", err)
+	}
+	return err
+}
+
 func (s *Submission) Delete() {
 	s.FetchJudgeSetResults(false)
 	for _, r := range s.JudgeSetResults {
@@ -127,10 +145,7 @@ func (s *Submission) Delete() {
 }
 
 func (s *Submission) resetJudgeSetResults() error {
-	s.Status = StatusInQueue
-	err := db.Model(Submission{}).Where("id = ?", s.ID).Update("status", s.Status).Error
-	if err != nil {
-		logger.AppLog.Errorf("error: %+v", err)
+	if err := s.SetStatus(StatusInQueue); err != nil {
 		return err
 	}
 
@@ -142,6 +157,9 @@ func (s *Submission) resetJudgeSetResults() error {
 			return err
 		}
 	}
+
+	s.FetchProblem()
+	onUpdateJudgementStatuses(s.Problem.ContestID, *s)
 
 	return nil
 }

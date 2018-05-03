@@ -59,8 +59,7 @@ func (j *judgementJob) Run() {
 		logger.AppLog.Infof("submission(id = %v) is deleted", j.submissionID)
 		return
 	}
-	j.submission.Status = StatusJudging
-	db.Model(j.submission).Update("status", j.submission.Status)
+	j.submission.SetStatus(StatusJudging)
 	j.submission.FetchLanguage()
 	j.submission.FetchProblem()
 	j.submission.Problem.FetchJudgementConfig()
@@ -80,6 +79,7 @@ func (j *judgementJob) Run() {
 			"memory_usage": memoryUsage,
 		}
 		db.Model(&Submission{ID: j.submission.ID}).Updates(query)
+		onUpdateJudgementStatuses(j.submission.Problem.ContestID, *j.submission)
 	}()
 
 	var eval evaluator
