@@ -29,29 +29,35 @@ func onUpdateJudgementStatuses(contestID *uint, submission Submission) error {
 
 	st := ContestJudgementStatus{}
 	const query = "contest_id = ? AND user_id = ? AND problem_id = ?"
-	notFound := db.Model(ContestJudgementStatus{}).Where(query, *contestID, submission.UserID, submission.ProblemID).Scan(&st).RecordNotFound()
+	tx := db.Begin()
+	notFound := tx.Model(ContestJudgementStatus{}).Where(query, *contestID, submission.UserID, submission.ProblemID).Scan(&st).RecordNotFound()
 	if notFound {
-		err := db.Create(&ContestJudgementStatus{
+		err := tx.Create(&ContestJudgementStatus{
 			ContestID: *contestID,
 			UserID:    submission.UserID,
 			ProblemID: submission.ProblemID,
 			Status:    submission.Status,
 			Point:     submission.Point,
 		}).Error
+		tx.Commit()
 		return err
 	}
 
 	if st.Status == StatusAccepted || st.UpdatedAt.After(submission.UpdatedAt) {
+		tx.Rollback()
 		return nil
 	}
 
-	err := db.Model(&st).UpdateColumns(map[string]interface{}{
+	err := tx.Model(&st).UpdateColumns(map[string]interface{}{
 		"updated_at": submission.UpdatedAt,
 		"status":     submission.Status,
 		"point":      submission.Point,
 	}).Error
 	if err != nil {
 		logger.AppLog.Error(err)
+		tx.Rollback()
+	} else {
+		tx.Commit()
 	}
 	return err
 }
