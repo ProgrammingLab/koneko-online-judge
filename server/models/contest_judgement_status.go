@@ -7,9 +7,9 @@ import (
 )
 
 type ContestJudgementStatus struct {
-	ContestID uint            `gorm:"primary_key" sql:"type:int unsigned" json:"contestID"`
 	UserID    uint            `gorm:"primary_key" sql:"type:int unsigned" json:"userID"`
-	ProblemID uint            `gorm:"not null" json:"problemID"`
+	ProblemID uint            `gorm:"primary_key" sql:"type:int unsigned" json:"problemID"`
+	ContestID uint            `gorm:"not null" json:"contestID"`
 	CreatedAt time.Time       `json:"createdAt"`
 	UpdatedAt time.Time       `json:"updatedAt"`
 	Status    JudgementStatus `gorm:"not null; default:'0'" json:"status"`
