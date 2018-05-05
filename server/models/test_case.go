@@ -53,6 +53,10 @@ func readStringFull(file *zip.File) (*string, error) {
 }
 
 func (c TestCase) Delete() {
+	db.Model(TestCase{}).Where("id = ?", c.ID).Updates(map[string]interface{}{
+		"input":  "",
+		"output": "",
+	})
 	db.Delete(TestCase{}, "id = ?", c.ID)
 }
 
