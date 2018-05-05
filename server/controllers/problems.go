@@ -72,7 +72,6 @@ func UpdateProblem(c echo.Context) error {
 
 	problem.ContestID = nil
 	problem.Contest = nil
-	problem.DeleteSamples()
 	problem.Update(request)
 	return c.NoContent(http.StatusNoContent)
 }

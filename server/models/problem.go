@@ -81,10 +81,12 @@ func GetNoContestProblems() []Problem {
 
 func (p *Problem) Update(request *Problem) {
 	defer db.Save(p)
+	p.DeleteSamples()
 	p.Title = request.Title
 	p.TimeLimit = request.TimeLimit
 	p.MemoryLimit = request.MemoryLimit
 	p.Body = request.Body
+	p.Samples = request.Samples
 
 	if p.JudgementConfigID == nil && request.JudgementConfig == nil {
 		return
