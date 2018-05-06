@@ -213,6 +213,10 @@ func (c *Contest) FetchProblems() {
 
 	c.Problems = make([]Problem, 0)
 	db.Model(c).Related(&c.Problems, "Problems")
+	for i := range c.Problems {
+		c.Problems[i].FetchSamples()
+		c.Problems[i].FetchCaseSets()
+	}
 }
 
 func (c *Contest) Started() bool {
