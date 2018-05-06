@@ -192,10 +192,7 @@ func (p *Problem) CanEdit(s *UserSession) bool {
 }
 
 func (p *Problem) DeleteSamples() {
-	p.FetchSamples()
-	for _, s := range p.Samples {
-		s.Delete()
-	}
+	db.Delete(Sample{}, "problem_id = ?", p.ID)
 }
 
 func (p *Problem) Delete() {
