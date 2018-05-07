@@ -35,9 +35,13 @@ func main() {
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	e.Use(middleware.CORS())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		Skipper:      middleware.DefaultSkipper,
+		AllowHeaders: []string{"Date"},
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{echo.GET, echo.HEAD, echo.PUT, echo.PATCH, echo.POST, echo.DELETE},
+	}))
 	e.Use(controllers.CheckLogin)
-	e.Use(controllers.AddAccessControlAllowHeaders)
 
 	controllers.Routes(e)
 
