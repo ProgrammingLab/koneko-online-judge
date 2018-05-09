@@ -80,9 +80,12 @@ func GetNoContestProblems() []Problem {
 
 func (p *Problem) Update(request *Problem) {
 	p.Title = request.Title
+	p.Body = request.Body
+	p.InputFormat = request.InputFormat
+	p.OutputFormat = request.OutputFormat
+	p.Constraints = request.Constraints
 	p.TimeLimit = request.TimeLimit
 	p.MemoryLimit = request.MemoryLimit
-	p.Body = request.Body
 	p.JudgeType = request.JudgeType
 
 	db.Delete(JudgementConfig{}, "problem_id = ?", p.ID)
@@ -97,13 +100,16 @@ func (p *Problem) Update(request *Problem) {
 	p.Samples = request.Samples
 	p.UpdateSamples()
 
-	db.Model(Problem{}).Updates(map[string]interface{}{
-		"title":        request.Title,
-		"time_limit":   request.TimeLimit,
-		"memory_limit": request.MemoryLimit,
-		"body":         request.Body,
-		"judge_type":   request.JudgeType,
-	}).Where("id = ?", p.ID)
+	db.Model(Problem{}).Where("id = ?", p.ID).Updates(map[string]interface{}{
+		"title":         request.Title,
+		"body":          request.Body,
+		"input_format":  request.InputFormat,
+		"output_format": request.OutputFormat,
+		"constraints":   request.Constraints,
+		"time_limit":    request.TimeLimit,
+		"memory_limit":  request.MemoryLimit,
+		"judge_type":    request.JudgeType,
+	})
 }
 
 func (p *Problem) ReplaceTestCases(archive []byte) error {
