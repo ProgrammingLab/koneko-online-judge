@@ -214,10 +214,6 @@ func fetchProblem(out *models.Problem, s *models.UserSession) {
 	if out.ContestID == nil {
 		out.ContestID = new(uint)
 	}
-
-	if out.JudgementConfigID == nil {
-		out.JudgementConfigID = new(uint)
-	}
 }
 
 func getProblemFromContext(c echo.Context) *models.Problem {

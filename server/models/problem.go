@@ -7,26 +7,25 @@ import (
 )
 
 type Problem struct {
-	ID                uint             `gorm:"primary_key" json:"id"`
-	WriterID          uint             `gorm:"not null" json:"writerID"`
-	Writer            User             `gorm:"ForeignKey:WriterID" json:"writer,omitempty"`
-	CreatedAt         time.Time        `json:"createdAt"`
-	UpdatedAt         time.Time        `json:"updatedAt"`
-	Title             string           `gorm:"not null" json:"title"`
-	Body              string           `gorm:"type:text; not null" json:"body"`
-	InputFormat       string           `gorm:"type:text" json:"inputFormat"`
-	OutputFormat      string           `gorm:"type:text" json:"outputFormat"`
-	Constraints       string           `gorm:"type:text" json:"constraints"`
-	Samples           []Sample         `json:"samples,omitempty"`
-	TimeLimit         time.Duration    `gorm:"not null" json:"timeLimit" validate:"required,max=60000000000,min=1000000000"`
-	MemoryLimit       int              `gorm:"not null" json:"memoryLimit" validate:"required,max=512,min=128"`
-	JudgeType         JudgeType        `gorm:"not null; default:'0'" json:"judgeType" validate:"max=2,min=0"`
-	CaseSets          []CaseSet        `json:"caseSets,omitempty"`
-	Submissions       []Submission     `json:"-"`
-	Contest           *Contest         `json:"contest,omitempty"`
-	ContestID         *uint            `json:"contestID"`
-	JudgementConfigID *uint            `json:"judgementConfigID,omitempty"`
-	JudgementConfig   *JudgementConfig `json:"judgementConfig,omitempty"`
+	ID              uint             `gorm:"primary_key" json:"id"`
+	WriterID        uint             `gorm:"not null" json:"writerID"`
+	Writer          User             `gorm:"ForeignKey:WriterID" json:"writer,omitempty"`
+	CreatedAt       time.Time        `json:"createdAt"`
+	UpdatedAt       time.Time        `json:"updatedAt"`
+	Title           string           `gorm:"not null" json:"title"`
+	Body            string           `gorm:"type:text; not null" json:"body"`
+	InputFormat     string           `gorm:"type:text" json:"inputFormat"`
+	OutputFormat    string           `gorm:"type:text" json:"outputFormat"`
+	Constraints     string           `gorm:"type:text" json:"constraints"`
+	Samples         []Sample         `json:"samples,omitempty"`
+	TimeLimit       time.Duration    `gorm:"not null" json:"timeLimit" validate:"required,max=60000000000,min=1000000000"`
+	MemoryLimit     int              `gorm:"not null" json:"memoryLimit" validate:"required,max=512,min=128"`
+	JudgeType       JudgeType        `gorm:"not null; default:'0'" json:"judgeType" validate:"max=2,min=0"`
+	CaseSets        []CaseSet        `json:"caseSets,omitempty"`
+	Submissions     []Submission     `json:"-"`
+	Contest         *Contest         `json:"contest,omitempty"`
+	ContestID       *uint            `json:"contestID"`
+	JudgementConfig *JudgementConfig `json:"judgementConfig,omitempty"`
 }
 
 type JudgeType int
@@ -80,29 +79,31 @@ func GetNoContestProblems() []Problem {
 }
 
 func (p *Problem) Update(request *Problem) {
-	defer db.Save(p)
-	p.DeleteSamples()
 	p.Title = request.Title
 	p.TimeLimit = request.TimeLimit
 	p.MemoryLimit = request.MemoryLimit
 	p.Body = request.Body
-	p.Samples = request.Samples
+	p.JudgeType = request.JudgeType
 
-	if p.JudgementConfigID == nil && request.JudgementConfig == nil {
-		return
-	}
-
-	if p.JudgementConfigID != nil {
-		db.Delete(JudgementConfig{}, "id = ?", *p.JudgementConfigID)
-	}
+	db.Delete(JudgementConfig{}, "problem_id = ?", p.ID)
 	if request.JudgementConfig != nil {
+		request.JudgementConfig.ID = 0
+		request.JudgementConfig.ProblemID = &p.ID
 		db.Create(request.JudgementConfig)
-		p.JudgementConfigID = &request.JudgementConfig.ID
-		p.JudgementConfig = nil
 	} else {
-		p.JudgementConfigID = nil
 		p.JudgementConfig = nil
 	}
+
+	p.Samples = request.Samples
+	p.UpdateSamples()
+
+	db.Model(Problem{}).Updates(map[string]interface{}{
+		"title":        request.Title,
+		"time_limit":   request.TimeLimit,
+		"memory_limit": request.MemoryLimit,
+		"body":         request.Body,
+		"judge_type":   request.JudgeType,
+	}).Where("id = ?", p.ID)
 }
 
 func (p *Problem) ReplaceTestCases(archive []byte) error {
@@ -153,10 +154,6 @@ func (p *Problem) FetchContest() {
 }
 
 func (p *Problem) FetchJudgementConfig() {
-	if p.JudgementConfigID == nil {
-		return
-	}
-
 	p.JudgementConfig = &JudgementConfig{}
 	db.Model(p).Related(p.JudgementConfig)
 }
@@ -189,6 +186,15 @@ func (p *Problem) CanEdit(s *UserSession) bool {
 	}
 
 	return p.WriterID == s.UserID
+}
+
+func (p *Problem) UpdateSamples() {
+	p.DeleteSamples()
+	for i := range p.Samples {
+		p.Samples[i].ID = 0
+		p.Samples[i].ProblemID = p.ID
+		db.Create(&p.Samples[i])
+	}
 }
 
 func (p *Problem) DeleteSamples() {
