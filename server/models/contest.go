@@ -223,6 +223,10 @@ func (c *Contest) Started() bool {
 	return c.StartAt.Before(time.Now())
 }
 
+func (c *Contest) Ended() bool {
+	return c.EndAt.Before(time.Now())
+}
+
 // コンテストが時刻tのとき開催中であればtrueを返します。
 func (c *Contest) IsOpen(t time.Time) bool {
 	return c.StartAt.Before(t) && c.EndAt.After(t)
@@ -237,7 +241,7 @@ func (c *Contest) CanEdit(s *UserSession) bool {
 
 func (c *Contest) CanViewProblems(s *UserSession) bool {
 	if s == nil {
-		return false
+		return c.Ended()
 	}
 
 	isWriter, _ := c.IsWriter(s.UserID)
@@ -246,7 +250,7 @@ func (c *Contest) CanViewProblems(s *UserSession) bool {
 	}
 
 	isParticipant, _ := c.IsParticipant(s.UserID)
-	return c.Started() && isParticipant
+	return c.Started() && isParticipant || c.Ended()
 }
 
 func (c *Contest) IsWriter(userID uint) (bool, error) {
