@@ -1,0 +1,61 @@
+version: "3"
+
+services:
+  koneko:
+    build: ./server
+    command: ["./wait-for-it.sh", "mysql:3306", "--", "./run.sh"]
+    environment:
+      KOJ_DB_DRIVER: "mysql"
+      KOJ_DB_SPEC: "root:${KOJ_DB_PASSWORD}@tcp(mysql:3306)/koj?charset=utf8mb4&parseTime=True&loc=Local"
+      DOCKER_API_VERSION: "1.35"
+    depends_on:
+      - mysql
+    ports:
+      - "9000:9000"
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    logging:
+      options:
+        max-size: 5m
+        max-file: "10"
+
+  mysql:
+    image: mysql:5.7
+    hostname: mysql
+    environment: 
+      MYSQL_ROOT_PASSWORD: "${KOJ_DB_PASSWORD}"
+      MYSQL_DATABASE: "koj"
+    restart: always
+    volumes:
+      - db-data:/var/lib/mysql
+    logging:
+      options:
+        max-size: 5m
+        max-file: "10"
+    ports:
+      - "33060:3306"
+
+  redis:
+    image: redis:4.0.9-alpine
+    hostname: redis
+    restart: always
+    logging:
+      options:
+        max-size: 5m
+        max-file: "10"
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.0
+    hostname: smtp
+    restart: always
+    logging:
+      options:
+        max-size: 5m
+        max-file: "10"
+    ports:
+      - "8025:8025"
+
+volumes:
+  db-data:
+    driver: local
