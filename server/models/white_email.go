@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/gedorinku/koneko-online-judge/server/logger"
+)
 
 type WhiteEmail struct {
 	ID          uint          `gorm:"primary_key" json:"id"`
@@ -25,6 +29,12 @@ func NewWhiteEmail(email string, user *User) *WhiteEmail {
 	db.Create(e)
 	e.CreatedBy = *user
 	e.CreatedBy.Email = ""
+
+	if err := StartEmailConfirmation(e); err != nil {
+		logger.AppLog.Error(err)
+		return nil
+	}
+
 	return e
 }
 
