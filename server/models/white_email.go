@@ -54,6 +54,11 @@ func GetWhiteEmail(email string) *WhiteEmail {
 }
 
 func DeleteWhiteEmail(id uint) error {
+	err := db.Delete(EmailConfirmation{}, "white_email_id = ?", id).Error
+	if err != nil {
+		logger.AppLog.Error(err)
+		return err
+	}
 	return db.Delete(WhiteEmail{}, "id = ?", id).Error
 }
 
