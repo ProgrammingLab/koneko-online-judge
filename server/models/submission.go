@@ -25,6 +25,7 @@ type Submission struct {
 	MemoryUsage     int64            `json:"memoryUsage"`
 	CodeBytes       uint             `json:"codeBytes"`
 	JudgeSetResults []JudgeSetResult `json:"judgeSetResults,omitempty"`
+	ContestID       *uint            `json:"-"`
 }
 
 type JudgementStatus int

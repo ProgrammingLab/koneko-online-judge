@@ -35,6 +35,7 @@ func Submit(c echo.Context) error {
 		ProblemID:  problem.ID,
 		LanguageID: lang.ID,
 		SourceCode: request.SourceCode,
+		ContestID:  problem.ContestID,
 	}
 
 	if err := models.Submit(submission); err != nil {

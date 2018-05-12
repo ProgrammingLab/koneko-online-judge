@@ -71,6 +71,7 @@ func createTables() {
 	db.Model(&Submission{}).AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
 	db.Model(&Submission{}).AddForeignKey("language_id", "languages(id)", "RESTRICT", "RESTRICT")
 	db.Model(&Submission{}).AddForeignKey("problem_id", "problems(id)", "RESTRICT", "RESTRICT")
+	db.Model(&Submission{}).AddForeignKey("contest_id", "contests(id)", "RESTRICT", "RESTRICT")
 	db.Model(&JudgementConfig{}).AddForeignKey("language_id", "languages(id)", "RESTRICT", "RESTRICT")
 	db.Model(&JudgementConfig{}).AddForeignKey("problem_id", "problems(id)", "CASCADE", "CASCADE")
 

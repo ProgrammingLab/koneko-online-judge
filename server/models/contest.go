@@ -64,7 +64,7 @@ func NewContest(out *Contest) error {
 
 func GetContest(id uint) *Contest {
 	contest := &Contest{}
-	notFound := db.Where(id).First(contest).RecordNotFound()
+	notFound := db.Model(Contest{}).Where(id).Scan(contest).RecordNotFound()
 	if notFound {
 		return nil
 	}
@@ -73,7 +73,7 @@ func GetContest(id uint) *Contest {
 
 func GetContestDeeply(id uint, session *UserSession) *Contest {
 	contest := &Contest{}
-	notFound := db.Where(id).First(contest).RecordNotFound()
+	notFound := db.Model(Contest{}).Where(id).Scan(contest).RecordNotFound()
 	if notFound {
 		return nil
 	}
@@ -87,7 +87,7 @@ func GetContestDeeply(id uint, session *UserSession) *Contest {
 
 func IsContestWriter(contestID, userID uint) (bool, error) {
 	res := db.Limit(1).Table("contests_writers").Where("contest_id = ? AND user_id = ?", contestID, userID)
-	res = res.First(&struct{}{})
+	res = res.Scan(&struct{}{})
 	if res.RecordNotFound() {
 		return false, nil
 	}
@@ -100,7 +100,7 @@ func IsContestWriter(contestID, userID uint) (bool, error) {
 
 func IsContestParticipant(contestID, userID uint) (bool, error) {
 	res := db.Limit(1).Table("contests_participants").Where("contest_id = ? AND user_id = ?", contestID, userID)
-	res = res.First(&struct{}{})
+	res = res.Scan(&struct{}{})
 	if res.RecordNotFound() {
 		return false, nil
 	}
@@ -180,6 +180,53 @@ func (c *Contest) GetStandings() []Score {
 	}
 
 	return s
+}
+
+func (c *Contest) GetSubmissions(session *UserSession, limit, page int, userID, problemID *uint) ([]Submission, int, error) {
+	query := make(map[string]interface{})
+	isWriter, err := c.IsWriter(session.UserID)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return nil, 0, err
+	}
+
+	if !isWriter && !c.Ended() {
+		if userID != nil && *userID != session.UserID {
+			return []Submission{}, 0, nil
+		}
+		userID = &session.UserID
+	}
+	if problemID != nil {
+		problem := GetProblem(*problemID)
+		if problem == nil || problem.ContestID == nil || *problem.ContestID != c.ID {
+			return []Submission{}, 0, nil
+		}
+		query["problem_id"] = *problemID
+	} else {
+		query["contest_id"] = c.ID
+	}
+	if userID != nil {
+		query["user_id"] = *userID
+	}
+
+	res := make([]Submission, 0, 0)
+	err = db.Model(Submission{}).Order("id ASC").Where(query).Scan(&res).Error
+	if err != nil {
+		logger.AppLog.Error(err)
+		return []Submission{}, 0, err
+	}
+
+	start := limit * (page - 1)
+	end := limit * page
+	if len(res) <= start {
+		return []Submission{}, len(res), nil
+	}
+
+	if len(res) < end {
+		end = len(res)
+	}
+
+	return res[start:end], len(res), nil
 }
 
 func (c *Contest) FetchWriters() {

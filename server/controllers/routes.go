@@ -34,6 +34,7 @@ func Routes(e *echo.Echo) {
 	e.PUT("/contests/:contestID", UpdateContest)
 	e.POST("/contests/:contestID/enter", EnterContest)
 	e.GET("/contests/:contestID/standings", GetStandings)
+	e.GET("/contests/:contestID/submissions", GetContestSubmissions)
 	e.GET("/contests/:contestID/statuses", GetContestJudgeStatuses)
 
 	e.POST("/contests/:contestID/problems/new", NewContestProblem)
