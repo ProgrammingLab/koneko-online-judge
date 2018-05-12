@@ -69,6 +69,53 @@ func GetSubmission(submissionID uint) *Submission {
 	return submission
 }
 
+func fetchSubmissionFieldsWithCache(out []Submission) error {
+	users := make(map[uint]User)
+	problems := make(map[uint]Problem)
+	languages := make(map[uint]Language)
+
+	for i := range out {
+		if u, ok := users[out[i].UserID]; ok {
+			out[i].User = u
+		} else {
+			user := User{}
+			err := db.Model(User{}).Where("id = ?", out[i].UserID).Scan(&user).Error
+			if err != nil {
+				return err
+			}
+			user.Email = ""
+			out[i].User = user
+			users[user.ID] = user
+		}
+
+		if p, ok := problems[out[i].ProblemID]; ok {
+			out[i].Problem = p
+		} else {
+			problem := Problem{}
+			err := db.Model(Problem{}).Where("id = ?", out[i].ProblemID).Scan(&problem).Error
+			if err != nil {
+				return err
+			}
+			out[i].Problem = problem
+			problems[problem.ID] = problem
+		}
+
+		if l, ok := languages[out[i].LanguageID]; ok {
+			out[i].Language = l
+		} else {
+			language := Language{}
+			err := db.Model(Language{}).Where("id = ?", out[i].LanguageID).Scan(&language).Error
+			if err != nil {
+				return err
+			}
+			out[i].Language = language
+			languages[language.ID] = language
+		}
+	}
+
+	return nil
+}
+
 func (s *Submission) IsWrong() bool {
 	stat := s.Status
 	return stat == StatusWrongAnswer || stat == StatusTimeLimitExceeded || stat == StatusMemoryLimitExceeded || stat == StatusRuntimeError

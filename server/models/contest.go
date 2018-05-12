@@ -216,17 +216,21 @@ func (c *Contest) GetSubmissions(session *UserSession, limit, page int, userID, 
 		return []Submission{}, 0, err
 	}
 
+	total := len(res)
+
 	start := limit * (page - 1)
 	end := limit * page
 	if len(res) <= start {
-		return []Submission{}, len(res), nil
+		return []Submission{}, total, nil
 	}
 
 	if len(res) < end {
 		end = len(res)
 	}
+	res = res[start:end]
+	fetchSubmissionFieldsWithCache(res)
 
-	return res[start:end], len(res), nil
+	return res, total, nil
 }
 
 func (c *Contest) FetchWriters() {
