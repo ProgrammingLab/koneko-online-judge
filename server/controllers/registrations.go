@@ -55,7 +55,8 @@ func VerifyEmailConfirmationToken(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, ErrorResponse{"Invalid Token"})
 	}
 
-	return c.NoContent(http.StatusNoContent)
+	token.FetchWhiteEmail()
+	return c.JSON(http.StatusOK, email{token.WhiteEmail.Email})
 }
 
 func RegisterUser(c echo.Context) error {
