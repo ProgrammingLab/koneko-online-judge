@@ -133,7 +133,7 @@ func FindUserByName(name string, email bool) *User {
 
 func FindUserByEmail(email string) *User {
 	u := &User{}
-	nf := db.Where("email = ?", email).First(u).RecordNotFound()
+	nf := db.Model(User{}).Where("email = ?", email).Scan(u).RecordNotFound()
 	if nf {
 		return nil
 	}

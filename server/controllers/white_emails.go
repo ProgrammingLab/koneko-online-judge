@@ -39,6 +39,11 @@ func AddWhiteEmail(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{"すでに存在するメールアドレスです。"})
 	}
 
+	u := models.FindUserByEmail(req.Email)
+	if u != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{"メールアドレスはすでに使用されています。"})
+	}
+
 	e := models.NewWhiteEmail(req.Email, &s.User)
 	return c.JSON(http.StatusCreated, e)
 }
