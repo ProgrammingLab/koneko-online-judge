@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const (
@@ -25,8 +26,7 @@ var (
 )
 
 func GetBcryptCost() int {
-	//適当に調整する
-	return 14
+	return bcrypt.DefaultCost
 }
 
 // length bytesのランダムなBase64エンコードされた文字列を返す
