@@ -78,7 +78,7 @@ func NewUser(name, displayName, email, password string, token *EmailConfirmation
 		return nil, err
 	}
 
-	err := tx.Where("id = ?", token.ID).Delete(EmailConfirmation{}).Error
+	err := tx.Where("white_email_id = ?", token.WhiteEmailID).Delete(EmailConfirmation{}).Error
 	if err != nil {
 		tx.Rollback()
 		logger.AppLog.Errorf("error: %+v", err)
