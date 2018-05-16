@@ -7,16 +7,12 @@ language: go
 go:
   - "1.9"
 
-before_install:
-  - mysql -e 'CREATE DATABASE koj_test CHARACTER SET utf8mb4;'
-
-install:
-  - ./setup.sh
-
 jobs:
   include:
     - stage: test
       script:
+      - mysql -e 'CREATE DATABASE koj_test CHARACTER SET utf8mb4;'
+      - ./setup.sh
       - go test ./server/...
       - go test ./nekonote/...
     - stage: deploy docker image
