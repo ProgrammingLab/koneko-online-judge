@@ -13,9 +13,18 @@ before_install:
 install:
   - ./setup.sh
 
-script:
-  - go test ./server/...
-  - go test ./nekonote/...
+jobs:
+  include:
+    - stage: test
+      script:
+      - go test ./server/...
+      - go test ./nekonote/...
+    - stage: deploy docker image
+      if: branch = master
+      script:
+      - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+      - docker build -t gedorinku/koneko-online-judge ./server
+      - docker push gedorinku/koneko-online-judge
 
 notifications:
   email:
