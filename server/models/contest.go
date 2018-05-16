@@ -62,6 +62,16 @@ func NewContest(out *Contest) error {
 	return nil
 }
 
+func GetAllContests() ([]Contest, error) {
+	res := make([]Contest, 0, 0)
+	err := db.Model(Contest{}).Order("id ASC").Find(&res).Error
+	if err != nil {
+		logger.AppLog.Error(err)
+		return nil, err
+	}
+	return res, nil
+}
+
 func GetContest(id uint) *Contest {
 	contest := &Contest{}
 	notFound := db.Model(Contest{}).Where(id).Scan(contest).RecordNotFound()

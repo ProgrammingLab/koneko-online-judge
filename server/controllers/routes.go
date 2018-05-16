@@ -30,6 +30,7 @@ func Routes(e *echo.Echo) {
 	e.GET("/languages", GetLanguages)
 
 	e.POST("/contests", NewContest)
+	e.GET("/contests", GetContests)
 	e.GET("/contests/:contestID", GetContest)
 	e.PUT("/contests/:contestID", UpdateContest)
 	e.POST("/contests/:contestID/enter", EnterContest)

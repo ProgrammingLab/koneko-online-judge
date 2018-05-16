@@ -58,6 +58,14 @@ func GetContest(c echo.Context) error {
 	return c.JSON(http.StatusOK, contest)
 }
 
+func GetContests(c echo.Context) error {
+	contests, err := models.GetAllContests()
+	if err != nil {
+		return ErrInternalServer
+	}
+	return c.JSON(http.StatusOK, contests)
+}
+
 func UpdateContest(c echo.Context) error {
 	id, err := getContestIDFromContext(c)
 	if err != nil {
