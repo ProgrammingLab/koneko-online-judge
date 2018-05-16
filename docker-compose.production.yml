@@ -1,0 +1,29 @@
+version: "3"
+
+services:
+  koneko:
+    image: gedorinku/koneko-online-judge:latest
+    command: ["./run.sh"]
+    environment:
+      DOCKER_API_VERSION: "1.35"
+    depends_on:
+      - redis
+    ports:
+      - "9000:9000"
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./server/koneko.toml:/go/src/github.com/gedorinku/koneko-online-judge/server/koneko.toml
+    logging:
+      options:
+        max-size: 5m
+        max-file: "10"
+
+  redis:
+    image: redis:4.0.9-alpine
+    hostname: redis
+    restart: always
+    logging:
+      options:
+        max-size: 5m
+        max-file: "10"
