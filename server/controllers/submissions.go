@@ -72,13 +72,15 @@ func GetSubmission(c echo.Context) error {
 		return echo.ErrNotFound
 	}
 
+	submission.FetchLanguage()
+	submission.FetchUser()
+
 	cases := c.QueryParam("cases")
 	switch {
 	case cases == "true" || cases == "":
 		submission.FetchJudgeSetResultsDeeply(true)
 	case cases == "false":
-		submission.FetchLanguage()
-		submission.FetchUser()
+		break
 	default:
 		return c.JSON(http.StatusBadRequest, ErrorResponse{"cases"})
 	}
