@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
-	"github.com/gedorinku/koneko-online-judge/server/modules/mail"
+	"github.com/gedorinku/koneko-online-judge/server/modules/nekomail"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
@@ -167,7 +167,7 @@ func (u *User) setPasswordWithinTransaction(tx *gorm.DB, password string, notifi
 	}
 
 	body := fmt.Sprintf(bodyPasswordChanged, u.Name)
-	err = mail.SendMail(u.Email, subjectPasswordChanged, body)
+	err = nekomail.SendMail(u.Email, subjectPasswordChanged, body)
 	if err != nil {
 		logger.AppLog.Errorf("error: %+v", err)
 	}

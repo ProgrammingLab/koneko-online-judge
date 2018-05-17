@@ -92,6 +92,12 @@
   version = "v1.6.0"
 
 [[projects]]
+  name = "github.com/go-mail/mail"
+  packages = ["."]
+  revision = "63235f23494bf20d713a585bce40b2a0675c2f77"
+  version = "2.2.0"
+
+[[projects]]
   name = "github.com/go-playground/locales"
   packages = [
     ".",
@@ -241,15 +247,9 @@
   revision = "230db62e071d40171640c9deb875d46a3858d9dd"
   version = "v9.9.2"
 
-[[projects]]
-  branch = "v2"
-  name = "gopkg.in/gomail.v2"
-  packages = ["."]
-  revision = "81ebce5c23dfd25c6c67194b37d3dd3f338c98b1"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9ce469ad49e18c03e131129c9fa7d0d7d1980358bda030f9c8cb833a358ae58a"
+  inputs-digest = "42648b23cb9deef031475c5691a656606a5c9fc52932ab418dbf5482cbc7333c"
   solver-name = "gps-cdcl"
   solver-version = 1

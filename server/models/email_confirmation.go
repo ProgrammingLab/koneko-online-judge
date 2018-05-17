@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
-	"github.com/gedorinku/koneko-online-judge/server/modules/mail"
+	"github.com/gedorinku/koneko-online-judge/server/modules/nekomail"
 )
 
 type EmailConfirmation struct {
@@ -39,7 +39,7 @@ func StartEmailConfirmation(email *WhiteEmail) error {
 	}
 
 	body := fmt.Sprintf(bodyEmailConfirmation, confirm.Token, confirm.Token)
-	return mail.SendMail(email.Email, subjectEmailConfirmation, body)
+	return nekomail.SendMail(email.Email, subjectEmailConfirmation, body)
 }
 
 func newEmailConfirmation(email *WhiteEmail) (*EmailConfirmation, error) {

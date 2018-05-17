@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
-	"github.com/gedorinku/koneko-online-judge/server/modules/mail"
+	"github.com/gedorinku/koneko-online-judge/server/modules/nekomail"
 	"github.com/pkg/errors"
 )
 
@@ -36,7 +36,7 @@ func StartPasswordReset(user *User) error {
 	}
 
 	body := fmt.Sprintf(bodyPasswordReset, user.Name, t.Token, t.Token)
-	return mail.SendMail(user.Email, subjectPasswordReset, body)
+	return nekomail.SendMail(user.Email, subjectPasswordReset, body)
 }
 
 func newPasswordResetToken(user *User) (*PasswordResetToken, error) {
