@@ -43,7 +43,7 @@ func TestEqualTime(t *testing.T) {
 		},
 		{
 			time.Date(2018, 1, 1, 12, 0, 0, 0, time.Local),
-			time.Date(2018, 1, 1, 11, 59, 59, int(100*time.Millisecond), time.Local),
+			time.Date(2018, 1, 1, 11, 59, 58, int(100*time.Millisecond), time.Local),
 		},
 		{
 			time.Date(2018, 1, 1, 12, 0, 0, int(400*time.Millisecond), time.Local),
