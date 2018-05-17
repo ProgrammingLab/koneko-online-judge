@@ -87,16 +87,11 @@ func DefaultString(value, def string) string {
 }
 
 func EqualTime(t1, t2 time.Time) bool {
-	if t1.Unix() < 0 {
-		t1 = time.Unix(-t1.Unix(), 0)
+	diff := time.Duration(t1.UnixNano() - t2.UnixNano())
+	if diff < 0 {
+		diff = -diff
 	}
-	if t2.Unix() < 0 {
-		t2 = time.Unix(-t2.Unix(), 0)
-	}
-
-	u1 := t1.Add(500 * time.Millisecond).Unix()
-	u2 := t2.Add(500 * time.Millisecond).Unix()
-	return u1 == u2
+	return diff <= time.Second
 }
 
 func checkValidZip(reader *zip.Reader) error {
