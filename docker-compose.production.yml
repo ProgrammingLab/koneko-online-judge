@@ -14,6 +14,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./server/koneko.toml:/go/src/github.com/gedorinku/koneko-online-judge/server/koneko.toml
+    network_mode: "host"
     logging:
       options:
         max-size: 5m
@@ -23,6 +24,9 @@ services:
     image: redis:4.0.9-alpine
     hostname: redis
     restart: always
+    network_mode: "host"
+    ports:
+      - "9000:9000"
     logging:
       options:
         max-size: 5m
