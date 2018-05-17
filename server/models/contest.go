@@ -220,7 +220,7 @@ func (c *Contest) GetSubmissions(session *UserSession, limit, page int, userID, 
 	}
 
 	res := make([]Submission, 0, 0)
-	err = db.Model(Submission{}).Order("id ASC").Where(query).Scan(&res).Error
+	err = db.Model(Submission{}).Order("id DESC").Where(query).Scan(&res).Error
 	if err != nil {
 		logger.AppLog.Error(err)
 		return []Submission{}, 0, err
