@@ -21,11 +21,12 @@ type KoneConfig struct {
 }
 
 type SMTPConfig struct {
-	Host     string `toml:"host"`
-	Port     int    `toml:"port"`
-	User     string `toml:"user"`
-	Password string `toml:"password"`
-	From     string `toml:"from"`
+	Host       string `toml:"host"`
+	Port       int    `toml:"port"`
+	NoStartTLS bool   `toml:"noStartTLS"`
+	User       string `toml:"user"`
+	Password   string `toml:"password"`
+	From       string `toml:"from"`
 }
 
 type JudgementConfig struct {

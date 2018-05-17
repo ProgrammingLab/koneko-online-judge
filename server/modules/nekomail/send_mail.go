@@ -1,6 +1,8 @@
 package nekomail
 
 import (
+	"time"
+
 	"github.com/gedorinku/koneko-online-judge/server/conf"
 	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"github.com/go-mail/mail"
@@ -14,7 +16,24 @@ func SendMail(to, subject, body string) error {
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", body)
 
-	d := mail.NewDialer(cfg.Host, cfg.Port, cfg.User, cfg.Password)
+	var tls mail.StartTLSPolicy
+	if cfg.NoStartTLS {
+		tls = mail.NoStartTLS
+	} else {
+		tls = mail.OpportunisticStartTLS
+	}
+
+	d := &mail.Dialer{
+		Host:           cfg.Host,
+		Port:           cfg.Port,
+		Username:       cfg.User,
+		Password:       cfg.Password,
+		SSL:            cfg.Port == 465,
+		Timeout:        10 * time.Second,
+		RetryFailure:   true,
+		StartTLSPolicy: tls,
+	}
+
 	if err := d.DialAndSend(m); err != nil {
 		logger.AppLog.Errorf("send mail error: %+v", err)
 		return err

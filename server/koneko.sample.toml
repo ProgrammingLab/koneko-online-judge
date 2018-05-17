@@ -8,6 +8,7 @@ redisHost = "redis:6379"
 [SMTP]
 host = "smtp"
 port = 1025
+noStartTLS = false
 user = "user"
 password = "password"
 from = "hoge@example.com"
