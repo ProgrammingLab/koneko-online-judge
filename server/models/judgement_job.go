@@ -226,7 +226,9 @@ func (j *judgementJob) execSubmission(testCase *TestCase) *workers.ExecResult {
 		logger.AppLog.Errorf("exec: container create error %+v", err)
 		return nil
 	}
-	defer w.Remove()
+	defer func() {
+		go w.Remove()
+	}()
 
 	err = j.compiled.CopyTo(language.ExeFileName, w)
 	if err != nil {
