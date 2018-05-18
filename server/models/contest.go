@@ -64,7 +64,7 @@ func NewContest(out *Contest) error {
 
 func GetAllContests() ([]Contest, error) {
 	res := make([]Contest, 0, 0)
-	err := db.Model(Contest{}).Order("id ASC").Find(&res).Error
+	err := db.Model(Contest{}).Order("id DESC").Find(&res).Error
 	if err != nil {
 		logger.AppLog.Error(err)
 		return nil, err
