@@ -129,7 +129,9 @@ func (j *judgementJob) Run() {
 		}
 	}
 
-	finalStatus, point = eval.evaluate()
+	if finalStatus != StatusCompileError {
+		finalStatus, point = eval.evaluate()
+	}
 
 	j.submission.Point = point
 	j.submission.Status = finalStatus
