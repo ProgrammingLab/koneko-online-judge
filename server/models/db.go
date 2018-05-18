@@ -138,6 +138,14 @@ func seedLanguages() {
 			CompileCommand: "gcc -w -lm -std=gnu11 -O2 -o main.o main.c",
 			ExecCommand:    "./main.o",
 		},
+		{
+			ImageName:      "cpp",
+			DisplayName:    "C++2a (GCC 8.1.0)",
+			FileName:       "main.cpp",
+			ExeFileName:    "main.o",
+			CompileCommand: "g++ -w -lm -std=gnu++2a -O2 -o main.o main.cpp",
+			ExecCommand:    "./main.o",
+		},
 	}
 
 	for _, l := range languages {
