@@ -116,7 +116,7 @@ func seedLanguages() {
 	languages := []*Language{
 		{
 			ImageName:      "cpp",
-			DisplayName:    "C++17 (GCC 7.2.0)",
+			DisplayName:    "C++17 (GCC 8.1.0)",
 			FileName:       "main.cpp",
 			ExeFileName:    "main.o",
 			CompileCommand: "g++ -w -lm -std=gnu++17 -O2 -o main.o main.cpp",
@@ -124,7 +124,7 @@ func seedLanguages() {
 		},
 		{
 			ImageName:      "cpp",
-			DisplayName:    "C++11 (GCC 7.2.0)",
+			DisplayName:    "C++11 (GCC 8.1.0)",
 			FileName:       "main.cpp",
 			ExeFileName:    "main.o",
 			CompileCommand: "g++ -w -lm -std=gnu++11 -O2 -o main.o main.cpp",
@@ -132,7 +132,7 @@ func seedLanguages() {
 		},
 		{
 			ImageName:      "cpp",
-			DisplayName:    "C11 (GCC 7.2.0)",
+			DisplayName:    "C11 (GCC 8.1.0)",
 			FileName:       "main.c",
 			ExeFileName:    "main.o",
 			CompileCommand: "gcc -w -lm -std=gnu11 -O2 -o main.o main.c",

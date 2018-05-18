@@ -1,4 +1,4 @@
-FROM gcc:7.2.0
+FROM gcc:8.1.0
 LABEL maintainer="gedorinku <gedorinku@yahoo.co.jp>"
 
 RUN apt-get update && apt-get install time
