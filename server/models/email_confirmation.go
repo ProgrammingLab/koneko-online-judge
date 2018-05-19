@@ -24,7 +24,7 @@ const (
 	subjectEmailConfirmation = "[Koneko Online Judge]招待のご案内"
 	bodyEmailConfirmation    = `<p>Koneko Online Judgeへ招待されました。
 ユーザー登録を行うには、下記のリンクをクリックしてください。</p>
-<p><a href="https://judge.kurume-nct.com/#/registration/%v">https://judge.kurume-nct.com/#/registration/%v</a></p>
+<p><a href="https://judge.kurume-nct.com/registration/%v">https://judge.kurume-nct.com/registration/%v</a></p>
 <p>このリンクの有効期間は1週間です。</p>`
 )
 

@@ -14,7 +14,7 @@ const (
 	bodyPasswordReset    = `<p>%v さん</p>
 <p>Koneko Online Judgeのパスワード再設定がリクエストされました。
 パスワードを再設定するには、下記のリンクをクリックしてください。</p>
-<p><a href="https://judge.kurume-nct.com/#/password_reset/%v">https://judge.kurume-nct.com/#/password_reset/%v</a></p>`
+<p><a href="https://judge.kurume-nct.com/password_reset/%v">https://judge.kurume-nct.com/password_reset/%v</a></p>`
 )
 
 type PasswordResetToken struct {
