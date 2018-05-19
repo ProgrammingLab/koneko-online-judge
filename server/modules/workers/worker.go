@@ -127,8 +127,6 @@ func newSeparator() (string, error) {
 }
 
 func (w Worker) Run(input string) (*ExecResult, error) {
-	start := time.Now()
-
 	ctx := context.Background()
 	opt := types.ContainerAttachOptions{
 		Stream: true,
@@ -143,21 +141,11 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	}
 	defer hijacked.Close()
 
-	{
-		end := time.Now()
-		logger.AppLog.Debugf("attach%f秒\n", (end.Sub(start)).Seconds())
-	}
-
 	startErrChan := make(chan error)
 	go func() {
 		err = w.cli.ContainerStart(ctx, w.ID, types.ContainerStartOptions{})
 		startErrChan <- err
 	}()
-
-	{
-		end := time.Now()
-		logger.AppLog.Debugf("start%f秒\n", (end.Sub(start)).Seconds())
-	}
 
 	stdout, err := ioutil.TempFile("", "stdout")
 	if err != nil {
@@ -172,11 +160,6 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		return nil, err
 	}
 	defer removeTempFile(stderr)
-
-	{
-		end := time.Now()
-		logger.AppLog.Debugf("temp create%f秒\n", (end.Sub(start)).Seconds())
-	}
 
 	streamErrChan := make(chan error)
 	go func() {
@@ -201,11 +184,6 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		return nil, err
 	}
 
-	{
-		end := time.Now()
-		logger.AppLog.Debugf("wait chan%f秒\n", (end.Sub(start)).Seconds())
-	}
-
 	_, err = stdout.Seek(0, 0)
 	if err != nil {
 		logger.AppLog.Errorf("error %+v", err)
@@ -216,14 +194,8 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		logger.AppLog.Error(err)
 		return nil, err
 	}
-	logger.AppLog.Debug("stdoutlen", len(rawStdout))
 	if len(rawStdout) == 1 {
 		rawStdout = append(rawStdout, "255")
-	}
-	// TODO ここでOLEの処理
-	{
-		end := time.Now()
-		logger.AppLog.Debugf("stdout%f秒\n", (end.Sub(start)).Seconds())
 	}
 
 	_, err = stderr.Seek(0, 0)
@@ -236,17 +208,9 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		logger.AppLog.Error(err)
 		return nil, err
 	}
-	logger.AppLog.Debug("stderrlen", len(rawStderr))
-	{
-		end := time.Now()
-		logger.AppLog.Debugf("stderr%f秒\n", (end.Sub(start)).Seconds())
-	}
 
 	exitCode := rawStdout[1]
-	logger.AppLog.Debug(string(exitCode))
-
 	timeText := rawStderr[1]
-	logger.AppLog.Debug(string(timeText))
 
 	timeMillis, memoryUsage, err := parseTimeText(string(timeText))
 	if err != nil {
@@ -254,8 +218,6 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		return nil, err
 	}
 	memoryUsage *= 1024
-	end := time.Now()
-	logger.AppLog.Debugf("終わり%f秒\n", (end.Sub(start)).Seconds())
 
 	var status ExecStatus
 	runtimeErr := checkRuntimeError(exitCode)
