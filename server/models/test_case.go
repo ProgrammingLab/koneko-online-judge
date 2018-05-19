@@ -3,6 +3,7 @@ package models
 import (
 	"archive/zip"
 	"io"
+	"strings"
 
 	"github.com/jinzhu/gorm"
 )
@@ -13,6 +14,11 @@ type TestCase struct {
 	Input     string `gorm:"type:longtext; not null"`
 	Output    string `gorm:"type:longtext; not null"`
 }
+
+var newlineReplacer = strings.NewReplacer(
+	"\r\n", "\n",
+	"\r", "\n",
+)
 
 func newTestCase(set *CaseSet, input *zip.File, output *zip.File) (*TestCase, error) {
 	in, err := readStringFull(input)
@@ -27,8 +33,8 @@ func newTestCase(set *CaseSet, input *zip.File, output *zip.File) (*TestCase, er
 
 	testCase := &TestCase{
 		CaseSetID: set.ID,
-		Input:     *in,
-		Output:    *out,
+		Input:     newlineReplacer.Replace(*in),
+		Output:    newlineReplacer.Replace(*out),
 	}
 	db.Create(testCase)
 
