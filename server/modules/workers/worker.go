@@ -2,7 +2,6 @@ package workers
 
 import (
 	"archive/tar"
-	"bufio"
 	"crypto/rand"
 	"encoding/base64"
 	"io"
@@ -72,7 +71,7 @@ func NewWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []str
 		return nil, err
 	}
 
-	outputCmd := "echo -n " + sp + "$?" + sp
+	outputCmd := "echo -n " + sp + "$?"
 	runCmd := []string{
 		"/usr/bin/time", "-f", sp + "%e %M",
 		"timeout", strconv.FormatFloat(timeLimit.Seconds()+0.01, 'f', 4, 64),
@@ -212,7 +211,7 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
-	rawStdout, err := w.parseStdout(stdout)
+	rawStdout, err := w.parseOutput(stdout)
 	if err != nil {
 		logger.AppLog.Error(err)
 		return nil, err
@@ -232,7 +231,7 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
-	rawStderr, err := w.parseStdout(stderr)
+	rawStderr, err := w.parseOutput(stderr)
 	if err != nil {
 		logger.AppLog.Error(err)
 		return nil, err
@@ -260,22 +259,19 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 
 	var status ExecStatus
 	runtimeErr := checkRuntimeError(exitCode)
-	switch runtimeErr {
-	case errRuntime:
+	switch {
+	case int64(w.TimeLimit.Seconds()*1000.0+0.0001) <= timeMillis:
+		status = StatusTimeLimitExceeded
+		logger.AppLog.Debugf("time limit(%v) exceeded:%v", w.TimeLimit, timeMillis)
+	case w.MemoryLimit <= memoryUsage:
+		status = StatusMemoryLimitExceeded
+		logger.AppLog.Debugf("memory limit(%v) exceeded:%v", w.MemoryLimit, memoryUsage)
+	case runtimeErr == errRuntime:
 		status = StatusRuntimeError
-	case nil:
-		switch {
-		case int64(w.TimeLimit.Seconds()*1000.0+0.0001) <= timeMillis:
-			status = StatusTimeLimitExceeded
-			logger.AppLog.Debugf("time limit(%v) exceeded:%v", w.TimeLimit, timeMillis)
-		case w.MemoryLimit <= memoryUsage:
-			status = StatusMemoryLimitExceeded
-			logger.AppLog.Debugf("memory limit(%v) exceeded:%v", w.MemoryLimit, memoryUsage)
-		default:
-			status = StatusFinished
-		}
-	default:
+	case runtimeErr != nil:
 		return nil, runtimeErr
+	default:
+		status = StatusFinished
 	}
 
 	return &ExecResult{
@@ -348,29 +344,31 @@ func (w Worker) Remove() error {
 	return err
 }
 
-func (w Worker) parseStdout(r io.Reader) ([]string, error) {
-	scanner := bufio.NewScanner(r)
-	scanner.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		if atEOF && len(data) == 0 {
-			return 0, nil, nil
+func (w Worker) parseOutput(r io.Reader) ([]string, error) {
+	raw := make([]byte, outputLimit)
+	n, err := r.Read(raw)
+	if err != nil {
+		if err != io.EOF {
+			return nil, err
 		}
-		if i := strings.Index(string(data), w.separator); i >= 0 {
-			return i + len(w.separator), data[0:i], nil
-		}
-
-		if atEOF {
-			return len(data), data, nil
-		}
-
-		return 0, nil, nil
-	})
+		return []string{""}, nil
+	}
+	out := string(raw[0:n])
 
 	res := make([]string, 0, 3)
-	for scanner.Scan() {
-		res = append(res, scanner.Text())
+	for {
+		i := strings.Index(out, w.separator)
+		if i == -1 {
+			i = len(out)
+		}
+		res = append(res, out[:i])
+		if i == len(out) {
+			break
+		}
+		out = out[i+len(w.separator):]
 	}
 
-	return res, scanner.Err()
+	return res, nil
 }
 
 func (w Worker) getFromContainer(path string, limit int64) ([]byte, error) {
