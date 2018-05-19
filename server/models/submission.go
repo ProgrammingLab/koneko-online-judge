@@ -148,6 +148,7 @@ func (s *Submission) FetchJudgeSetResultsDeeply(sorted bool) {
 	}
 	query.Model(s).Related(&s.JudgeSetResults)
 	for i := range s.JudgeSetResults {
+		s.JudgeSetResults[i].FetchCaseSet()
 		s.JudgeSetResults[i].FetchJudgeResults(sorted)
 	}
 }

@@ -11,7 +11,7 @@ type JudgeSetResult struct {
 	CreatedAt    time.Time       `json:"createdAt"`
 	UpdatedAt    time.Time       `json:"updatedAt"`
 	SubmissionID uint            `gorm:"not null" json:"-"`
-	CaseSet      CaseSet         `json:"-"`
+	CaseSet      CaseSet         `json:"caseSet"`
 	CaseSetID    uint            `gorm:"not null" json:"caseSetID"`
 	Point        int             `json:"point"`
 	Status       JudgementStatus `gorm:"not null; default:'0'" json:"status"`
