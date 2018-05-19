@@ -175,10 +175,10 @@ func (c *Contest) GetStandings() []Score {
 	db.Model(c).Related(&s)
 	sort.Slice(s, func(i, j int) bool {
 		if s[i].Point == s[j].Point {
-			return s[i].UpdatedAt.After(s[j].UpdatedAt)
+			return s[i].UpdatedAt.Before(s[j].UpdatedAt)
 		}
 
-		return s[i].Point < s[j].Point
+		return s[i].Point > s[j].Point
 	})
 	for i := range s {
 		score := &s[i]
