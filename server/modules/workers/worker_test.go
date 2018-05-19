@@ -50,7 +50,7 @@ func TestWorkerOutput(t *testing.T) {
 				t.Errorf("invalid stdout on case #%v: test case -> %v, actual -> %v", i, output, res.Stdout)
 			}
 
-			if strings.TrimSpace(res.Stderr) != stderr {
+			if strings.Index(res.Stderr, stderr) == -1 {
 				t.Errorf("invalid stderr on case #%v: test case -> %v, actual -> %v", i, stderr, res.Stderr)
 			}
 
