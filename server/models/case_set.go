@@ -56,6 +56,7 @@ func newCaseSets(problem *Problem, archive []byte) ([]*CaseSet, error) {
 
 	err = checkValidZip(r)
 	if err != nil {
+		logger.AppLog.Error(err)
 		return nil, err
 	}
 
@@ -180,8 +181,8 @@ func getCaseFiles(reader *zip.Reader) ([]*zip.File, []*zip.File) {
 	outputs := make([]*zip.File, 0, len(reader.File)/2)
 	for _, f := range reader.File {
 		switch {
-		case f.FileInfo().IsDir():
-			return nil, nil
+		case f.FileInfo().IsDir() || strings.Index(f.Name, "/") != -1:
+			break
 		case inputFileRegex.MatchString(f.Name):
 			inputs = append(inputs, f)
 		case outputFileRegex.MatchString(f.Name):
