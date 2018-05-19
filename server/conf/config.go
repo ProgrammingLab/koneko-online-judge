@@ -18,6 +18,7 @@ type KoneConfig struct {
 	DBUser     string `toml:"dbUser"`
 	DBPassword string `toml:"dbPassword"`
 	RedisHost  string `toml:"redisHost"`
+	Debug      bool   `toml:"debug"`
 }
 
 type SMTPConfig struct {

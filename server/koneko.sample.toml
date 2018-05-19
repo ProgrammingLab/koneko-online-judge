@@ -4,6 +4,7 @@ dbName = "koj"
 dbUser = "root"
 dbPassword = "password"
 redisHost = "redis:6379"
+debug = true
 
 [SMTP]
 host = "smtp"

@@ -28,7 +28,7 @@ func InitDB() {
 	}
 
 	logger.AppLog.Info("DB Connected")
-	db.LogMode(true)
+	db.LogMode(cfg.Debug)
 
 	createTables()
 	seedLanguages()

@@ -23,7 +23,12 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 
 func main() {
 	e := echo.New()
-	e.Logger.SetLevel(log.DEBUG)
+	cfg := conf.GetConfig().Koneko
+	if cfg.Debug {
+		e.Logger.SetLevel(log.DEBUG)
+	} else {
+		e.Logger.SetLevel(log.INFO)
+	}
 	logger.AppLog = e.Logger
 
 	if err := conf.LoadConfig(); err != nil {
