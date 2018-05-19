@@ -2,6 +2,8 @@ package workers
 
 import (
 	"archive/tar"
+	"crypto/rand"
+	"encoding/base64"
 	"io"
 	"io/ioutil"
 	"os"
@@ -25,6 +27,7 @@ type Worker struct {
 	cli         *client.Client
 	TimeLimit   time.Duration
 	MemoryLimit int64
+	separator   string
 }
 
 type ExecStatus int
@@ -35,10 +38,12 @@ const (
 	StatusMemoryLimitExceeded ExecStatus = 2
 	StatusRuntimeError        ExecStatus = 3
 	StatusUnknownError        ExecStatus = 4
+	StatusOutputLimitExceeded ExecStatus = 5
 	outputLimit                          = 10 * 1024 * 1024
 	errorOutputLimit                     = 512
 	Workspace                            = "/tmp/koj-workspace/"
 	errorString                          = "runtime_error"
+	exitCodeFile                         = "exit.txt"
 )
 
 var (
@@ -61,12 +66,17 @@ func NewWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []str
 		return nil, err
 	}
 
-	// 下のやつ、echo $?したら必ず0になってよくわからず
+	sp, err := newSeparator()
+	if err != nil {
+		return nil, err
+	}
+
+	outputCmd := "echo -n " + sp + "$?"
 	runCmd := []string{
-		"/usr/bin/time", "-f", "%e %M", "-o", "time.txt",
+		"/usr/bin/time", "-f", sp + "%e %M",
 		"timeout", strconv.FormatFloat(timeLimit.Seconds()+0.01, 'f', 4, 64),
 		"/usr/bin/sudo", "-u", "nobody", "--",
-		"/bin/sh", "-c", strings.Join(cmd, " ") + " 2>error.txt || echo " + errorString + " 1>&2",
+		"/bin/bash", "-c", strings.Join(cmd, " ") + ";" + outputCmd,
 	}
 	logger.AppLog.Debugf("run command", runCmd)
 
@@ -101,8 +111,19 @@ func NewWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []str
 		TimeLimit:   timeLimit,
 		MemoryLimit: memoryLimit,
 		cli:         cli,
+		separator:   sp,
 	}
 	return w, nil
+}
+
+func newSeparator() (string, error) {
+	s := make([]byte, 16)
+	_, err := rand.Read(s)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(s), nil
 }
 
 func (w Worker) Run(input string) (*ExecResult, error) {
@@ -120,11 +141,11 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	}
 	defer hijacked.Close()
 
-	err = w.cli.ContainerStart(ctx, w.ID, types.ContainerStartOptions{})
-	if err != nil {
-		logger.AppLog.Errorf("error %+v", err)
-		return nil, err
-	}
+	startErrChan := make(chan error)
+	go func() {
+		err = w.cli.ContainerStart(ctx, w.ID, types.ContainerStartOptions{})
+		startErrChan <- err
+	}()
 
 	stdout, err := ioutil.TempFile("", "stdout")
 	if err != nil {
@@ -154,12 +175,10 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		streamErrChan <- err
 	}()
 
-	err = w.cli.ContainerStart(ctx, w.ID, types.ContainerStartOptions{})
-	if err != nil {
+	if err := <-startErrChan; err != nil {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
-
 	if err := <-streamErrChan; err != nil {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
@@ -170,25 +189,28 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
-	stdoutBuf := make([]byte, outputLimit)
-	n, err := stdout.Read(stdoutBuf)
-	if err != nil && err != io.EOF {
+	rawStdout, err := w.parseOutput(stdout)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return nil, err
+	}
+	if len(rawStdout) == 1 {
+		rawStdout = append(rawStdout, "255")
+	}
+
+	_, err = stderr.Seek(0, 0)
+	if err != nil {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
-	stdoutBuf = stdoutBuf[0:n]
-	stderrString, err := w.getFromContainer(Workspace+"error.txt", errorOutputLimit)
-	// プロセスがOOM Killerによって殺されたとき、error.txtが出力されないので、そのようなエラーは無視する
-	if err != nil && err != io.EOF && !strings.Contains(err.Error(), "Could not find the file") {
-		logger.AppLog.Errorf("error %+v", err)
+	rawStderr, err := w.parseOutput(stderr)
+	if err != nil {
+		logger.AppLog.Error(err)
 		return nil, err
 	}
 
-	timeText, err := w.getFromContainer(Workspace+"time.txt", 128)
-	if err != nil && err != io.EOF {
-		logger.AppLog.Errorf("error %+v", err)
-		return nil, err
-	}
+	exitCode := rawStdout[1]
+	timeText := rawStderr[1]
 
 	timeMillis, memoryUsage, err := parseTimeText(string(timeText))
 	if err != nil {
@@ -198,30 +220,28 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	memoryUsage *= 1024
 
 	var status ExecStatus
-	switch checkRuntimeError(stderr) {
-	case errRuntime:
+	runtimeErr := checkRuntimeError(exitCode)
+	switch {
+	case int64(w.TimeLimit.Seconds()*1000.0+0.0001) <= timeMillis:
+		status = StatusTimeLimitExceeded
+		logger.AppLog.Debugf("time limit(%v) exceeded:%v", w.TimeLimit, timeMillis)
+	case w.MemoryLimit <= memoryUsage:
+		status = StatusMemoryLimitExceeded
+		logger.AppLog.Debugf("memory limit(%v) exceeded:%v", w.MemoryLimit, memoryUsage)
+	case runtimeErr == errRuntime:
 		status = StatusRuntimeError
-	case nil:
-		switch {
-		case int64(w.TimeLimit.Seconds()*1000.0+0.0001) <= timeMillis:
-			status = StatusTimeLimitExceeded
-			logger.AppLog.Debugf("time limit(%v) exceeded:%v", w.TimeLimit, timeMillis)
-		case w.MemoryLimit <= memoryUsage:
-			status = StatusMemoryLimitExceeded
-			logger.AppLog.Debugf("memory limit(%v) exceeded:%v", w.MemoryLimit, memoryUsage)
-		default:
-			status = StatusFinished
-		}
+	case runtimeErr != nil:
+		return nil, runtimeErr
 	default:
-		return nil, nil
+		status = StatusFinished
 	}
 
 	return &ExecResult{
 		Status:      status,
 		ExecTime:    time.Duration(timeMillis) * time.Millisecond,
 		MemoryUsage: memoryUsage,
-		Stdout:      string(stdoutBuf),
-		Stderr:      string(stderrString),
+		Stdout:      rawStdout[0],
+		Stderr:      rawStderr[0],
 	}, nil
 }
 
@@ -286,6 +306,33 @@ func (w Worker) Remove() error {
 	return err
 }
 
+func (w Worker) parseOutput(r io.Reader) ([]string, error) {
+	raw := make([]byte, outputLimit)
+	n, err := r.Read(raw)
+	if err != nil {
+		if err != io.EOF {
+			return nil, err
+		}
+		return []string{""}, nil
+	}
+	out := string(raw[0:n])
+
+	res := make([]string, 0, 3)
+	for {
+		i := strings.Index(out, w.separator)
+		if i == -1 {
+			i = len(out)
+		}
+		res = append(res, out[:i])
+		if i == len(out) {
+			break
+		}
+		out = out[i+len(w.separator):]
+	}
+
+	return res, nil
+}
+
 func (w Worker) getFromContainer(path string, limit int64) ([]byte, error) {
 	ctx := context.Background()
 	f, _, err := w.cli.CopyFromContainer(ctx, w.ID, path)
@@ -343,22 +390,17 @@ func parseTimeText(time string) (int64, int64, error) {
 	return int64(t * 1000), int64(m / 4), nil
 }
 
-func checkRuntimeError(stderr *os.File) error {
-	_, err := stderr.Seek(0, 0)
+func checkRuntimeError(exitCode string) error {
+	code, err := strconv.Atoi(strings.TrimSpace(exitCode))
 	if err != nil {
-		logger.AppLog.Errorf("error %+v", err)
-		return err
-	}
-	stderrString, err := ioutil.ReadAll(stderr)
-	if err != nil {
+		logger.AppLog.Errorf("parse error: %+v", err)
 		return err
 	}
 
-	index := strings.Index(string(stderrString), errorString)
-	if index == -1 {
-		return nil
+	if code != 0 {
+		return errRuntime
 	}
-	return errRuntime
+	return nil
 }
 
 func createTempDir() error {
