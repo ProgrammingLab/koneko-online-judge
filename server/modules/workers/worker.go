@@ -39,6 +39,7 @@ const (
 	errorOutputLimit                     = 512
 	Workspace                            = "/tmp/koj-workspace/"
 	errorString                          = "runtime_error"
+	exitCodeFile                         = "exit.txt"
 )
 
 var (
@@ -66,7 +67,7 @@ func NewWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []str
 		"/usr/bin/time", "-f", "%e %M", "-o", "time.txt",
 		"timeout", strconv.FormatFloat(timeLimit.Seconds()+0.01, 'f', 4, 64),
 		"/usr/bin/sudo", "-u", "nobody", "--",
-		"/bin/bash", "-c", strings.Join(cmd, " ") + " 2>error.txt || echo " + errorString + " 1>&2",
+		"/bin/bash", "-c", strings.Join(cmd, " ") + "; echo $? >" + exitCodeFile,
 	}
 	logger.AppLog.Debugf("run command", runCmd)
 
@@ -106,6 +107,8 @@ func NewWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []str
 }
 
 func (w Worker) Run(input string) (*ExecResult, error) {
+	start := time.Now()
+
 	ctx := context.Background()
 	opt := types.ContainerAttachOptions{
 		Stream: true,
@@ -120,10 +123,20 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	}
 	defer hijacked.Close()
 
-	err = w.cli.ContainerStart(ctx, w.ID, types.ContainerStartOptions{})
-	if err != nil {
-		logger.AppLog.Errorf("error %+v", err)
-		return nil, err
+	{
+		end := time.Now()
+		logger.AppLog.Debugf("attach%f秒\n", (end.Sub(start)).Seconds())
+	}
+
+	startErrChan := make(chan error)
+	go func() {
+		err = w.cli.ContainerStart(ctx, w.ID, types.ContainerStartOptions{})
+		startErrChan <- err
+	}()
+
+	{
+		end := time.Now()
+		logger.AppLog.Debugf("start%f秒\n", (end.Sub(start)).Seconds())
 	}
 
 	stdout, err := ioutil.TempFile("", "stdout")
@@ -140,6 +153,11 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	}
 	defer removeTempFile(stderr)
 
+	{
+		end := time.Now()
+		logger.AppLog.Debugf("temp create%f秒\n", (end.Sub(start)).Seconds())
+	}
+
 	streamErrChan := make(chan error)
 	go func() {
 		_, err := hijacked.Conn.Write([]byte(input))
@@ -154,37 +172,68 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		streamErrChan <- err
 	}()
 
-	err = w.cli.ContainerStart(ctx, w.ID, types.ContainerStartOptions{})
-	if err != nil {
+	if err := <-startErrChan; err != nil {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
-
 	if err := <-streamErrChan; err != nil {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
 
-	_, err = stdout.Seek(0, 0)
-	if err != nil {
-		logger.AppLog.Errorf("error %+v", err)
-		return nil, err
+	{
+		end := time.Now()
+		logger.AppLog.Debugf("wait chan%f秒\n", (end.Sub(start)).Seconds())
 	}
+
 	stdoutBuf := make([]byte, outputLimit)
-	n, err := stdout.Read(stdoutBuf)
-	if err != nil && err != io.EOF {
-		logger.AppLog.Errorf("error %+v", err)
-		return nil, err
+	{
+		_, err = stdout.Seek(0, 0)
+		if err != nil {
+			logger.AppLog.Errorf("error %+v", err)
+			return nil, err
+		}
+		n, err := stdout.Read(stdoutBuf)
+		if err != nil && err != io.EOF {
+			logger.AppLog.Errorf("error %+v", err)
+			return nil, err
+		}
+		stdoutBuf = stdoutBuf[0:n]
 	}
-	stdoutBuf = stdoutBuf[0:n]
-	stderrString, err := w.getFromContainer(Workspace+"error.txt", errorOutputLimit)
-	// プロセスがOOM Killerによって殺されたとき、error.txtが出力されないので、そのようなエラーは無視する
-	if err != nil && err != io.EOF && !strings.Contains(err.Error(), "Could not find the file") {
+	{
+		end := time.Now()
+		logger.AppLog.Debugf("stdout%f秒\n", (end.Sub(start)).Seconds())
+	}
+
+	stderrBuf := make([]byte, outputLimit)
+	{
+		_, err = stderr.Seek(0, 0)
+		if err != nil {
+			logger.AppLog.Errorf("error %+v", err)
+			return nil, err
+		}
+		n, err := stderr.Read(stderrBuf)
+		if err != nil && err != io.EOF {
+			logger.AppLog.Errorf("error %+v", err)
+			return nil, err
+		}
+		stderrBuf = stderrBuf[0:n]
+	}
+
+	{
+		end := time.Now()
+		logger.AppLog.Debugf("stderr%f秒\n", (end.Sub(start)).Seconds())
+	}
+
+	exitCode, err := w.getFromContainer(Workspace+exitCodeFile, 128)
+	logger.AppLog.Debug(string(exitCode))
+	if err != nil && err != io.EOF {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
 
 	timeText, err := w.getFromContainer(Workspace+"time.txt", 128)
+	logger.AppLog.Debug(string(timeText))
 	if err != nil && err != io.EOF {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
@@ -196,9 +245,12 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		return nil, err
 	}
 	memoryUsage *= 1024
+	end := time.Now()
+	logger.AppLog.Debugf("終わり%f秒\n", (end.Sub(start)).Seconds())
 
 	var status ExecStatus
-	switch checkRuntimeError(stderr) {
+	runtimeErr := checkRuntimeError(exitCode)
+	switch runtimeErr {
 	case errRuntime:
 		status = StatusRuntimeError
 	case nil:
@@ -213,7 +265,7 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 			status = StatusFinished
 		}
 	default:
-		return nil, nil
+		return nil, runtimeErr
 	}
 
 	return &ExecResult{
@@ -221,7 +273,7 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		ExecTime:    time.Duration(timeMillis) * time.Millisecond,
 		MemoryUsage: memoryUsage,
 		Stdout:      string(stdoutBuf),
-		Stderr:      string(stderrString),
+		Stderr:      string(stderrBuf),
 	}, nil
 }
 
@@ -343,22 +395,17 @@ func parseTimeText(time string) (int64, int64, error) {
 	return int64(t * 1000), int64(m / 4), nil
 }
 
-func checkRuntimeError(stderr *os.File) error {
-	_, err := stderr.Seek(0, 0)
+func checkRuntimeError(exitCode []byte) error {
+	code, err := strconv.Atoi(strings.TrimSpace(string(exitCode)))
 	if err != nil {
-		logger.AppLog.Errorf("error %+v", err)
-		return err
-	}
-	stderrString, err := ioutil.ReadAll(stderr)
-	if err != nil {
+		logger.AppLog.Errorf("parse error: %+v", err)
 		return err
 	}
 
-	index := strings.Index(string(stderrString), errorString)
-	if index == -1 {
-		return nil
+	if code != 0 {
+		return errRuntime
 	}
-	return errRuntime
+	return nil
 }
 
 func createTempDir() error {

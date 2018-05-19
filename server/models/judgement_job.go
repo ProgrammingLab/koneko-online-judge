@@ -236,7 +236,10 @@ func (j *judgementJob) execSubmission(testCase *TestCase) *workers.ExecResult {
 		return nil
 	}
 
+	start := time.Now()
 	res, err := w.Run(testCase.Input[:])
+	end := time.Now()
+	logger.AppLog.Debugf("全体%f秒\n", (end.Sub(start)).Seconds())
 	if err != nil {
 		logger.AppLog.Errorf("exec: container attach error %+v", err)
 	}
