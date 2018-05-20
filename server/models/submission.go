@@ -155,7 +155,7 @@ func (s *Submission) FetchJudgeSetResultsDeeply(sorted bool) {
 
 func (s *Submission) CanView(session *UserSession) bool {
 	s.FetchProblem()
-	if s.Problem.ContestID == nil || s.Problem.CanEdit(session) {
+	if s.Problem.ContestID == nil || s.UserID == session.UserID || s.Problem.CanEdit(session) {
 		return true
 	}
 
