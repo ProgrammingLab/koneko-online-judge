@@ -200,12 +200,11 @@ func (s *Submission) resetJudgeSetResults() error {
 
 	s.FetchJudgeSetResults(false)
 	for i := range s.JudgeSetResults {
-		err := s.JudgeSetResults[i].setJudgementStatus(s.Status)
-		if err != nil {
-			logger.AppLog.Errorf("error: %+v", err)
-			return err
-		}
+		s.JudgeSetResults[i].Delete()
 	}
+
+	s.JudgeSetResults = make([]JudgeSetResult, 0, 0)
+	initJudgeSetResults(s)
 
 	s.FetchProblem()
 	onUpdateJudgementStatuses(s.Problem.ContestID, *s)

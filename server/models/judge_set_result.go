@@ -62,10 +62,7 @@ func (r *JudgeSetResult) GetJudgeResultsSorted() []JudgeResult {
 }
 
 func (r *JudgeSetResult) Delete() {
-	r.FetchJudgeResults(false)
-	for _, res := range r.JudgeResults {
-		res.Delete()
-	}
+	db.Delete(JudgeResult{}, "judge_set_result_id = ?", r.ID)
 	db.Delete(JudgeSetResult{}, "id = ?", r.ID)
 }
 
