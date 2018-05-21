@@ -1,6 +1,10 @@
 package models
 
-import "github.com/gedorinku/koneko-online-judge/server/modules/workers"
+import (
+	"sort"
+
+	"github.com/gedorinku/koneko-online-judge/server/modules/workers"
+)
 
 type evaluator interface {
 	next(set *CaseSet, factory func(set *CaseSet) caseSetEvaluator) caseSetEvaluator
@@ -14,21 +18,15 @@ type caseSetEvaluator interface {
 }
 
 func evaluateStatuses(statuses map[JudgementStatus]int) JudgementStatus {
-	max := 0
-	maxSt := StatusAccepted
-	ac := true
+	temp := make([]JudgementStatus, 0, len(statuses))
 	for k, v := range statuses {
-		if k != StatusAccepted && 0 < v {
-			ac = false
-			break
-		}
-	}
-	for k, v := range statuses {
-		if max < v && (!ac || k != StatusAccepted) {
-			max = v
-			maxSt = k
+		if 0 < v {
+			temp = append(temp, k)
 		}
 	}
 
-	return maxSt
+	sort.Slice(temp, func(i, j int) bool {
+		return temp[i] > temp[j]
+	})
+	return temp[0]
 }
