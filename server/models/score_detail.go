@@ -17,16 +17,19 @@ type ScoreDetail struct {
 	ProblemID  uint      `gorm:"not null" json:"problemID"`
 }
 
-func newScoreDetail(score *Score, problemID uint, point, wrongCount int, tx *gorm.DB) *ScoreDetail {
+func newScoreDetail(score *Score, submission *Submission, wrongCount int, tx *gorm.DB) *ScoreDetail {
 	d := &ScoreDetail{
-		Point:      point,
+		Point:      submission.Point,
 		WrongCount: wrongCount,
+		Accepted:   submission.Status == StatusAccepted,
 		ScoreID:    score.ID,
-		ProblemID:  problemID,
+		ProblemID:  submission.ProblemID,
 	}
 	tx.Create(d)
 
-	tx.Model(score).Update("point", score.Point+point)
-
 	return d
+}
+
+func deleteScoreDetails(problemID uint) {
+	db.Delete(ScoreDetail{}, "problem_id = ?", problemID)
 }

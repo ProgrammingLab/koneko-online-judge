@@ -34,6 +34,7 @@ func onUpdateJudgementStatuses(contestID *uint, submission Submission) error {
 	if notFound {
 		err := tx.Create(&ContestJudgementStatus{
 			ContestID: *contestID,
+			UpdatedAt: submission.UpdatedAt,
 			UserID:    submission.UserID,
 			ProblemID: submission.ProblemID,
 			Status:    submission.Status,

@@ -88,29 +88,6 @@ func GetSubmission(c echo.Context) error {
 	return c.JSON(http.StatusOK, submission)
 }
 
-func Rejudge(c echo.Context) error {
-	s := getSession(c)
-	if s == nil {
-		return echo.ErrUnauthorized
-	}
-
-	submission := getSubmissionFromContext(c)
-	if submission == nil {
-		return echo.ErrNotFound
-	}
-
-	submission.FetchProblem()
-	if !submission.Problem.CanEdit(s) {
-		return echo.ErrForbidden
-	}
-
-	if err := submission.Rejudge(); err != nil {
-		return ErrInternalServer
-	}
-
-	return c.NoContent(http.StatusNoContent)
-}
-
 func fetchSubmission(out *models.Submission, s *models.UserSession) {
 	out.FetchUser()
 	out.User.Email = ""

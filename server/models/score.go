@@ -44,10 +44,16 @@ func updateScore(submission *Submission, contestID uint) {
 	if found {
 		newPoint := MaxInt(d.Point, submission.Point)
 		db.Model(d).Updates(map[string]interface{}{"point": newPoint, "wrong_count": d.WrongCount, "accepted": ac})
-		db.Model(s).Update("point", s.Point-d.Point+submission.Point)
 	} else {
-		newScoreDetail(s, submission.ProblemID, submission.Point, d.WrongCount, db)
+		newScoreDetail(s, submission, d.WrongCount, db)
 	}
+
+	s.FetchDetails()
+	s.Point = 0
+	for i := range s.ScoreDetails {
+		s.Point += s.ScoreDetails[i].Point
+	}
+	db.Model(s).Update("point", s.Point)
 }
 
 func (s *Score) FetchDetails() {

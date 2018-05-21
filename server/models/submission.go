@@ -163,7 +163,7 @@ func (s *Submission) CanView(session *UserSession) bool {
 	return s.Problem.CanView(session) && s.Problem.Contest.Started() && !s.Problem.Contest.IsOpen(time.Now())
 }
 
-func (s *Submission) Rejudge() error {
+func (s *Submission) rejudge() error {
 	s.resetJudgeSetResults()
 	return judge(s.ID)
 }

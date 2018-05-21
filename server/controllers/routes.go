@@ -24,7 +24,6 @@ func Routes(e *echo.Echo) {
 	e.POST("/problems/:id/submissions", Submit)
 	e.GET("/problems/:id/submissions", GetSubmissions)
 
-	e.POST("/submissions/:id/rejudge", Rejudge)
 	e.GET("/submissions/:id", GetSubmission)
 
 	e.GET("/languages", GetLanguages)
