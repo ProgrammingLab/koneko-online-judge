@@ -1,6 +1,13 @@
 package models
 
 import (
+	crand "crypto/rand"
+	"io/ioutil"
+	"math"
+	"math/big"
+	"math/rand"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
@@ -37,7 +44,7 @@ func compile(sourceCode string, language *Language) (*workers.Worker, *workers.E
 		return nil, nil
 	}
 
-	err = w.CopyContentToContainer([]byte(sourceCode), language.FileName, 0744)
+	err = w.CopyContentToContainer([]byte(sourceCode), workers.Workspace+language.FileName)
 	if err != nil {
 		logger.AppLog.Errorf("compile: docker cp %+v", err)
 		return nil, nil
@@ -172,16 +179,25 @@ func markAs(setResults []JudgeSetResult, status JudgementStatus) {
 func (j *judgementJob) judgeCaseSet(evaluator caseSetEvaluator, result *JudgeSetResult) {
 	result.FetchCaseSet()
 	result.FetchJudgeResults(false)
+	result.CaseSet.FetchTestCases()
+
+	w, err := j.createJudgementWorker(&result.CaseSet)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return
+	}
+	defer w.Remove()
 
 	var (
 		execTime    time.Duration
 		memoryUsage int64
 	)
-	for _, r := range result.JudgeResults {
-		j.judgeTestCase(evaluator, &r)
-		execTime = MaxDuration(execTime, r.ExecTime)
-		memoryUsage = MaxLong(memoryUsage, r.MemoryUsage)
+	res, err := w.Run("")
+	if err != nil {
+		logger.AppLog.Error(err)
+		return
 	}
+	logger.AppLog.Debug(res)
 
 	result.Status, result.Point = evaluator.evaluate()
 	result.ExecTime = execTime
@@ -196,49 +212,80 @@ func (j *judgementJob) judgeCaseSet(evaluator caseSetEvaluator, result *JudgeSet
 	db.Model(&JudgeSetResult{ID: result.ID}).Updates(query)
 }
 
-func (j *judgementJob) judgeTestCase(evaluator caseSetEvaluator, result *JudgeResult) int {
-	result.Status = StatusJudging
-	db.Model(result).Update("status", result.Status)
-	result.FetchTestCase()
-	testCase := &result.TestCase
-
-	res := j.execSubmission(testCase)
-	var point int
-	result.Status, point = evaluator.next(res, testCase)
-	result.ExecTime = res.ExecTime
-	result.MemoryUsage = res.MemoryUsage / 1024
-
-	query := map[string]interface{}{
-		"status":       result.Status,
-		"exec_time":    result.ExecTime,
-		"memory_usage": result.MemoryUsage,
-	}
-	db.Model(&JudgeResult{ID: result.ID}).Updates(query)
-	return point
-}
-
-func (j *judgementJob) execSubmission(testCase *TestCase) *workers.ExecResult {
+func (j *judgementJob) createJudgementWorker(caseSet *CaseSet) (*workers.Worker, error) {
 	problem := &j.submission.Problem
 	language := &j.submission.Language
 	cmd := language.GetExecCommandSlice()
-	w, err := workers.NewTimeoutWorker(imageNamePrefix+language.ImageName, problem.TimeLimit, int64(problem.MemoryLimit*1024*1024), cmd)
+	w, err := workers.NewJudgementWorker(imageNamePrefix+language.ImageName, problem.TimeLimit, int64(problem.MemoryLimit*1024*1024), cmd, language.ExeFileName)
 	if err != nil {
 		logger.AppLog.Errorf("exec: container create error %+v", err)
-		return nil
+		w.Remove()
+		return nil, err
 	}
-	defer func() {
-		go w.Remove()
-	}()
 
-	err = j.compiled.CopyTo(language.ExeFileName, w, 0755)
+	script, err := getJudgeScript()
+	if err != nil {
+		logger.AppLog.Error(err)
+		w.Remove()
+		return nil, err
+	}
+	err = w.CopyContentToContainer(script, "/tmp/judge.sh")
+	if err != nil {
+		logger.AppLog.Error(err)
+		w.Remove()
+		return nil, err
+	}
+
+	shuffleTestCase(caseSet)
+	for i := range caseSet.TestCases {
+		err := w.CopyContentToContainer([]byte(caseSet.TestCases[i].Input), "/tmp/input/"+strconv.Itoa(i)+".txt")
+		if err != nil {
+			logger.AppLog.Error(err)
+			w.Remove()
+			return nil, err
+		}
+	}
+
+	err = j.compiled.CopyTo(workers.Workspace+language.ExeFileName, w)
 	if err != nil {
 		logger.AppLog.Errorf("exec: docker cp error %+v", err)
-		return nil
+		w.Remove()
+		return nil, err
 	}
 
-	res, err := w.Run(testCase.Input[:])
+	return w, nil
+}
+
+func shuffleTestCase(set *CaseSet) error {
+	seed, err := crand.Int(crand.Reader, big.NewInt(math.MaxInt64))
 	if err != nil {
-		logger.AppLog.Errorf("exec: container attach error %+v", err)
+		logger.AppLog.Error(err)
+		return err
 	}
-	return res
+
+	r := rand.New(rand.NewSource(seed.Int64()))
+
+	n := len(set.TestCases)
+	for i := n - 1; i >= 0; i-- {
+		j := r.Intn(i + 1)
+		set.TestCases[i], set.TestCases[j] = set.TestCases[j], set.TestCases[i]
+	}
+
+	return nil
+}
+
+func getJudgeScript() ([]byte, error) {
+	f, err := os.Open("./judge.sh")
+	if err != nil {
+		logger.AppLog.Error(err)
+		return nil, err
+	}
+	defer f.Close()
+
+	res, err := ioutil.ReadAll(f)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return nil, err
+	}
+	return res, nil
 }

@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -83,17 +84,18 @@ func NewTimeoutWorker(img string, timeLimit time.Duration, memoryLimit int64, cm
 	return w, err
 }
 
-func NewJudgementWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []string) (*Worker, error) {
+func NewJudgementWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []string, execFileName string) (*Worker, error) {
 	sp, err := newSeparator()
 	if err != nil {
 		return nil, err
 	}
 
 	runCmd := []string{
-		"./judge.sh",
+		"/tmp/judge.sh",
 		sp,
 		strconv.FormatFloat(timeLimit.Seconds()+0.01, 'f', 4, 64),
 		strings.Join(cmd, " "),
+		execFileName,
 	}
 
 	w, err := newWorker(img, timeLimit, memoryLimit, runCmd)
@@ -127,7 +129,7 @@ func newWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []str
 	hcfg := &container.HostConfig{
 		Resources: container.Resources{
 			CpusetCpus: "0",
-			PidsLimit:  15,
+			PidsLimit:  20,
 			Memory:     memoryLimit + 10*1024*1024,
 		},
 		NetworkMode: "none",
@@ -277,27 +279,27 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	}, nil
 }
 
-func (w Worker) CopyTo(filename string, dist *Worker, mode os.FileMode) error {
+func (w Worker) CopyTo(filename string, dist *Worker) error {
 	const limit = 10 * 1024 * 1024
-	name := Workspace + filename
-	content, err := w.getFromContainer(name, limit)
+	content, err := w.getFromContainer(filename, limit)
 	if err != nil && err != io.EOF {
 		logger.AppLog.Errorf("%+v", err)
 		return err
 	}
-	return dist.CopyContentToContainer(content, filename, mode)
+	return dist.CopyContentToContainer(content, filename)
 }
 
-func (w Worker) CopyContentToContainer(content []byte, name string, mode os.FileMode) error {
+func (w Worker) CopyContentToContainer(content []byte, name string) error {
 	createTempDir()
-	f, err := os.Create(Workspace + name)
+	base := path.Base(name)
+	f, err := os.Create(Workspace + base)
 	if err != nil {
 		logger.AppLog.Errorf("could not create temp file %+v", err)
 		return err
 	}
 	f.Write(content)
 	f.Close()
-	err = os.Chmod(f.Name(), mode)
+	err = os.Chmod(f.Name(), 0777)
 	if err != nil {
 		logger.AppLog.Errorf("could not change temp file mode %+v", err)
 		return err
@@ -317,7 +319,7 @@ func (w Worker) CopyContentToContainer(content []byte, name string, mode os.File
 	}
 	defer srcArchive.Close()
 
-	dstInfo := archive.CopyInfo{Path: Workspace + name}
+	dstInfo := archive.CopyInfo{Path: name}
 	dstDir, preparedArchive, err := archive.PrepareArchiveCopy(srcArchive, srcInfo, dstInfo)
 	if err != nil {
 		logger.AppLog.Errorf("%+v", err)
