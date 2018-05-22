@@ -37,7 +37,7 @@ func compile(sourceCode string, language *Language) (*workers.Worker, *workers.E
 		return nil, nil
 	}
 
-	err = w.CopyContentToContainer([]byte(sourceCode), language.FileName)
+	err = w.CopyContentToContainer([]byte(sourceCode), language.FileName, 0744)
 	if err != nil {
 		logger.AppLog.Errorf("compile: docker cp %+v", err)
 		return nil, nil
@@ -230,7 +230,7 @@ func (j *judgementJob) execSubmission(testCase *TestCase) *workers.ExecResult {
 		go w.Remove()
 	}()
 
-	err = j.compiled.CopyTo(language.ExeFileName, w)
+	err = j.compiled.CopyTo(language.ExeFileName, w, 0755)
 	if err != nil {
 		logger.AppLog.Errorf("exec: docker cp error %+v", err)
 		return nil

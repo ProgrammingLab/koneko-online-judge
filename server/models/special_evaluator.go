@@ -95,12 +95,12 @@ func (e *specialCaseSetEvaluator) next(res *workers.ExecResult, testCase *TestCa
 	}
 	defer w.Remove()
 
-	e.verifier.CopyTo(e.config.Language.ExeFileName, w)
+	e.verifier.CopyTo(e.config.Language.ExeFileName, w, 0755)
 
-	w.CopyContentToContainer([]byte(testCase.Input), input)
-	w.CopyContentToContainer([]byte(testCase.Output), output)
-	w.CopyContentToContainer([]byte(res.Stdout), userOutput)
-	w.CopyContentToContainer([]byte(e.submission.SourceCode), l.FileName)
+	w.CopyContentToContainer([]byte(testCase.Input), input, 0744)
+	w.CopyContentToContainer([]byte(testCase.Output), output, 0744)
+	w.CopyContentToContainer([]byte(res.Stdout), userOutput, 0744)
+	w.CopyContentToContainer([]byte(e.submission.SourceCode), l.FileName, 0744)
 
 	judged, err := w.Run("")
 	if err != nil {

@@ -277,7 +277,7 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	}, nil
 }
 
-func (w Worker) CopyTo(filename string, dist *Worker) error {
+func (w Worker) CopyTo(filename string, dist *Worker, mode os.FileMode) error {
 	const limit = 10 * 1024 * 1024
 	name := Workspace + filename
 	content, err := w.getFromContainer(name, limit)
@@ -285,10 +285,10 @@ func (w Worker) CopyTo(filename string, dist *Worker) error {
 		logger.AppLog.Errorf("%+v", err)
 		return err
 	}
-	return dist.CopyContentToContainer(content, filename)
+	return dist.CopyContentToContainer(content, filename, mode)
 }
 
-func (w Worker) CopyContentToContainer(content []byte, name string) error {
+func (w Worker) CopyContentToContainer(content []byte, name string, mode os.FileMode) error {
 	createTempDir()
 	f, err := os.Create(Workspace + name)
 	if err != nil {
@@ -297,7 +297,7 @@ func (w Worker) CopyContentToContainer(content []byte, name string) error {
 	}
 	f.Write(content)
 	f.Close()
-	err = os.Chmod(f.Name(), 0777)
+	err = os.Chmod(f.Name(), mode)
 	if err != nil {
 		logger.AppLog.Errorf("could not change temp file mode %+v", err)
 		return err
