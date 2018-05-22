@@ -31,7 +31,7 @@ func judge(submissionID uint) error {
 
 func compile(sourceCode string, language *Language) (*workers.Worker, *workers.ExecResult) {
 	cmd := language.GetCompileCommandSlice()
-	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, compileTimeLimit, compileMemoryLimit, cmd)
+	w, err := workers.NewTimeoutWorker(imageNamePrefix+language.ImageName, compileTimeLimit, compileMemoryLimit, cmd)
 	if err != nil {
 		logger.AppLog.Errorf("compile: container create error %+v", err)
 		return nil, nil
@@ -221,7 +221,7 @@ func (j *judgementJob) execSubmission(testCase *TestCase) *workers.ExecResult {
 	problem := &j.submission.Problem
 	language := &j.submission.Language
 	cmd := language.GetExecCommandSlice()
-	w, err := workers.NewWorker(imageNamePrefix+language.ImageName, problem.TimeLimit, int64(problem.MemoryLimit*1024*1024), cmd)
+	w, err := workers.NewTimeoutWorker(imageNamePrefix+language.ImageName, problem.TimeLimit, int64(problem.MemoryLimit*1024*1024), cmd)
 	if err != nil {
 		logger.AppLog.Errorf("exec: container create error %+v", err)
 		return nil

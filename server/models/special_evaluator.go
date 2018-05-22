@@ -88,7 +88,7 @@ func (e *specialCaseSetEvaluator) next(res *workers.ExecResult, testCase *TestCa
 		userOutput = "submission"
 	)
 	cmd := append(e.config.Language.GetExecCommandSlice(), input, output, userOutput, l.FileName)
-	w, err := workers.NewWorker(imageNamePrefix+e.config.Language.ImageName, compileTimeLimit, compileMemoryLimit, cmd)
+	w, err := workers.NewTimeoutWorker(imageNamePrefix+e.config.Language.ImageName, compileTimeLimit, compileMemoryLimit, cmd)
 	if err != nil {
 		logger.AppLog.Errorf("error: %+v", err)
 		return StatusUnknownError, 0

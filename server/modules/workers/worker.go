@@ -59,13 +59,7 @@ type ExecResult struct {
 	Stderr      string
 }
 
-func NewWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []string) (*Worker, error) {
-	ctx := context.Background()
-	cli, err := client.NewEnvClient()
-	if err != nil {
-		return nil, err
-	}
-
+func NewTimeoutWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []string) (*Worker, error) {
 	sp, err := newSeparator()
 	if err != nil {
 		return nil, err
@@ -78,7 +72,46 @@ func NewWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []str
 		"/usr/bin/sudo", "-u", "nobody", "--",
 		"/bin/bash", "-c", strings.Join(cmd, " ") + ";" + outputCmd,
 	}
-	logger.AppLog.Debugf("run command", runCmd)
+
+	w, err := newWorker(img, timeLimit, memoryLimit, runCmd)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return nil, err
+	}
+	w.separator = sp
+
+	return w, err
+}
+
+func NewJudgementWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []string) (*Worker, error) {
+	sp, err := newSeparator()
+	if err != nil {
+		return nil, err
+	}
+
+	runCmd := []string{
+		"./judge.sh",
+		sp,
+		strconv.FormatFloat(timeLimit.Seconds()+0.01, 'f', 4, 64),
+		strings.Join(cmd, " "),
+	}
+
+	w, err := newWorker(img, timeLimit, memoryLimit, runCmd)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return nil, err
+	}
+	w.separator = sp
+
+	return w, err
+}
+
+func newWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []string) (*Worker, error) {
+	ctx := context.Background()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		return nil, err
+	}
 
 	cfg := &container.Config{
 		Image:        img,
@@ -89,7 +122,7 @@ func NewWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []str
 		StdinOnce:    true,
 		Tty:          false,
 		WorkingDir:   Workspace,
-		Cmd:          runCmd,
+		Cmd:          cmd,
 	}
 	hcfg := &container.HostConfig{
 		Resources: container.Resources{
@@ -111,7 +144,6 @@ func NewWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []str
 		TimeLimit:   timeLimit,
 		MemoryLimit: memoryLimit,
 		cli:         cli,
-		separator:   sp,
 	}
 	return w, nil
 }
