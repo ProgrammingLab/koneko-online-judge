@@ -203,7 +203,7 @@ func (j *judgementJob) executeCaseSet(evaluator caseSetEvaluator, result *JudgeS
 	return w, err
 }
 
-func (j *judgementJob) judgeCaseSet(w *workers.Worker, evaluator caseSetEvaluator, setResult *JudgeSetResult) error {
+func (j *judgementJob) judgeCaseSet(w *workers.Worker, evaluator caseSetEvaluator, setResult *JudgeSetResult) {
 	var (
 		maxExecTime    time.Duration
 		maxMemoryUsage int64
@@ -219,11 +219,10 @@ func (j *judgementJob) judgeCaseSet(w *workers.Worker, evaluator caseSetEvaluato
 		logger.AppLog.Debug(i)
 		if err != nil {
 			logger.AppLog.Error(err)
-			return err
-		}
-		if !has && i != len(results)-1 {
+			res = nil
+		} else if !has && i != len(results)-1 {
 			logger.AppLog.Error(ErrParseOutput)
-			return ErrParseOutput
+			res = nil
 		}
 
 		r.Status, _ = evaluator.next(res, &r.TestCase)
@@ -249,8 +248,6 @@ func (j *judgementJob) judgeCaseSet(w *workers.Worker, evaluator caseSetEvaluato
 		"memory_usage": setResult.MemoryUsage,
 	}
 	db.Model(&JudgeSetResult{ID: setResult.ID}).Updates(query)
-
-	return nil
 }
 
 func (j *judgementJob) createJudgementWorker(results []JudgeResult) (*workers.Worker, error) {
