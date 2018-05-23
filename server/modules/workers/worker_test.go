@@ -37,7 +37,7 @@ func TestWorkerOutput(t *testing.T) {
 				t.Fatalf("on case %v: %+v", i, err)
 			}
 
-			res, err := w.Run("")
+			res, err := w.Run("", true)
 			if err != nil {
 				t.Fatalf("on case %v: %+v", i, err)
 			}
@@ -73,7 +73,7 @@ func TestWorkerTimeLimit(t *testing.T) {
 			}
 			defer w.Remove()
 
-			res, err := w.Run("")
+			res, err := w.Run("", true)
 			if err != nil {
 				t.Fatalf("on case %v: %+v", i, err)
 			}
@@ -101,7 +101,7 @@ func TestWorkerMemoryLimit(t *testing.T) {
 	}
 	defer w.Remove()
 
-	res, err := w.Run("")
+	res, err := w.Run("", true)
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
