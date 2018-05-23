@@ -19,6 +19,7 @@ do
     cp ${var} input.txt
     chmod 744 input.txt
 
-    /usr/bin/time -f "$1%e %M$1" -- timeout $2 /usr/bin/sudo -u nobody -- /bin/bash -c "$3 <input.txt; echo -n $1$?$1"
+    /usr/bin/time -f "$1%e %M$1" -- timeout $2 /usr/bin/sudo -u nobody -- /bin/bash -c "$3 <input.txt"
+    echo -n $1$?$1
     rm -rf input.txt >/dev/null 2>/dev/null
 done
