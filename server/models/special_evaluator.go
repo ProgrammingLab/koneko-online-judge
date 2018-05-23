@@ -102,7 +102,7 @@ func (e *specialCaseSetEvaluator) next(res *workers.ExecResult, testCase *TestCa
 	w.CopyContentToContainer([]byte(res.Stdout), workers.Workspace+userOutput)
 	w.CopyContentToContainer([]byte(e.submission.SourceCode), workers.Workspace+l.FileName)
 
-	judged, err := w.Run("")
+	judged, err := w.Run("", true)
 	if err != nil {
 		logger.AppLog.Errorf("error: %+v", err)
 		return StatusUnknownError, 0

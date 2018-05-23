@@ -13,6 +13,7 @@ import (
 	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"github.com/gedorinku/koneko-online-judge/server/modules/workers"
 	"github.com/gocraft/work"
+	"github.com/pkg/errors"
 )
 
 type judgementJob struct {
@@ -27,6 +28,8 @@ const (
 	compileTimeLimit   = 5 * time.Second
 	compileMemoryLimit = 256 * 1024 * 1024
 )
+
+var ErrParseOutput = errors.New("stdout parse error")
 
 func judge(submissionID uint) error {
 	_, err := enqueuer.Enqueue(judgementJobName, work.Q{submissionJobArgKey: submissionID})
@@ -50,7 +53,7 @@ func compile(sourceCode string, language *Language) (*workers.Worker, *workers.E
 		return nil, nil
 	}
 
-	res, err := w.Run("")
+	res, err := w.Run("", true)
 	if err != nil {
 		logger.AppLog.Errorf("compile: container attach error %+v", err)
 		return nil, nil
@@ -127,9 +130,13 @@ func (j *judgementJob) Run() {
 			logger.AppLog.Debugf("compile error: worker status %v", compileRes.Status, compileRes.Stderr)
 		} else {
 			for _, r := range j.submission.JudgeSetResults {
-				r.FetchCaseSet()
 				setEval := eval.next(&r.CaseSet, nil)
-				j.judgeCaseSet(setEval, &r)
+				w, err := j.executeCaseSet(setEval, &r)
+				if err != nil {
+					logger.AppLog.Error(err)
+					break
+				}
+				j.judgeCaseSet(w, setEval, &r)
 				execTime = MaxDuration(execTime, r.ExecTime)
 				memoryUsage = MaxLong(memoryUsage, r.MemoryUsage)
 			}
@@ -176,43 +183,77 @@ func markAs(setResults []JudgeSetResult, status JudgementStatus) {
 	}
 }
 
-func (j *judgementJob) judgeCaseSet(evaluator caseSetEvaluator, result *JudgeSetResult) {
+func (j *judgementJob) executeCaseSet(evaluator caseSetEvaluator, result *JudgeSetResult) (*workers.Worker, error) {
 	result.FetchCaseSet()
 	result.FetchJudgeResults(false)
-	result.CaseSet.FetchTestCases()
 
-	w, err := j.createJudgementWorker(&result.CaseSet)
+	w, err := j.createJudgementWorker(result.JudgeResults)
 	if err != nil {
 		logger.AppLog.Error(err)
-		return
+		return nil, err
 	}
-	defer w.Remove()
 
-	var (
-		execTime    time.Duration
-		memoryUsage int64
-	)
-	res, err := w.Run("")
+	res, err := w.Run("", false)
 	if err != nil {
 		logger.AppLog.Error(err)
-		return
+		return nil, err
 	}
 	logger.AppLog.Debug(res)
 
-	result.Status, result.Point = evaluator.evaluate()
-	result.ExecTime = execTime
-	result.MemoryUsage = memoryUsage
-
-	query := map[string]interface{}{
-		"point":        result.Point,
-		"status":       result.Status,
-		"exec_time":    result.ExecTime,
-		"memory_usage": result.MemoryUsage,
-	}
-	db.Model(&JudgeSetResult{ID: result.ID}).Updates(query)
+	return w, err
 }
 
-func (j *judgementJob) createJudgementWorker(caseSet *CaseSet) (*workers.Worker, error) {
+func (j *judgementJob) judgeCaseSet(w *workers.Worker, evaluator caseSetEvaluator, setResult *JudgeSetResult) error {
+	var (
+		maxExecTime    time.Duration
+		maxMemoryUsage int64
+	)
+
+	defer w.Remove()
+	p := workers.NewExecResultParser(w)
+	results := setResult.JudgeResults
+
+	for i, r := range results {
+		r.FetchTestCase()
+		has, res, err := p.Next()
+		logger.AppLog.Debug(i)
+		if err != nil {
+			logger.AppLog.Error(err)
+			return err
+		}
+		if !has && i != len(results)-1 {
+			logger.AppLog.Error(ErrParseOutput)
+			return ErrParseOutput
+		}
+
+		r.Status, _ = evaluator.next(res, &r.TestCase)
+		r.ExecTime = res.ExecTime
+		r.MemoryUsage = res.MemoryUsage / 1024
+
+		query := map[string]interface{}{
+			"status":       r.Status,
+			"exec_time":    r.ExecTime,
+			"memory_usage": r.MemoryUsage,
+		}
+		db.Model(&JudgeResult{ID: r.ID}).Updates(query)
+	}
+
+	setResult.Status, setResult.Point = evaluator.evaluate()
+	setResult.ExecTime = maxExecTime
+	setResult.MemoryUsage = maxMemoryUsage
+
+	query := map[string]interface{}{
+		"point":        setResult.Point,
+		"status":       setResult.Status,
+		"exec_time":    setResult.ExecTime,
+		"memory_usage": setResult.MemoryUsage,
+	}
+	db.Model(&JudgeSetResult{ID: setResult.ID}).Updates(query)
+
+	return nil
+}
+
+func (j *judgementJob) createJudgementWorker(results []JudgeResult) (*workers.Worker, error) {
 	problem := &j.submission.Problem
 	language := &j.submission.Language
 	cmd := language.GetExecCommandSlice()
@@ -236,9 +277,10 @@ func (j *judgementJob) createJudgementWorker(caseSet *CaseSet) (*workers.Worker,
 		return nil, err
 	}
 
-	shuffleTestCase(caseSet)
-	for i := range caseSet.TestCases {
-		err := w.CopyContentToContainer([]byte(caseSet.TestCases[i].Input), "/tmp/input/"+strconv.Itoa(i)+".txt")
+	shuffleJudgeResults(results)
+	for i, r := range results {
+		r.FetchTestCase()
+		err := w.CopyContentToContainer([]byte(r.TestCase.Input), "/tmp/input/"+strconv.Itoa(i)+".txt")
 		if err != nil {
 			logger.AppLog.Error(err)
 			w.Remove()
@@ -256,7 +298,7 @@ func (j *judgementJob) createJudgementWorker(caseSet *CaseSet) (*workers.Worker,
 	return w, nil
 }
 
-func shuffleTestCase(set *CaseSet) error {
+func shuffleJudgeResults(results []JudgeResult) error {
 	seed, err := crand.Int(crand.Reader, big.NewInt(math.MaxInt64))
 	if err != nil {
 		logger.AppLog.Error(err)
@@ -265,10 +307,10 @@ func shuffleTestCase(set *CaseSet) error {
 
 	r := rand.New(rand.NewSource(seed.Int64()))
 
-	n := len(set.TestCases)
+	n := len(results)
 	for i := n - 1; i >= 0; i-- {
 		j := r.Intn(i + 1)
-		set.TestCases[i], set.TestCases[j] = set.TestCases[j], set.TestCases[i]
+		results[i], results[j] = results[j], results[i]
 	}
 
 	return nil

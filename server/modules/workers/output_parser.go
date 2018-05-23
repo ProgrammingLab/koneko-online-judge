@@ -13,18 +13,9 @@ type OutputParser struct {
 	cur       int
 }
 
-func NewStdoutParser(w *Worker) OutputParser {
-	w.stdout.Seek(0, 0)
-	return newOutputParser(w.stdout, w.separator)
-}
-
-func NewReaderParser(reader io.Reader, separator string) OutputParser {
-	return newOutputParser(reader, separator)
-}
-
-func newOutputParser(output io.Reader, separator string) OutputParser {
+func newReaderParser(reader io.Reader, separator string) OutputParser {
 	return OutputParser{
-		output:    output,
+		output:    reader,
 		separator: separator,
 		next:      "",
 	}

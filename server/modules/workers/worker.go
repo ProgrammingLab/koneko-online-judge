@@ -131,7 +131,7 @@ func newWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []str
 	hcfg := &container.HostConfig{
 		Resources: container.Resources{
 			CpusetCpus: "0",
-			PidsLimit:  20,
+			PidsLimit:  50,
 			Memory:     memoryLimit + 10*1024*1024,
 		},
 		NetworkMode: "none",
@@ -162,7 +162,7 @@ func newSeparator() (string, error) {
 	return base64.URLEncoding.EncodeToString(s), nil
 }
 
-func (w Worker) Run(input string) (*ExecResult, error) {
+func (w *Worker) Run(input string, parseOutput bool) (*ExecResult, error) {
 	ctx := context.Background()
 	opt := types.ContainerAttachOptions{
 		Stream: true,
@@ -183,13 +183,13 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		startErrChan <- err
 	}()
 
-	w.stdout, err = ioutil.TempFile("", "stdout")
+	w.stdout, err = ioutil.TempFile(Workspace, "stdout"+w.ID[:16])
 	if err != nil {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
 
-	w.stderr, err = ioutil.TempFile("", "stderr")
+	w.stderr, err = ioutil.TempFile(Workspace, "stderr"+w.ID[:16])
 	if err != nil {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
@@ -216,6 +216,16 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	if err := <-streamErrChan; err != nil {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
+	}
+
+	if !parseOutput {
+		return &ExecResult{
+			Status:      StatusFinished,
+			ExecTime:    0,
+			MemoryUsage: 0,
+			Stdout:      "",
+			Stderr:      "",
+		}, nil
 	}
 
 	_, err = w.stdout.Seek(0, 0)
@@ -253,25 +263,8 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	}
 	memoryUsage *= 1024
 
-	var status ExecStatus
-	runtimeErr := checkRuntimeError(exitCode)
-	switch {
-	case int64(w.TimeLimit.Seconds()*1000.0+0.0001) <= timeMillis:
-		status = StatusTimeLimitExceeded
-		logger.AppLog.Debugf("time limit(%v) exceeded:%v", w.TimeLimit, timeMillis)
-	case w.MemoryLimit <= memoryUsage:
-		status = StatusMemoryLimitExceeded
-		logger.AppLog.Debugf("memory limit(%v) exceeded:%v", w.MemoryLimit, memoryUsage)
-	case runtimeErr == errRuntime:
-		status = StatusRuntimeError
-	case runtimeErr != nil:
-		return nil, runtimeErr
-	default:
-		status = StatusFinished
-	}
-
 	return &ExecResult{
-		Status:      status,
+		Status:      checkStatus(timeMillis, memoryUsage, w.TimeLimit, w.MemoryLimit, exitCode),
 		ExecTime:    time.Duration(timeMillis) * time.Millisecond,
 		MemoryUsage: memoryUsage,
 		Stdout:      rawStdout[0],
@@ -279,7 +272,7 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	}, nil
 }
 
-func (w Worker) CopyTo(filename string, dist *Worker) error {
+func (w *Worker) CopyTo(filename string, dist *Worker) error {
 	const limit = 10 * 1024 * 1024
 	content, err := w.getFromContainer(filename, limit)
 	if err != nil && err != io.EOF {
@@ -289,7 +282,7 @@ func (w Worker) CopyTo(filename string, dist *Worker) error {
 	return dist.CopyContentToContainer(content, filename)
 }
 
-func (w Worker) CopyContentToContainer(content []byte, name string) error {
+func (w *Worker) CopyContentToContainer(content []byte, name string) error {
 	createTempDir()
 	base := path.Base(name)
 	f, err := os.Create(Workspace + base)
@@ -330,7 +323,7 @@ func (w Worker) CopyContentToContainer(content []byte, name string) error {
 	return w.cli.CopyToContainer(ctx, w.ID, dstDir, preparedArchive, types.CopyToContainerOptions{})
 }
 
-func (w Worker) Remove() error {
+func (w *Worker) Remove() error {
 	if w.stdout != nil {
 		removeTempFile(w.stdout)
 	}
@@ -347,7 +340,7 @@ func (w Worker) Remove() error {
 	return err
 }
 
-func (w Worker) parseOutput(r io.Reader) ([]string, error) {
+func (w *Worker) parseOutput(r io.Reader) ([]string, error) {
 	raw := make([]byte, outputLimit)
 	n, err := r.Read(raw)
 	if err != nil {
@@ -374,7 +367,7 @@ func (w Worker) parseOutput(r io.Reader) ([]string, error) {
 	return res, nil
 }
 
-func (w Worker) getFromContainer(path string, limit int64) ([]byte, error) {
+func (w *Worker) getFromContainer(path string, limit int64) ([]byte, error) {
 	ctx := context.Background()
 	f, _, err := w.cli.CopyFromContainer(ctx, w.ID, path)
 	if err != nil {
@@ -451,4 +444,23 @@ func createTempDir() error {
 	}
 
 	return nil
+}
+
+func checkStatus(timeMillis, memoryUsage int64, timeLimit time.Duration, memoryLimit int64, exitCode string) ExecStatus {
+	runtimeErr := checkRuntimeError(exitCode)
+	switch {
+	case int64(timeLimit.Seconds()*1000.0+0.0001) <= timeMillis:
+		logger.AppLog.Debugf("time limit(%v) exceeded:%v", timeLimit, timeMillis)
+		return StatusTimeLimitExceeded
+	case memoryLimit <= memoryUsage:
+		logger.AppLog.Debugf("memory limit(%v) exceeded:%v", memoryLimit, memoryUsage)
+		return StatusMemoryLimitExceeded
+	case runtimeErr == errRuntime:
+		return StatusRuntimeError
+	case runtimeErr != nil:
+		logger.AppLog.Error(runtimeErr)
+		return StatusUnknownError
+	default:
+		return StatusFinished
+	}
 }

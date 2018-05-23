@@ -3,7 +3,7 @@
 cd /tmp >/dev/null 2>/dev/null
 mv ./koj-workspace/$4 . >/dev/null 2>/dev/null
 chmod 755 $4 >/dev/null 2>/dev/null
-rm -rf ./koj-workspace
+rm -rf ./koj-workspace >/dev/null 2>/dev/null
 chmod 700 $0 >/dev/null 2>/dev/null
 chmod 700 -R ./input >/dev/null 2>/dev/null
 
@@ -19,7 +19,6 @@ do
     cp ${var} input.txt
     chmod 744 input.txt
 
-    echo -n $1`basename ${var}`$1
-    /usr/bin/time -f "$1%e %M" -- timeout $2 /usr/bin/sudo -u nobody -- /bin/bash -c "$3 <input.txt; echo -n $1$?"
-    rm -rf input.txt
+    /usr/bin/time -f "$1%e %M$1" -- timeout $2 /usr/bin/sudo -u nobody -- /bin/bash -c "$3 <input.txt; echo -n $1$?$1"
+    rm -rf input.txt >/dev/null 2>/dev/null
 done
