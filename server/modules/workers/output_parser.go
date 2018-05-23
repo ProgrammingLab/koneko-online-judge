@@ -11,6 +11,7 @@ type OutputParser struct {
 	separator string
 	next      string
 	cur       int
+	eof       bool
 }
 
 func newReaderParser(reader io.Reader, separator string) OutputParser {
@@ -30,18 +31,17 @@ func (p *OutputParser) Next() (bool, string, error) {
 		buf := make([]byte, bufLen)
 		n, err := p.output.Read(buf)
 
-		if err != nil {
-			if err == io.EOF {
-				return false, p.next, nil
-			}
+		if err != nil && err != io.EOF {
 			logger.AppLog.Error(err)
 			return false, "", err
 		}
+		p.eof = err == io.EOF
 
 		buf = buf[:n]
 		if remain {
 			buf = append([]byte(p.next), buf...)
 			p.next = ""
+			remain = false
 		}
 		bufStr := string(buf)
 
@@ -63,7 +63,10 @@ func (p *OutputParser) Next() (bool, string, error) {
 			p.next = bufStr[i+1:]
 			k := len(res) - spLen
 			p.cur = 0
-			return true, res[:k], nil
+			return !p.eof, res[:k], nil
+		}
+		if p.eof {
+			return false, p.next + bufStr, nil
 		}
 		p.next += bufStr
 	}
