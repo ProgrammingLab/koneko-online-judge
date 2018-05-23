@@ -33,7 +33,7 @@ func TestWorkerOutput(t *testing.T) {
 			}
 			defer w.Remove()
 
-			if err := w.CopyContentToContainer([]byte(script), Workspace+filename, 0755); err != nil {
+			if err := w.CopyContentToContainer([]byte(script), Workspace+filename); err != nil {
 				t.Fatalf("on case %v: %+v", i, err)
 			}
 

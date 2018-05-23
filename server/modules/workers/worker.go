@@ -29,6 +29,8 @@ type Worker struct {
 	TimeLimit   time.Duration
 	MemoryLimit int64
 	separator   string
+	stdout      *os.File
+	stderr      *os.File
 }
 
 type ExecStatus int
@@ -181,19 +183,17 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		startErrChan <- err
 	}()
 
-	stdout, err := ioutil.TempFile("", "stdout")
+	w.stdout, err = ioutil.TempFile("", "stdout")
 	if err != nil {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
-	defer removeTempFile(stdout)
 
-	stderr, err := ioutil.TempFile("", "stderr")
+	w.stderr, err = ioutil.TempFile("", "stderr")
 	if err != nil {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
-	defer removeTempFile(stderr)
 
 	streamErrChan := make(chan error)
 	go func() {
@@ -205,7 +205,7 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 
 		hijacked.CloseWrite()
 
-		_, err = stdcopy.StdCopy(stdout, stderr, hijacked.Reader)
+		_, err = stdcopy.StdCopy(w.stdout, w.stderr, hijacked.Reader)
 		streamErrChan <- err
 	}()
 
@@ -218,12 +218,12 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		return nil, err
 	}
 
-	_, err = stdout.Seek(0, 0)
+	_, err = w.stdout.Seek(0, 0)
 	if err != nil {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
-	rawStdout, err := w.parseOutput(stdout)
+	rawStdout, err := w.parseOutput(w.stdout)
 	if err != nil {
 		logger.AppLog.Error(err)
 		return nil, err
@@ -232,12 +232,12 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		rawStdout = append(rawStdout, "255")
 	}
 
-	_, err = stderr.Seek(0, 0)
+	_, err = w.stderr.Seek(0, 0)
 	if err != nil {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
-	rawStderr, err := w.parseOutput(stderr)
+	rawStderr, err := w.parseOutput(w.stderr)
 	if err != nil {
 		logger.AppLog.Error(err)
 		return nil, err
@@ -331,6 +331,13 @@ func (w Worker) CopyContentToContainer(content []byte, name string) error {
 }
 
 func (w Worker) Remove() error {
+	if w.stdout != nil {
+		removeTempFile(w.stdout)
+	}
+	if w.stderr != nil {
+		removeTempFile(w.stderr)
+	}
+
 	ctx := context.Background()
 	err := w.cli.ContainerRemove(ctx, w.ID, types.ContainerRemoveOptions{
 		Force: true,
