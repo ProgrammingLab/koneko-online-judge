@@ -153,6 +153,31 @@ func (s *Submission) FetchJudgeSetResultsDeeply(sorted bool) {
 	}
 }
 
+func (s *Submission) FetchJudgeSetResultsDeeplyForContest(session *UserSession) error {
+	s.FetchJudgeSetResultsDeeply(true)
+
+	if s.ContestID == nil {
+		return nil
+	}
+
+	c := GetContest(*s.ContestID)
+	isWriter, err := c.IsWriter(session.UserID)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return err
+	}
+
+	if c.Ended() || isWriter {
+		return nil
+	}
+
+	for i := range s.JudgeSetResults {
+		s.JudgeSetResults[i].shuffleJudgeResults()
+	}
+
+	return nil
+}
+
 func (s *Submission) CanView(session *UserSession) bool {
 	s.FetchProblem()
 	if s.Problem.ContestID == nil || s.UserID == session.UserID || s.Problem.CanEdit(session) {
