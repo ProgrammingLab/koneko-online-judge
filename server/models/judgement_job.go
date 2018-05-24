@@ -130,6 +130,7 @@ func (j *judgementJob) Run() {
 			logger.AppLog.Debugf("compile error: worker status %v", compileRes.Status, compileRes.Stderr)
 		} else {
 			for _, r := range j.submission.JudgeSetResults {
+				r.FetchCaseSet()
 				setEval := eval.next(&r.CaseSet, nil)
 				w, err := j.executeCaseSet(setEval, &r)
 				if err != nil {
@@ -184,7 +185,6 @@ func markAs(setResults []JudgeSetResult, status JudgementStatus) {
 }
 
 func (j *judgementJob) executeCaseSet(evaluator caseSetEvaluator, result *JudgeSetResult) (*workers.Worker, error) {
-	result.FetchCaseSet()
 	result.FetchJudgeResults(false)
 
 	w, err := j.createJudgementWorker(result.JudgeResults)
@@ -204,14 +204,14 @@ func (j *judgementJob) executeCaseSet(evaluator caseSetEvaluator, result *JudgeS
 }
 
 func (j *judgementJob) judgeCaseSet(w *workers.Worker, evaluator caseSetEvaluator, setResult *JudgeSetResult) {
+	defer w.Remove()
+	p := workers.NewExecResultParser(w)
+	results := setResult.JudgeResults
+
 	var (
 		maxExecTime    time.Duration
 		maxMemoryUsage int64
 	)
-
-	defer w.Remove()
-	p := workers.NewExecResultParser(w)
-	results := setResult.JudgeResults
 
 	for i, r := range results {
 		r.FetchTestCase()
@@ -235,6 +235,9 @@ func (j *judgementJob) judgeCaseSet(w *workers.Worker, evaluator caseSetEvaluato
 			"memory_usage": r.MemoryUsage,
 		}
 		db.Model(&JudgeResult{ID: r.ID}).Updates(query)
+
+		maxExecTime = MaxDuration(maxExecTime, r.ExecTime)
+		maxMemoryUsage = MaxLong(maxMemoryUsage, r.MemoryUsage)
 	}
 
 	setResult.Status, setResult.Point = evaluator.evaluate()
