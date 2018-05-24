@@ -2,6 +2,7 @@ package workers
 
 import (
 	"io"
+	"strings"
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
 )
@@ -10,7 +11,6 @@ type OutputParser struct {
 	output    io.Reader
 	separator string
 	next      string
-	cur       int
 	eof       bool
 }
 
@@ -25,7 +25,8 @@ func newReaderParser(reader io.Reader, separator string) OutputParser {
 func (p *OutputParser) Next() (bool, string, error) {
 	spLen := len(p.separator)
 	bufLen := 2 * len(p.separator)
-	remain := 0 < len(p.next)
+	step := spLen
+	cur := 0
 
 	for {
 		buf := make([]byte, bufLen)
@@ -35,39 +36,27 @@ func (p *OutputParser) Next() (bool, string, error) {
 			logger.AppLog.Error(err)
 			return false, "", err
 		}
-		p.eof = err == io.EOF
+		p.eof = err == io.EOF || n != bufLen
 
 		buf = buf[:n]
-		if remain {
-			buf = append([]byte(p.next), buf...)
-			p.next = ""
-			remain = false
-		}
-		bufStr := string(buf)
+		p.next += string(buf)
 
-		for i, b := range buf {
-			if p.separator[p.cur] != b {
-				p.cur = 0
-				if p.separator[0] == b {
-					p.cur = 1
-				}
-				continue
+		i := strings.Index(p.next[cur:], p.separator)
+		if i == -1 {
+			if p.eof {
+				res := p.next
+				p.next = ""
+				return false, res, nil
 			}
-
-			if p.cur < spLen-1 {
-				p.cur++
-				continue
+			cur += step
+			if step == spLen {
+				step += spLen
 			}
-
-			res := p.next + bufStr[:i+1]
-			p.next = bufStr[i+1:]
-			k := len(res) - spLen
-			p.cur = 0
-			return !p.eof, res[:k], nil
+			continue
 		}
-		if p.eof {
-			return false, p.next + bufStr, nil
-		}
-		p.next += bufStr
+		i += cur
+		res := p.next[:i]
+		p.next = p.next[i+spLen:]
+		return true, res, nil
 	}
 }

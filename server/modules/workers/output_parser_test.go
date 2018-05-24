@@ -118,9 +118,6 @@ XucMvC62n7h8u9ORt7_6LQ==0XucMvC62n7h8u9ORt7_6LQ==
 		op := newReaderParser(r, sp[i])
 
 		for j, out := range outputs[i] {
-			if j == 12 {
-				t.Log("hoge")
-			}
 			nx, str, err := op.Next()
 			if err != nil {
 				t.Error(err)
