@@ -326,9 +326,11 @@ func (w *Worker) CopyContentToContainer(content []byte, name string) error {
 func (w *Worker) Remove() error {
 	if w.stdout != nil {
 		removeTempFile(w.stdout)
+		w.stdout = nil
 	}
 	if w.stderr != nil {
 		removeTempFile(w.stderr)
+		w.stderr = nil
 	}
 
 	ctx := context.Background()
