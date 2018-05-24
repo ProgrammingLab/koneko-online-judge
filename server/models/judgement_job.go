@@ -17,8 +17,8 @@ type judgementJob struct {
 
 const (
 	imageNamePrefix    = "koneko-online-judge-image-"
-	compileTimeLimit   = 5 * time.Second
-	compileMemoryLimit = 256 * 1024 * 1024
+	compileTimeLimit   = 20 * time.Second
+	compileMemoryLimit = 512 * 1024 * 1024
 )
 
 func judge(submissionID uint) error {
