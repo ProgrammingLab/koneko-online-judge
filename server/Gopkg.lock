@@ -83,15 +83,6 @@
   version = "v0.3.2"
 
 [[projects]]
-  name = "github.com/garyburd/redigo"
-  packages = [
-    "internal",
-    "redis"
-  ]
-  revision = "a69d19351219b6dd56f274f96d85a7014a2ec34e"
-  version = "v1.6.0"
-
-[[projects]]
   name = "github.com/go-mail/mail"
   packages = ["."]
   revision = "63235f23494bf20d713a585bce40b2a0675c2f77"
@@ -119,10 +110,19 @@
   version = "v1.3"
 
 [[projects]]
+  branch = "master"
   name = "github.com/gocraft/work"
   packages = ["."]
-  revision = "67c8dc210ce647e8d8a4206c7f5856ea2390f290"
-  version = "v0.5.0"
+  revision = "1d4117a214abff263b472043871c8666aedb716b"
+
+[[projects]]
+  name = "github.com/gomodule/redigo"
+  packages = [
+    "internal",
+    "redis"
+  ]
+  revision = "9c11da706d9b7902c6da69c592f75637793fe121"
+  version = "v2.0.0"
 
 [[projects]]
   name = "github.com/jinzhu/gorm"
@@ -250,6 +250,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "42648b23cb9deef031475c5691a656606a5c9fc52932ab418dbf5482cbc7333c"
+  inputs-digest = "4067bd2406a879a0bd72f20f1ffdf37ba5ba0cbdb7679fcda97fa64cbc187e02"
   solver-name = "gps-cdcl"
   solver-version = 1

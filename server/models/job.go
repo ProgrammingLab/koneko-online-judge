@@ -1,10 +1,10 @@
 package models
 
 import (
-	"github.com/garyburd/redigo/redis"
 	"github.com/gedorinku/koneko-online-judge/server/conf"
 	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"github.com/gocraft/work"
+	"github.com/gomodule/redigo/redis"
 )
 
 type jobContext struct{}
