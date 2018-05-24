@@ -211,23 +211,38 @@ func (j *judgementJob) judgeCaseSet(w *workers.Worker, evaluator caseSetEvaluato
 	var (
 		maxExecTime    time.Duration
 		maxMemoryUsage int64
+		hasErr         bool
 	)
 
 	for i, r := range results {
 		r.FetchTestCase()
-		has, res, err := p.Next()
-		logger.AppLog.Debug(i)
-		if err != nil {
-			logger.AppLog.Error(err)
-			res = nil
-		} else if !has && i != len(results)-1 {
-			logger.AppLog.Error(ErrParseOutput)
-			res = nil
+		var (
+			has bool
+			res *workers.ExecResult
+			err error
+		)
+		if !hasErr {
+			has, res, err = p.Next()
+			logger.AppLog.Debug(i)
+			if err != nil {
+				logger.AppLog.Error(err)
+				res = nil
+				hasErr = true
+			} else if !has && i != len(results)-1 {
+				logger.AppLog.Error(ErrParseOutput)
+				res = nil
+				hasErr = true
+			}
 		}
 
 		r.Status, _ = evaluator.next(res, &r.TestCase)
-		r.ExecTime = res.ExecTime
-		r.MemoryUsage = res.MemoryUsage / 1024
+		if err != nil || res == nil {
+			r.Status = StatusUnknownError
+		}
+		if res != nil {
+			r.ExecTime = res.ExecTime
+			r.MemoryUsage = res.MemoryUsage / 1024
+		}
 
 		query := map[string]interface{}{
 			"status":       r.Status,

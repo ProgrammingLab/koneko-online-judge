@@ -2,6 +2,7 @@ package workers
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
@@ -52,6 +53,9 @@ func (p *ExecResultParser) Next() (bool, *ExecResult, error) {
 	timeMillis, memoryUsage, err := parseTimeText(stderr)
 	memoryUsage *= 1024
 
+	if strings.TrimSpace(exitStatus) == "" {
+		exitStatus = "127"
+	}
 	status := checkStatus(timeMillis, memoryUsage, p.worker.TimeLimit, p.worker.MemoryLimit, exitStatus)
 
 	res := &ExecResult{
