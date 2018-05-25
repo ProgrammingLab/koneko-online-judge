@@ -32,7 +32,7 @@ func updateScore(submission *Submission, contestID uint) {
 	db.Where("user_id = ? AND contest_id = ?", submission.UserID, contestID).First(s)
 
 	d := &ScoreDetail{}
-	found := !db.Where("score_id = ?", s.ID).First(d).RecordNotFound()
+	found := !db.Where("score_id = ? AND problem_id = ?", s.ID, submission.ProblemID).First(d).RecordNotFound()
 
 	if found && submission.Point <= d.Point && d.Accepted {
 		return
