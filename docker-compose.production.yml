@@ -6,6 +6,7 @@ services:
     command: ["./run.sh"]
     environment:
       DOCKER_API_VERSION: "1.35"
+      TZ: "Asia/Tokyo"
     depends_on:
       - redis
     ports:
