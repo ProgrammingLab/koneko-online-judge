@@ -146,6 +146,14 @@ func seedLanguages() {
 			CompileCommand: "g++ -w -lm -std=gnu++2a -O2 -o main.o main.cpp",
 			ExecCommand:    "./main.o",
 		},
+		{
+			ImageName:      "python3",
+			DisplayName:    "Python3 (3.6.4)",
+			FileName:       "main.py",
+			ExeFileName:    "main.py",
+			CompileCommand: "",
+			ExecCommand:    "python3 main.py",
+		},
 	}
 
 	for _, l := range languages {
