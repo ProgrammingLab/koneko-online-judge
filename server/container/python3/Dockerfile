@@ -1,7 +1,9 @@
-FROM alpine:edge
+FROM python:3.7-rc-slim
 LABEL maintainer="kp54 <kangpang65@gmail.com>"
 
-RUN apk add --no-cache sudo python3=3.6.4-r1
+RUN apt-get update && apt-get install time
+
+RUN apt-get update && apt-get install sudo
 
 RUN sh -c 'echo 127.0.1.1 $(hostname) >> /etc/hosts'
 
