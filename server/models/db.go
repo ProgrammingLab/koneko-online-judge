@@ -149,9 +149,9 @@ func seedLanguages() {
 		{
 			ImageName:      "python3",
 			DisplayName:    "Python3 (3.7.0)",
-			FileName:       "main.py",
+			FileName:       "tmp.py",
 			ExeFileName:    "main.py",
-			CompileCommand: "",
+			CompileCommand: "cp tmp.py main.py",
 			ExecCommand:    "python3 main.py",
 		},
 	}
