@@ -16,7 +16,7 @@ jobs:
       - go test ./server/...
       - go test ./nekonote/...
     - stage: deploy docker image
-      if: branch = master
+      if: branch = master AND type != pull_request
       script:
       - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
       - docker build -t gedorinku/koneko-online-judge ./server
