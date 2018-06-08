@@ -10,6 +10,7 @@ go:
 jobs:
   include:
     - stage: test
+      install: skip
       script:
       - mysql -e 'CREATE DATABASE koj_test CHARACTER SET utf8mb4;'
       - ./setup.sh
@@ -17,6 +18,7 @@ jobs:
       - go test ./nekonote/...
     - stage: deploy docker image
       if: branch = master AND type != pull_request
+      install: skip
       script:
       - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
       - docker build -t gedorinku/koneko-online-judge ./server
