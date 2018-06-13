@@ -32,7 +32,7 @@ func updateScore(submission *Submission, contestID uint) {
 	db.Where("user_id = ? AND contest_id = ?", submission.UserID, contestID).First(s)
 
 	d := &ScoreDetail{}
-	found := !db.Where("score_id = ?", s.ID).First(d).RecordNotFound()
+	found := !db.Where("score_id = ? AND problem_id = ?", s.ID, submission.ProblemID).First(d).RecordNotFound()
 
 	if found && submission.Point <= d.Point && d.Accepted {
 		return
@@ -43,7 +43,12 @@ func updateScore(submission *Submission, contestID uint) {
 	ac := submission.Status == StatusAccepted
 	if found {
 		newPoint := MaxInt(d.Point, submission.Point)
-		db.Model(d).Updates(map[string]interface{}{"point": newPoint, "wrong_count": d.WrongCount, "accepted": ac})
+		db.Model(d).UpdateColumns(map[string]interface{}{
+			"updated_at":  submission.CreatedAt,
+			"point":       newPoint,
+			"wrong_count": d.WrongCount,
+			"accepted":    ac,
+		})
 	} else {
 		newScoreDetail(s, submission, d.WrongCount, db)
 	}
@@ -53,7 +58,7 @@ func updateScore(submission *Submission, contestID uint) {
 	for i := range s.ScoreDetails {
 		s.Point += s.ScoreDetails[i].Point
 	}
-	db.Model(s).Update("point", s.Point)
+	db.Model(s).UpdateColumns(map[string]interface{}{"point": s.Point, "updated_at": submission.CreatedAt})
 }
 
 func (s *Score) FetchDetails() {

@@ -26,6 +26,10 @@ func newScoreDetail(score *Score, submission *Submission, wrongCount int, tx *go
 		ProblemID:  submission.ProblemID,
 	}
 	tx.Create(d)
+	tx.Model(d).UpdateColumns(map[string]interface{}{
+		"created_at": submission.CreatedAt,
+		"updated_at": submission.CreatedAt,
+	})
 
 	return d
 }

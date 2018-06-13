@@ -1,6 +1,7 @@
 package models
 
 import (
+	"sort"
 	"time"
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
@@ -53,6 +54,14 @@ func (r *JudgeSetResult) FetchJudgeResults(sorted bool) {
 		query = query.Order("id ASC")
 	}
 	query.Model(r).Related(&r.JudgeResults)
+}
+
+func (r *JudgeSetResult) shuffleJudgeResults() error {
+	sort.Slice(r.JudgeResults, func(i, j int) bool {
+		return r.JudgeResults[i].Status > r.JudgeResults[j].Status
+	})
+
+	return nil
 }
 
 func (r *JudgeSetResult) GetJudgeResultsSorted() []JudgeResult {

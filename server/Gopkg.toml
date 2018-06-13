@@ -25,3 +25,7 @@
 [[constraint]]
   name = "github.com/go-mail/mail"
   version = "2.2.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/gocraft/work"

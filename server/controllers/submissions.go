@@ -78,7 +78,7 @@ func GetSubmission(c echo.Context) error {
 	cases := c.QueryParam("cases")
 	switch {
 	case cases == "true" || cases == "":
-		submission.FetchJudgeSetResultsDeeply(true)
+		submission.FetchJudgeSetResultsDeeplyForContest(s)
 	case cases == "false":
 		break
 	default:

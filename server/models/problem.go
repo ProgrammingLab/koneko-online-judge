@@ -123,14 +123,16 @@ func (p *Problem) ReplaceTestCases(archive []byte) error {
 }
 
 func (p *Problem) Rejudge() error {
-	p.FetchSubmissions()
-	deleteScoreDetails(p.ID)
-	for i := range p.Submissions {
-		if err := p.Submissions[i].rejudge(); err != nil {
-			logger.AppLog.Errorf("error: %+v", err)
-			return err
+	go func() {
+		p.FetchSubmissions()
+		deleteScoreDetails(p.ID)
+		for i := range p.Submissions {
+			if err := p.Submissions[i].rejudge(); err != nil {
+				logger.AppLog.Errorf("error: %+v", err)
+				break
+			}
 		}
-	}
+	}()
 
 	return nil
 }
