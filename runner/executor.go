@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"syscall"
@@ -78,13 +77,12 @@ func (e Executor) ExecMonitored() error {
 	start := time.Now()
 	err = c.Run()
 	dur := time.Now().Sub(start)
+	pw.Close()
 	if err != nil && err != io.ErrClosedPipe && err != context.DeadlineExceeded {
-		exitErr, ok := err.(*exec.ExitError)
+		_, ok := err.(*exec.ExitError)
 		if !ok {
 			return err
 		}
-
-		log.Print(exitErr.String())
 	}
 
 	writeRes := <-ch
@@ -124,7 +122,7 @@ func (e Executor) saveExecResult(cmd *exec.Cmd, writeRes outputWriteResult, dura
 		ExecTime:    duration,
 		MemoryUsage: memory,
 	}
-	log.Print(res, res.MemoryUsage/1024)
+
 	st, err := os.Create(statusDir + e.Input.Name())
 	if err != nil {
 		return err
