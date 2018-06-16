@@ -52,11 +52,11 @@ var (
 )
 
 type ExecResult struct {
-	Status      ExecStatus
-	ExecTime    time.Duration
-	MemoryUsage int64
-	Stdout      string
-	Stderr      string
+	Status      ExecStatus    `json:"status"`
+	ExecTime    time.Duration `json:"execTime"`
+	MemoryUsage int64         `json:"memoryUsage"`
+	Stdout      string        `json:"stdout"`
+	Stderr      string        `json:"stderr"`
 }
 
 func NewWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []string) (*Worker, error) {
