@@ -77,7 +77,7 @@
     "server/logger",
     "server/modules/workers"
   ]
-  revision = "c8da7ecd5178fafe8a9c33eef121eab1cd3bafb3"
+  revision = "a85bf6180424ce7c3b4d2ef62414526a84667b9d"
 
 [[projects]]
   name = "github.com/labstack/echo"
@@ -161,7 +161,7 @@
     "unix",
     "windows"
   ]
-  revision = "8014b7b116a67fea23fbb82cd834c9ad656ea44b"
+  revision = "6c888cc515d3ed83fc103cf1d84468aad274b0a7"
 
 [solve-meta]
   analyzer-name = "dep"
