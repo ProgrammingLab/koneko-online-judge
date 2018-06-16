@@ -1,10 +1,8 @@
 package main
 
 import (
-	"context"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"strconv"
 	"time"
 
@@ -12,9 +10,11 @@ import (
 )
 
 const (
-	dataDir   = "./judge_data/"
-	inputDir  = dataDir + "input/"
-	outputDir = dataDir + "output/"
+	dataDir     = "./judge_data/"
+	inputDir    = dataDir + "input/"
+	outputDir   = dataDir + "output/"
+	statusDir   = dataDir + "status/"
+	outputLimit = 10 * 1024 * 1024
 )
 
 func main() {
@@ -42,13 +42,21 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = os.Mkdir(outputDir, 0700)
+	os.RemoveAll(outputDir)
+	err = os.Mkdir(outputDir, 0777)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	os.RemoveAll(statusDir)
+	err = os.Mkdir(statusDir, 0777)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for _, i := range inputs {
-		if err := execMonitored(tl, ml, i, os.Args[3:]); err != nil {
+		e := NewExecutor(tl, ml, i, os.Args[3:])
+		if err := e.ExecMonitored(); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -61,27 +69,4 @@ func getTimeLimit() (time.Duration, error) {
 
 func getMemoryLimitByte() (int64, error) {
 	return strconv.ParseInt(os.Args[2], 10, 64)
-}
-
-func execMonitored(timeLimit time.Duration, memoryLimit int64, input os.FileInfo, cmd []string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), timeLimit+50*time.Millisecond)
-	defer cancel()
-
-	in, err := os.Open(inputDir + input.Name())
-	if err != nil {
-		return err
-	}
-	out, err := os.Create(outputDir + input.Name())
-	if err != nil {
-		return err
-	}
-	c := exec.CommandContext(ctx, cmd[0], cmd[1:]...)
-	c.Stdin = in
-	c.Stdout = out
-
-	if err := c.Run(); err != nil {
-		return err
-	}
-
-	return nil
 }
