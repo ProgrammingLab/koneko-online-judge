@@ -88,21 +88,21 @@ func (e *specialCaseSetEvaluator) next(res *workers.ExecResult, testCase *TestCa
 		userOutput = "submission"
 	)
 	cmd := append(e.config.Language.GetExecCommandSlice(), input, output, userOutput, l.FileName)
-	w, err := workers.NewWorker(imageNamePrefix+e.config.Language.ImageName, compileTimeLimit, compileMemoryLimit, cmd)
+	w, err := workers.NewTimeoutWorker(imageNamePrefix+e.config.Language.ImageName, compileTimeLimit, compileMemoryLimit, cmd)
 	if err != nil {
 		logger.AppLog.Errorf("error: %+v", err)
 		return StatusUnknownError, 0
 	}
 	defer w.Remove()
 
-	e.verifier.CopyTo(e.config.Language.ExeFileName, w)
+	e.verifier.CopyTo(workers.Workspace+e.config.Language.ExeFileName, w)
 
-	w.CopyContentToContainer([]byte(testCase.Input), input)
-	w.CopyContentToContainer([]byte(testCase.Output), output)
-	w.CopyContentToContainer([]byte(res.Stdout), userOutput)
-	w.CopyContentToContainer([]byte(e.submission.SourceCode), l.FileName)
+	w.CopyContentToContainer([]byte(testCase.Input), workers.Workspace+input)
+	w.CopyContentToContainer([]byte(testCase.Output), workers.Workspace+output)
+	w.CopyContentToContainer([]byte(res.Stdout), workers.Workspace+userOutput)
+	w.CopyContentToContainer([]byte(e.submission.SourceCode), workers.Workspace+l.FileName)
 
-	judged, err := w.Run("")
+	judged, err := w.Run("", true)
 	if err != nil {
 		logger.AppLog.Errorf("error: %+v", err)
 		return StatusUnknownError, 0

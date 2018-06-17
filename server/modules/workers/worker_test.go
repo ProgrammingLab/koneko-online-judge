@@ -27,17 +27,17 @@ func TestWorkerOutput(t *testing.T) {
 	for i := range exitCodes {
 		func() {
 			script := fmt.Sprintf(scriptTmp, exitCodes[i])
-			w, err := NewWorker(image, time.Second, 128*1024*1024, []string{"./" + filename})
+			w, err := NewTimeoutWorker(image, time.Second, 128*1024*1024, []string{"./" + filename})
 			if err != nil {
 				t.Fatal(err)
 			}
 			defer w.Remove()
 
-			if err := w.CopyContentToContainer([]byte(script), filename); err != nil {
+			if err := w.CopyContentToContainer([]byte(script), Workspace+filename); err != nil {
 				t.Fatalf("on case %v: %+v", i, err)
 			}
 
-			res, err := w.Run("")
+			res, err := w.Run("", true)
 			if err != nil {
 				t.Fatalf("on case %v: %+v", i, err)
 			}
@@ -67,13 +67,13 @@ func TestWorkerTimeLimit(t *testing.T) {
 
 	for i := range timeLimits {
 		func() {
-			w, err := NewWorker(image, timeLimits[i], 128*1024*1024, cmd)
+			w, err := NewTimeoutWorker(image, timeLimits[i], 128*1024*1024, cmd)
 			if err != nil {
 				t.Fatalf("on case %v: %+v", i, err)
 			}
 			defer w.Remove()
 
-			res, err := w.Run("")
+			res, err := w.Run("", true)
 			if err != nil {
 				t.Fatalf("on case %v: %+v", i, err)
 			}
@@ -95,13 +95,13 @@ func TestWorkerTimeLimit(t *testing.T) {
 func TestWorkerMemoryLimit(t *testing.T) {
 	const memoryLimit = 1 * 1024 * 1024
 	cmd := []string{"/bin/sh", "-c", "/dev/null < $(yes)"}
-	w, err := NewWorker(image, time.Second, memoryLimit, cmd)
+	w, err := NewTimeoutWorker(image, time.Second, memoryLimit, cmd)
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
 	defer w.Remove()
 
-	res, err := w.Run("")
+	res, err := w.Run("", true)
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}

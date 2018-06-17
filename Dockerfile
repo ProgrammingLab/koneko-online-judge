@@ -13,10 +13,14 @@ ENV DOCKER_VERSION 1.35
 # Setup Koneko
 RUN apk --no-cache add bash git mercurial
 RUN go get github.com/golang/dep/cmd/dep
-COPY . /go/src/github.com/gedorinku/koneko-online-judge/server
+COPY ./server /go/src/github.com/gedorinku/koneko-online-judge
 RUN cd /go/src/github.com/gedorinku/koneko-online-judge/server/ \
     && dep ensure -vendor-only \
     && go build main.go
+RUN cd /go/src/github.com/gedorinku/koneko-online-judge/runner/ \
+    && dep ensure -vendor-only \
+    && go build .
+    && chmod 700 runner
 
 WORKDIR /go/src/github.com/gedorinku/koneko-online-judge/server/
 # dockerdを起動させないようにする

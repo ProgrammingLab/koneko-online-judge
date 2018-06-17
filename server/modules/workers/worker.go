@@ -7,27 +7,34 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/gedorinku/koneko-online-judge/server/logger"
+	"github.com/gedorinku/koneko-online-judge/server/modules/unique"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
 
 type Worker struct {
-	ID          string
-	cli         *client.Client
-	TimeLimit   time.Duration
-	MemoryLimit int64
-	separator   string
+	ID               string
+	cli              *client.Client
+	TimeLimit        time.Duration
+	MemoryLimit      int64
+	HostJudgeDataDir string
+	separator        string
+	stdout           *os.File
+	stderr           *os.File
 }
 
 type ExecStatus int
@@ -42,6 +49,7 @@ const (
 	outputLimit                          = 10 * 1024 * 1024
 	errorOutputLimit                     = 512
 	Workspace                            = "/tmp/koj-workspace/"
+	JudgeDataDir                         = Workspace + "judge_data"
 	errorString                          = "runtime_error"
 	exitCodeFile                         = "exit.txt"
 )
@@ -59,13 +67,7 @@ type ExecResult struct {
 	Stderr      string        `json:"stderr"`
 }
 
-func NewWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []string) (*Worker, error) {
-	ctx := context.Background()
-	cli, err := client.NewEnvClient()
-	if err != nil {
-		return nil, err
-	}
-
+func NewTimeoutWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []string) (*Worker, error) {
 	sp, err := newSeparator()
 	if err != nil {
 		return nil, err
@@ -78,7 +80,73 @@ func NewWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []str
 		"/usr/bin/sudo", "-u", "nobody", "--",
 		"/bin/bash", "-c", strings.Join(cmd, " ") + ";" + outputCmd,
 	}
-	logger.AppLog.Debugf("run command", runCmd)
+
+	w, err := newWorker(img, timeLimit, memoryLimit, runCmd, nil)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return nil, err
+	}
+	w.separator = sp
+
+	return w, err
+}
+
+func NewJudgementWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []string) (*Worker, error) {
+	sp, err := newSeparator()
+	if err != nil {
+		return nil, err
+	}
+
+	runCmd := []string{
+		"./runner",
+		strconv.FormatInt(int64(timeLimit), 10),
+		strconv.FormatInt(int64(memoryLimit), 10),
+	}
+	runCmd = append(runCmd, cmd...)
+
+	judgeData, err := createJudgeDataDir()
+	if err != nil {
+		logger.AppLog.Error(err)
+		return nil, err
+	}
+
+	mounts := []mount.Mount{
+		{
+			Type:     mount.TypeBind,
+			Source:   judgeData,
+			Target:   JudgeDataDir,
+			ReadOnly: false,
+		},
+	}
+
+	w, err := newWorker(img, timeLimit, memoryLimit, runCmd, mounts)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return nil, err
+	}
+	w.separator = sp
+	w.HostJudgeDataDir = judgeData
+
+	runnerAbs, err := filepath.Abs("../runner/runner")
+	if err != nil {
+		logger.AppLog.Error(err)
+		w.Remove()
+		return nil, err
+	}
+	if err := w.CopyFileToContainer(runnerAbs, Workspace+"runner"); err != nil {
+		logger.AppLog.Error(err)
+		return nil, err
+	}
+
+	return w, err
+}
+
+func newWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []string, mounts []mount.Mount) (*Worker, error) {
+	ctx := context.Background()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		return nil, err
+	}
 
 	cfg := &container.Config{
 		Image:        img,
@@ -89,15 +157,16 @@ func NewWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []str
 		StdinOnce:    true,
 		Tty:          false,
 		WorkingDir:   Workspace,
-		Cmd:          runCmd,
+		Cmd:          cmd,
 	}
 	hcfg := &container.HostConfig{
 		Resources: container.Resources{
 			CpusetCpus: "0",
-			PidsLimit:  15,
+			PidsLimit:  50,
 			Memory:     memoryLimit + 10*1024*1024,
 		},
 		NetworkMode: "none",
+		Mounts:      mounts,
 	}
 
 	res, err := cli.ContainerCreate(ctx, cfg, hcfg, &network.NetworkingConfig{}, "")
@@ -111,7 +180,6 @@ func NewWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []str
 		TimeLimit:   timeLimit,
 		MemoryLimit: memoryLimit,
 		cli:         cli,
-		separator:   sp,
 	}
 	return w, nil
 }
@@ -126,7 +194,7 @@ func newSeparator() (string, error) {
 	return base64.URLEncoding.EncodeToString(s), nil
 }
 
-func (w Worker) Run(input string) (*ExecResult, error) {
+func (w *Worker) Run(input string, parseOutput bool) (*ExecResult, error) {
 	ctx := context.Background()
 	opt := types.ContainerAttachOptions{
 		Stream: true,
@@ -147,19 +215,17 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		startErrChan <- err
 	}()
 
-	stdout, err := ioutil.TempFile("", "stdout")
+	w.stdout, err = ioutil.TempFile(Workspace, "stdout"+w.ID[:16])
 	if err != nil {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
-	defer removeTempFile(stdout)
 
-	stderr, err := ioutil.TempFile("", "stderr")
+	w.stderr, err = ioutil.TempFile(Workspace, "stderr"+w.ID[:16])
 	if err != nil {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
-	defer removeTempFile(stderr)
 
 	streamErrChan := make(chan error)
 	go func() {
@@ -171,7 +237,7 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 
 		hijacked.CloseWrite()
 
-		_, err = stdcopy.StdCopy(stdout, stderr, hijacked.Reader)
+		_, err = stdcopy.StdCopy(w.stdout, w.stderr, hijacked.Reader)
 		streamErrChan <- err
 	}()
 
@@ -184,12 +250,22 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		return nil, err
 	}
 
-	_, err = stdout.Seek(0, 0)
+	if !parseOutput {
+		return &ExecResult{
+			Status:      StatusFinished,
+			ExecTime:    0,
+			MemoryUsage: 0,
+			Stdout:      "",
+			Stderr:      "",
+		}, nil
+	}
+
+	_, err = w.stdout.Seek(0, 0)
 	if err != nil {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
-	rawStdout, err := w.parseOutput(stdout)
+	rawStdout, err := w.parseOutput(w.stdout)
 	if err != nil {
 		logger.AppLog.Error(err)
 		return nil, err
@@ -198,12 +274,12 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 		rawStdout = append(rawStdout, "255")
 	}
 
-	_, err = stderr.Seek(0, 0)
+	_, err = w.stderr.Seek(0, 0)
 	if err != nil {
 		logger.AppLog.Errorf("error %+v", err)
 		return nil, err
 	}
-	rawStderr, err := w.parseOutput(stderr)
+	rawStderr, err := w.parseOutput(w.stderr)
 	if err != nil {
 		logger.AppLog.Error(err)
 		return nil, err
@@ -219,25 +295,8 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	}
 	memoryUsage *= 1024
 
-	var status ExecStatus
-	runtimeErr := checkRuntimeError(exitCode)
-	switch {
-	case int64(w.TimeLimit.Seconds()*1000.0+0.0001) <= timeMillis:
-		status = StatusTimeLimitExceeded
-		logger.AppLog.Debugf("time limit(%v) exceeded:%v", w.TimeLimit, timeMillis)
-	case w.MemoryLimit <= memoryUsage:
-		status = StatusMemoryLimitExceeded
-		logger.AppLog.Debugf("memory limit(%v) exceeded:%v", w.MemoryLimit, memoryUsage)
-	case runtimeErr == errRuntime:
-		status = StatusRuntimeError
-	case runtimeErr != nil:
-		return nil, runtimeErr
-	default:
-		status = StatusFinished
-	}
-
 	return &ExecResult{
-		Status:      status,
+		Status:      checkStatus(timeMillis, memoryUsage, w.TimeLimit, w.MemoryLimit, exitCode),
 		ExecTime:    time.Duration(timeMillis) * time.Millisecond,
 		MemoryUsage: memoryUsage,
 		Stdout:      rawStdout[0],
@@ -245,10 +304,9 @@ func (w Worker) Run(input string) (*ExecResult, error) {
 	}, nil
 }
 
-func (w Worker) CopyTo(filename string, dist *Worker) error {
+func (w *Worker) CopyTo(filename string, dist *Worker) error {
 	const limit = 10 * 1024 * 1024
-	name := Workspace + filename
-	content, err := w.getFromContainer(name, limit)
+	content, err := w.getFromContainer(filename, limit)
 	if err != nil && err != io.EOF {
 		logger.AppLog.Errorf("%+v", err)
 		return err
@@ -256,9 +314,10 @@ func (w Worker) CopyTo(filename string, dist *Worker) error {
 	return dist.CopyContentToContainer(content, filename)
 }
 
-func (w Worker) CopyContentToContainer(content []byte, name string) error {
+func (w *Worker) CopyContentToContainer(content []byte, name string) error {
 	createTempDir()
-	f, err := os.Create(Workspace + name)
+	base := path.Base(name)
+	f, err := os.Create(Workspace + base)
 	if err != nil {
 		logger.AppLog.Errorf("could not create temp file %+v", err)
 		return err
@@ -285,7 +344,7 @@ func (w Worker) CopyContentToContainer(content []byte, name string) error {
 	}
 	defer srcArchive.Close()
 
-	dstInfo := archive.CopyInfo{Path: Workspace + name}
+	dstInfo := archive.CopyInfo{Path: name}
 	dstDir, preparedArchive, err := archive.PrepareArchiveCopy(srcArchive, srcInfo, dstInfo)
 	if err != nil {
 		logger.AppLog.Errorf("%+v", err)
@@ -296,17 +355,62 @@ func (w Worker) CopyContentToContainer(content []byte, name string) error {
 	return w.cli.CopyToContainer(ctx, w.ID, dstDir, preparedArchive, types.CopyToContainerOptions{})
 }
 
-func (w Worker) Remove() error {
+func (w *Worker) CopyFileToContainer(src, dst string) error {
+	f, err := os.Open(src)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return err
+	}
+	defer f.Close()
+
+	srcInfo, err := archive.CopyInfoSourcePath(f.Name(), false)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return err
+	}
+
+	srcArchive, err := archive.TarResource(srcInfo)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return err
+	}
+	defer srcArchive.Close()
+
+	dstInfo := archive.CopyInfo{Path: dst}
+	dstDir, preparedArchive, err := archive.PrepareArchiveCopy(srcArchive, srcInfo, dstInfo)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return err
+	}
+
+	ctx := context.Background()
+	return w.cli.CopyToContainer(ctx, w.ID, dstDir, preparedArchive, types.CopyToContainerOptions{})
+}
+
+func (w *Worker) Remove() error {
+	if w.stdout != nil {
+		removeTempFile(w.stdout)
+		w.stdout = nil
+	}
+	if w.stderr != nil {
+		removeTempFile(w.stderr)
+		w.stderr = nil
+	}
+
 	ctx := context.Background()
 	err := w.cli.ContainerRemove(ctx, w.ID, types.ContainerRemoveOptions{
 		Force: true,
 	})
 	w.cli.Close()
 
+	if w.HostJudgeDataDir != "" {
+		os.RemoveAll(w.HostJudgeDataDir)
+	}
+
 	return err
 }
 
-func (w Worker) parseOutput(r io.Reader) ([]string, error) {
+func (w *Worker) parseOutput(r io.Reader) ([]string, error) {
 	raw := make([]byte, outputLimit)
 	n, err := r.Read(raw)
 	if err != nil {
@@ -333,7 +437,7 @@ func (w Worker) parseOutput(r io.Reader) ([]string, error) {
 	return res, nil
 }
 
-func (w Worker) getFromContainer(path string, limit int64) ([]byte, error) {
+func (w *Worker) getFromContainer(path string, limit int64) ([]byte, error) {
 	ctx := context.Background()
 	f, _, err := w.cli.CopyFromContainer(ctx, w.ID, path)
 	if err != nil {
@@ -351,6 +455,16 @@ func (w Worker) getFromContainer(path string, limit int64) ([]byte, error) {
 	}
 
 	return buf[0:n], err
+}
+
+func createJudgeDataDir() (string, error) {
+	id, err := unique.GenerateRandomBase62String(12)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return "", err
+	}
+	tmp := "/tmp/judge_data" + id
+	return tmp, os.Mkdir(tmp, 0700)
 }
 
 func removeTempFile(file *os.File) {
@@ -410,4 +524,23 @@ func createTempDir() error {
 	}
 
 	return nil
+}
+
+func checkStatus(timeMillis, memoryUsage int64, timeLimit time.Duration, memoryLimit int64, exitCode string) ExecStatus {
+	runtimeErr := checkRuntimeError(exitCode)
+	switch {
+	case int64(timeLimit.Seconds()*1000.0+0.0001) <= timeMillis:
+		logger.AppLog.Debugf("time limit(%v) exceeded:%v", timeLimit, timeMillis)
+		return StatusTimeLimitExceeded
+	case memoryLimit <= memoryUsage:
+		logger.AppLog.Debugf("memory limit(%v) exceeded:%v", memoryLimit, memoryUsage)
+		return StatusMemoryLimitExceeded
+	case runtimeErr == errRuntime:
+		return StatusRuntimeError
+	case runtimeErr != nil:
+		logger.AppLog.Error(runtimeErr)
+		return StatusUnknownError
+	default:
+		return StatusFinished
+	}
 }

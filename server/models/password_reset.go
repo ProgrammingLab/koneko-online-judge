@@ -6,6 +6,7 @@ import (
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"github.com/gedorinku/koneko-online-judge/server/modules/nekomail"
+	"github.com/gedorinku/koneko-online-judge/server/modules/unique"
 	"github.com/pkg/errors"
 )
 
@@ -41,7 +42,7 @@ func StartPasswordReset(user *User) error {
 
 func newPasswordResetToken(user *User) (*PasswordResetToken, error) {
 	db.Delete(PasswordResetToken{}, "user_id = ?", user.ID)
-	token, err := GenerateRandomBase62String(48)
+	token, err := unique.GenerateRandomBase62String(48)
 	if err != nil {
 		return nil, err
 	}

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
+	"github.com/gedorinku/koneko-online-judge/server/modules/unique"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -42,7 +43,7 @@ func NewSession(email, password string) (*UserSession, string, error) {
 		return nil, "", ErrLogin
 	}
 
-	secret := []byte(GenerateRandomBase64String(24))
+	secret := []byte(unique.GenerateRandomBase64String(24))
 	digest, err := bcrypt.GenerateFromPassword(secret, bcrypt.MinCost)
 	if err != nil {
 		return nil, "", err
@@ -121,7 +122,7 @@ func GetSession(id uint) *UserSession {
 
 func (s *UserSession) Delete() {
 	db.Delete(UserSession{}, "id = ?", s.ID)
-	s.TokenDigest = GenerateRandomBase64String(16)
+	s.TokenDigest = unique.GenerateRandomBase64String(16)
 }
 
 func (s *UserSession) FetchUser() {

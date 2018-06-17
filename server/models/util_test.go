@@ -7,13 +7,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gedorinku/koneko-online-judge/server/modules/unique"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func TestGenerateRandomBase64String(t *testing.T) {
 	const length = 32
 	regex := regexp.MustCompile(`^[A-Za-z0-9/+]*=*$`)
-	res := GenerateRandomBase64String(length)
+	res := unique.GenerateRandomBase64String(length)
 	if len(res) != base64.StdEncoding.EncodedLen(length) {
 		t.Errorf("incorrect length: %v", res)
 	}
