@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/gedorinku/koneko-online-judge/server/modules/workers"
+	"github.com/labstack/gommon/log"
 )
 
 var (
@@ -93,7 +94,9 @@ func (e Executor) ExecMonitored() error {
 	pw.Close()
 
 	if err := killProcessGroup(c.Process); err != nil {
-		log.Fatal(err)
+		if i := strings.Index(err.Error(), "no such process"); i == -1 {
+			log.Fatal(err)
+		}
 	}
 
 	if !done {

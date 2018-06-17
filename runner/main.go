@@ -18,6 +18,12 @@ const (
 )
 
 func main() {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Error(err)
+		}
+	}()
+
 	f, err := os.Create(dataDir + "err")
 	if err != nil {
 		log.Fatal(err)
