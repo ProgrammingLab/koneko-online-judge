@@ -123,7 +123,9 @@ func (e Executor) saveExecResult(cmd *exec.Cmd, writeRes outputWriteResult, dura
 	if !ok {
 		return errNotSupportedOS
 	}
-	memory := usage.Maxrss * 1024
+
+	// なんかGNU Time(1.7)と同じ値を出力してるっぽいので、4で割っとく
+	memory := usage.Maxrss * 1024 / 4
 	wst, ok := cmd.ProcessState.Sys().(syscall.WaitStatus)
 	if !ok {
 		return errNotSupportedOS
