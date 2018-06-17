@@ -2,7 +2,7 @@ version: "3"
 
 services:
   koneko:
-    build: ./server
+    build: .
     command: ["./wait-for-it.sh", "mysql:3306", "--", "./run.sh"]
     environment:
       KOJ_DB_DRIVER: "mysql"
