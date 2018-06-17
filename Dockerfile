@@ -19,7 +19,7 @@ RUN cd /go/src/github.com/gedorinku/koneko-online-judge/server/ \
     && go build main.go
 RUN cd /go/src/github.com/gedorinku/koneko-online-judge/runner/ \
     && dep ensure -vendor-only \
-    && go build .
+    && go build . \
     && chmod 700 runner
 
 WORKDIR /go/src/github.com/gedorinku/koneko-online-judge/server/
