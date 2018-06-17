@@ -5,6 +5,7 @@ import (
 
 	"github.com/gedorinku/koneko-online-judge/server/conf"
 	"github.com/gedorinku/koneko-online-judge/server/logger"
+	"github.com/gedorinku/koneko-online-judge/server/modules/unique"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"golang.org/x/crypto/bcrypt"
@@ -163,7 +164,7 @@ func seedLanguages() {
 
 func insertAdmin() {
 	const email = "admin@judge.kurume-nct.com"
-	password := GenerateRandomBase64String(12)
+	password := unique.GenerateRandomBase64String(12)
 
 	digest, err := bcrypt.GenerateFromPassword([]byte(password), GetBcryptCost())
 	if err != nil {

@@ -2,7 +2,6 @@ package models
 
 import (
 	crand "crypto/rand"
-	"io/ioutil"
 	"math"
 	"math/big"
 	"math/rand"
@@ -205,14 +204,19 @@ func (j *judgementJob) executeCaseSet(evaluator caseSetEvaluator, result *JudgeS
 
 func (j *judgementJob) judgeCaseSet(w *workers.Worker, evaluator caseSetEvaluator, setResult *JudgeSetResult) {
 	defer w.Remove()
-	p := workers.NewExecResultParser(w)
-	results := setResult.JudgeResults
 
 	var (
 		maxExecTime    time.Duration
 		maxMemoryUsage int64
 		hasErr         bool
 	)
+
+	p, err := workers.NewExecResultParser(w)
+	if err != nil {
+		logger.AppLog.Error(err)
+		hasErr = true
+	}
+	results := setResult.JudgeResults
 
 	for i, r := range results {
 		r.FetchTestCase()
@@ -272,20 +276,15 @@ func (j *judgementJob) createJudgementWorker(results []JudgeResult) (*workers.Wo
 	problem := &j.submission.Problem
 	language := &j.submission.Language
 	cmd := language.GetExecCommandSlice()
-	w, err := workers.NewJudgementWorker(imageNamePrefix+language.ImageName, problem.TimeLimit, int64(problem.MemoryLimit*1024*1024), cmd, language.ExeFileName)
+	w, err := workers.NewJudgementWorker(imageNamePrefix+language.ImageName, problem.TimeLimit, int64(problem.MemoryLimit*1024*1024), cmd)
 	if err != nil {
 		logger.AppLog.Errorf("exec: container create error %+v", err)
 		w.Remove()
 		return nil, err
 	}
 
-	script, err := getJudgeScript()
-	if err != nil {
-		logger.AppLog.Error(err)
-		w.Remove()
-		return nil, err
-	}
-	err = w.CopyContentToContainer(script, "/tmp/judge.sh")
+	inputDir := w.HostJudgeDataDir + "/input"
+	err = os.Mkdir(inputDir, 0700)
 	if err != nil {
 		logger.AppLog.Error(err)
 		w.Remove()
@@ -293,9 +292,21 @@ func (j *judgementJob) createJudgementWorker(results []JudgeResult) (*workers.Wo
 	}
 
 	shuffleJudgeResults(results)
+
 	for i, r := range results {
 		r.FetchTestCase()
-		err := w.CopyContentToContainer([]byte(r.TestCase.Input), "/tmp/input/"+strconv.Itoa(i)+".txt")
+		name := inputDir + "/" + strconv.Itoa(i)
+		err := func() error {
+			f, err := os.Create(name)
+			if err != nil {
+				return err
+			}
+			defer f.Close()
+
+			_, err = f.WriteString(r.TestCase.Input)
+
+			return err
+		}()
 		if err != nil {
 			logger.AppLog.Error(err)
 			w.Remove()
@@ -329,20 +340,4 @@ func shuffleJudgeResults(results []JudgeResult) error {
 	}
 
 	return nil
-}
-
-func getJudgeScript() ([]byte, error) {
-	f, err := os.Open("./judge.sh")
-	if err != nil {
-		logger.AppLog.Error(err)
-		return nil, err
-	}
-	defer f.Close()
-
-	res, err := ioutil.ReadAll(f)
-	if err != nil {
-		logger.AppLog.Error(err)
-		return nil, err
-	}
-	return res, nil
 }

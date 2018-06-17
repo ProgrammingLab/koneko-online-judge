@@ -18,11 +18,18 @@ const (
 )
 
 func main() {
+	f, err := os.Create(dataDir + "err")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+	log.SetOutput(f)
+
 	if len(os.Args) < 4 {
 		log.Fatal("invalid arg(s)")
 	}
 
-	err := loadSeccompContext()
+	err = loadSeccompContext()
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -1,69 +1,141 @@
 package workers
 
 import (
+	"encoding/json"
 	"errors"
-	"strings"
-	"time"
+	"io/ioutil"
+	"os"
+	"path"
+	"strconv"
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
 )
 
 type ExecResultParser struct {
-	worker       *Worker
-	stdoutParser OutputParser
-	stderrParser OutputParser
+	index     int
+	outputs   map[int]os.FileInfo
+	outputDir string
+	results   map[int]os.FileInfo
+	resDir    string
+	length    int
 }
 
 var ErrExecResultParse = errors.New("exec result parse error")
 
-func NewExecResultParser(w *Worker) ExecResultParser {
-	w.stdout.Seek(0, 0)
-	w.stderr.Seek(0, 0)
-	return ExecResultParser{
-		w,
-		newReaderParser(w.stdout, w.separator),
-		newReaderParser(w.stderr, w.separator),
+func NewExecResultParser(w *Worker) (ExecResultParser, error) {
+	outputDir := w.HostJudgeDataDir + "/output"
+	outputs, err := ioutil.ReadDir(outputDir)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return ExecResultParser{}, err
 	}
+	outputMap, err := toFileInfoMap(outputs)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return ExecResultParser{}, err
+	}
+
+	resDir := w.HostJudgeDataDir + "/status"
+	results, err := ioutil.ReadDir(resDir)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return ExecResultParser{}, err
+	}
+	resultMap, err := toFileInfoMap(results)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return ExecResultParser{}, err
+	}
+
+	if len(outputMap) != len(resultMap) {
+		logger.AppLog.Error(ErrExecResultParse)
+		return ExecResultParser{}, ErrExecResultParse
+	}
+
+	return ExecResultParser{
+		outputs:   outputMap,
+		outputDir: outputDir,
+		results:   resultMap,
+		resDir:    resDir,
+		length:    len(outputMap),
+	}, nil
+}
+
+func toFileInfoMap(files []os.FileInfo) (map[int]os.FileInfo, error) {
+	res := make(map[int]os.FileInfo, len(files))
+
+	for _, f := range files {
+		base := path.Base(f.Name())
+		index, err := strconv.Atoi(base)
+		if err != nil {
+			return nil, err
+		}
+
+		res[index] = f
+	}
+
+	return res, nil
 }
 
 func (p *ExecResultParser) Next() (bool, *ExecResult, error) {
-	_, stdout, err := p.stdoutParser.Next()
-	if err != nil {
-		logger.AppLog.Error(err)
-		return false, nil, err
-	}
-	hasNextStdout, exitStatus, err := p.stdoutParser.Next()
-	if err != nil {
-		logger.AppLog.Error(err)
-		return false, nil, err
+	if p.length <= p.index {
+		return false, nil, nil
 	}
 
-	// 実行ファイルのエラー出力は読み捨てる
-	_, _, err = p.stderrParser.Next()
+	execRes, err := p.parseCurrentExecResult()
+	if err != nil {
+		p.index = p.length
+		return false, nil, nil
+	}
+
+	fi, ok := p.outputs[p.index]
+	if !ok {
+		p.index = p.length
+		return false, nil, ErrExecResultParse
+	}
+
+	f, err := os.Open(p.outputDir + "/" + fi.Name())
 	if err != nil {
 		logger.AppLog.Error(err)
+		p.index = p.length
 		return false, nil, err
 	}
-	hasNextStderr, stderr, err := p.stderrParser.Next()
+	defer f.Close()
+
+	buf, err := ioutil.ReadAll(f)
 	if err != nil {
 		logger.AppLog.Error(err)
+		p.index = p.length
 		return false, nil, err
 	}
+	execRes.Stdout = string(buf)
 
-	timeMillis, memoryUsage, err := parseTimeText(stderr)
-	memoryUsage *= 1024
+	p.index++
 
-	if strings.TrimSpace(exitStatus) == "" {
-		exitStatus = "127"
+	return p.index <= p.length, &execRes, nil
+}
+
+func (p *ExecResultParser) parseCurrentExecResult() (ExecResult, error) {
+	fi, ok := p.results[p.index]
+	if !ok {
+		logger.AppLog.Error(ErrExecResultParse)
+		return ExecResult{}, ErrExecResultParse
 	}
-	status := checkStatus(timeMillis, memoryUsage, p.worker.TimeLimit, p.worker.MemoryLimit, exitStatus)
 
-	res := &ExecResult{
-		status,
-		time.Duration(timeMillis) * time.Millisecond,
-		memoryUsage,
-		stdout,
-		"",
+	f, err := os.Open(p.resDir + "/" + fi.Name())
+	if err != nil {
+		logger.AppLog.Error(err)
+		return ExecResult{}, err
 	}
-	return hasNextStdout && hasNextStderr, res, nil
+	defer f.Close()
+
+	e := json.NewDecoder(f)
+	res := ExecResult{}
+	err = e.Decode(&res)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return ExecResult{}, err
+	}
+
+	return res, nil
 }

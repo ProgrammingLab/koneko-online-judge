@@ -8,29 +8,33 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/gedorinku/koneko-online-judge/server/logger"
+	"github.com/gedorinku/koneko-online-judge/server/modules/unique"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
 
 type Worker struct {
-	ID          string
-	cli         *client.Client
-	TimeLimit   time.Duration
-	MemoryLimit int64
-	separator   string
-	stdout      *os.File
-	stderr      *os.File
+	ID               string
+	cli              *client.Client
+	TimeLimit        time.Duration
+	MemoryLimit      int64
+	HostJudgeDataDir string
+	separator        string
+	stdout           *os.File
+	stderr           *os.File
 }
 
 type ExecStatus int
@@ -45,6 +49,7 @@ const (
 	outputLimit                          = 10 * 1024 * 1024
 	errorOutputLimit                     = 512
 	Workspace                            = "/tmp/koj-workspace/"
+	JudgeDataDir                         = Workspace + "judge_data"
 	errorString                          = "runtime_error"
 	exitCodeFile                         = "exit.txt"
 )
@@ -76,7 +81,7 @@ func NewTimeoutWorker(img string, timeLimit time.Duration, memoryLimit int64, cm
 		"/bin/bash", "-c", strings.Join(cmd, " ") + ";" + outputCmd,
 	}
 
-	w, err := newWorker(img, timeLimit, memoryLimit, runCmd)
+	w, err := newWorker(img, timeLimit, memoryLimit, runCmd, nil)
 	if err != nil {
 		logger.AppLog.Error(err)
 		return nil, err
@@ -86,31 +91,57 @@ func NewTimeoutWorker(img string, timeLimit time.Duration, memoryLimit int64, cm
 	return w, err
 }
 
-func NewJudgementWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []string, execFileName string) (*Worker, error) {
+func NewJudgementWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []string) (*Worker, error) {
 	sp, err := newSeparator()
 	if err != nil {
 		return nil, err
 	}
 
 	runCmd := []string{
-		"/tmp/judge.sh",
-		sp,
-		strconv.FormatFloat(timeLimit.Seconds()+0.01, 'f', 4, 64),
-		strings.Join(cmd, " "),
-		execFileName,
+		"./runner",
+		strconv.FormatInt(int64(timeLimit), 10),
+		strconv.FormatInt(int64(memoryLimit), 10),
+	}
+	runCmd = append(runCmd, cmd...)
+
+	judgeData, err := createJudgeDataDir()
+	if err != nil {
+		logger.AppLog.Error(err)
+		return nil, err
 	}
 
-	w, err := newWorker(img, timeLimit, memoryLimit, runCmd)
+	mounts := []mount.Mount{
+		{
+			Type:     mount.TypeBind,
+			Source:   judgeData,
+			Target:   JudgeDataDir,
+			ReadOnly: false,
+		},
+	}
+
+	w, err := newWorker(img, timeLimit, memoryLimit, runCmd, mounts)
 	if err != nil {
 		logger.AppLog.Error(err)
 		return nil, err
 	}
 	w.separator = sp
+	w.HostJudgeDataDir = judgeData
+
+	runnerAbs, err := filepath.Abs("../runner/runner")
+	if err != nil {
+		logger.AppLog.Error(err)
+		w.Remove()
+		return nil, err
+	}
+	if err := w.CopyFileToContainer(runnerAbs, Workspace+"runner"); err != nil {
+		logger.AppLog.Error(err)
+		return nil, err
+	}
 
 	return w, err
 }
 
-func newWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []string) (*Worker, error) {
+func newWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []string, mounts []mount.Mount) (*Worker, error) {
 	ctx := context.Background()
 	cli, err := client.NewEnvClient()
 	if err != nil {
@@ -135,6 +166,7 @@ func newWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []str
 			Memory:     memoryLimit + 10*1024*1024,
 		},
 		NetworkMode: "none",
+		Mounts:      mounts,
 	}
 
 	res, err := cli.ContainerCreate(ctx, cfg, hcfg, &network.NetworkingConfig{}, "")
@@ -323,6 +355,38 @@ func (w *Worker) CopyContentToContainer(content []byte, name string) error {
 	return w.cli.CopyToContainer(ctx, w.ID, dstDir, preparedArchive, types.CopyToContainerOptions{})
 }
 
+func (w *Worker) CopyFileToContainer(src, dst string) error {
+	f, err := os.Open(src)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return err
+	}
+	defer f.Close()
+
+	srcInfo, err := archive.CopyInfoSourcePath(f.Name(), false)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return err
+	}
+
+	srcArchive, err := archive.TarResource(srcInfo)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return err
+	}
+	defer srcArchive.Close()
+
+	dstInfo := archive.CopyInfo{Path: dst}
+	dstDir, preparedArchive, err := archive.PrepareArchiveCopy(srcArchive, srcInfo, dstInfo)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return err
+	}
+
+	ctx := context.Background()
+	return w.cli.CopyToContainer(ctx, w.ID, dstDir, preparedArchive, types.CopyToContainerOptions{})
+}
+
 func (w *Worker) Remove() error {
 	if w.stdout != nil {
 		removeTempFile(w.stdout)
@@ -338,6 +402,10 @@ func (w *Worker) Remove() error {
 		Force: true,
 	})
 	w.cli.Close()
+
+	if w.HostJudgeDataDir != "" {
+		os.RemoveAll(w.HostJudgeDataDir)
+	}
 
 	return err
 }
@@ -387,6 +455,16 @@ func (w *Worker) getFromContainer(path string, limit int64) ([]byte, error) {
 	}
 
 	return buf[0:n], err
+}
+
+func createJudgeDataDir() (string, error) {
+	id, err := unique.GenerateRandomBase62String(12)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return "", err
+	}
+	tmp := "/tmp/judge_data" + id
+	return tmp, os.Mkdir(tmp, 0700)
 }
 
 func removeTempFile(file *os.File) {

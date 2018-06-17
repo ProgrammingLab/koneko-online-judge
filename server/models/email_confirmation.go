@@ -6,6 +6,7 @@ import (
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"github.com/gedorinku/koneko-online-judge/server/modules/nekomail"
+	"github.com/gedorinku/koneko-online-judge/server/modules/unique"
 )
 
 type EmailConfirmation struct {
@@ -45,7 +46,7 @@ func StartEmailConfirmation(email *WhiteEmail) error {
 func newEmailConfirmation(email *WhiteEmail) (*EmailConfirmation, error) {
 	db.Delete(EmailConfirmation{}, "white_email_id = ?", email.ID)
 
-	token, err := GenerateRandomBase62String(48)
+	token, err := unique.GenerateRandomBase62String(48)
 	if err != nil {
 		logger.AppLog.Errorf("token error: %+v", err)
 		return nil, err

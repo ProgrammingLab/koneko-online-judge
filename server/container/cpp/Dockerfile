@@ -8,5 +8,3 @@ RUN apt-get update && apt-get install sudo
 RUN sh -c 'echo 127.0.1.1 $(hostname) >> /etc/hosts'
 
 RUN mkdir /tmp/koj-workspace && chmod 777 /tmp/koj-workspace
-
-RUN mkdir /tmp/input && chmod 700 /tmp/input

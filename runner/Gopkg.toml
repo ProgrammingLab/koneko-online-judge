@@ -1,3 +1,9 @@
+ignored = [
+  "github.com/user/project/pkgX",
+  "bitbucket.org/user/project/pkgA/pkgY",
+  "github.com/gedorinku/koneko-online-judge/server*"
+]
+
 [prune]
   go-tests = true
   unused-packages = true
