@@ -15,6 +15,8 @@ services:
     restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/koj-workspace:/tmp/koj-workspace
+      - /tmp/judge_data:/tmp/judge_data
     logging:
       options:
         max-size: 5m

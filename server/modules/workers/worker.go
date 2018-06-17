@@ -463,7 +463,7 @@ func createJudgeDataDir() (string, error) {
 		logger.AppLog.Error(err)
 		return "", err
 	}
-	tmp := "/tmp/judge_data" + id
+	tmp := "/tmp/judge_data/judge_data" + id
 	return tmp, os.Mkdir(tmp, 0700)
 }
 
