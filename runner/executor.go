@@ -70,7 +70,9 @@ func (e Executor) ExecMonitored() error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), e.TimeLimit+50*time.Millisecond)
 	defer cancel()
-	c := exec.CommandContext(ctx, e.Cmd[0], e.Cmd[1:]...)
+	cmd := []string{"/usr/bin/sudo", "-u", "nobody", "--"}
+	cmd = append(cmd, e.Cmd...)
+	c := exec.CommandContext(ctx, cmd[0], cmd[1:]...)
 	c.Stdin = in
 	c.Stdout = pw
 
