@@ -1,10 +1,10 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"syscall"
@@ -68,19 +68,39 @@ func (e Executor) ExecMonitored() error {
 		ch <- outputWriteResult{n, err}
 	}()
 
-	ctx, cancel := context.WithTimeout(context.Background(), e.TimeLimit+50*time.Millisecond)
-	defer cancel()
 	cmd := []string{"/usr/bin/sudo", "-u", "nobody", "--"}
 	cmd = append(cmd, e.Cmd...)
-	c := exec.CommandContext(ctx, cmd[0], cmd[1:]...)
+	c := exec.Command(cmd[0], cmd[1:]...)
 	c.Stdin = in
 	c.Stdout = pw
+	c.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+
+	wait := make(chan error, 1)
 
 	start := time.Now()
-	err = c.Run()
+	go func() {
+		wait <- c.Run()
+	}()
+
+	done := false
+	select {
+	case err = <-wait:
+		done = true
+	case <-time.After(e.TimeLimit + time.Millisecond):
+	}
+
 	dur := time.Now().Sub(start)
 	pw.Close()
-	if err != nil && err != io.ErrClosedPipe && err != context.DeadlineExceeded {
+
+	if err := killProcessGroup(c.Process); err != nil {
+		log.Fatal(err)
+	}
+
+	if !done {
+		err = <-wait
+	}
+
+	if err != nil && err != io.ErrClosedPipe {
 		_, ok := err.(*exec.ExitError)
 		if !ok {
 			return err
@@ -132,4 +152,12 @@ func (e Executor) saveExecResult(cmd *exec.Cmd, writeRes outputWriteResult, dura
 	defer st.Close()
 	en := json.NewEncoder(st)
 	return en.Encode(res)
+}
+
+func killProcessGroup(process *os.Process) error {
+	pgid, err := syscall.Getpgid(process.Pid)
+	if err != nil {
+		return err
+	}
+	return syscall.Kill(-pgid, syscall.SIGKILL)
 }
