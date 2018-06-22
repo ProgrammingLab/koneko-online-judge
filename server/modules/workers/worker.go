@@ -464,7 +464,7 @@ func createJudgeDataDir() (string, error) {
 		return "", err
 	}
 	tmp := "/tmp/judge_data/judge_data" + id
-	return tmp, os.Mkdir(tmp, 0700)
+	return tmp, os.MkdirAll(tmp, 0700)
 }
 
 func removeTempFile(file *os.File) {
