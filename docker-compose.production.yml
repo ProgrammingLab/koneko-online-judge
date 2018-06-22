@@ -28,8 +28,6 @@ services:
     hostname: redis
     restart: always
     network_mode: "host"
-    ports:
-      - "9000:9000"
     logging:
       options:
         max-size: 5m
