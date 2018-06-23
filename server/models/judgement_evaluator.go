@@ -30,3 +30,18 @@ func evaluateStatuses(statuses map[JudgementStatus]int) JudgementStatus {
 	})
 	return temp[0]
 }
+
+func toJudgementStatus(status workers.ExecStatus) JudgementStatus {
+	switch status {
+	case workers.StatusMemoryLimitExceeded:
+		return StatusMemoryLimitExceeded
+	case workers.StatusTimeLimitExceeded:
+		return StatusTimeLimitExceeded
+	case workers.StatusRuntimeError:
+		return StatusRuntimeError
+	case workers.StatusOutputLimitExceeded:
+		return StatusOutputLimitExceeded
+	default:
+		return StatusUnknownError
+	}
+}

@@ -62,6 +62,12 @@ func compile(sourceCode string, language *Language) (*workers.Worker, *workers.E
 }
 
 func (j *judgementJob) Run() {
+	defer func() {
+		if err := recover(); err != nil {
+			logger.AppLog.Errorf("%+v", err)
+		}
+	}()
+
 	defer j.Close()
 	j.submission = GetSubmission(j.submissionID)
 	if j.submission == nil {

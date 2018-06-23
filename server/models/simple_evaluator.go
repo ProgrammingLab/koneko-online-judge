@@ -63,29 +63,22 @@ func newSimpleCaseSetEvaluator(set *CaseSet) *simpleCaseSetEvaluator {
 
 func (e *simpleCaseSetEvaluator) next(res *workers.ExecResult, testCase *TestCase) (JudgementStatus, int) {
 	// スペシャルジャッジではないので、ケースごとの点数は無視される
-	st, _ := func() (JudgementStatus, int) {
+	st := func() JudgementStatus {
 		if res == nil {
-			return StatusUnknownError, 0
+			return StatusUnknownError
 		}
 
-		switch res.Status {
-		case workers.StatusMemoryLimitExceeded:
-			return StatusMemoryLimitExceeded, 0
-		case workers.StatusTimeLimitExceeded:
-			return StatusTimeLimitExceeded, 0
-		case workers.StatusRuntimeError:
-			return StatusRuntimeError, 0
-		case workers.StatusFinished:
-			if res.Stdout == testCase.Output {
-				return StatusAccepted, 0
-			}
-			if strings.TrimSpace(res.Stdout) == strings.TrimSpace(testCase.Output) {
-				return StatusPresentationError, 0
-			}
-			return StatusWrongAnswer, 0
-		default:
-			return StatusUnknownError, 0
+		if res.Status != workers.StatusFinished {
+			return toJudgementStatus(res.Status)
 		}
+
+		if res.Stdout == testCase.Output {
+			return StatusAccepted
+		}
+		if strings.TrimSpace(res.Stdout) == strings.TrimSpace(testCase.Output) {
+			return StatusPresentationError
+		}
+		return StatusWrongAnswer
 	}()
 
 	e.statuses[st]++

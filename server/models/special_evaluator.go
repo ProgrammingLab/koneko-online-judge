@@ -81,39 +81,48 @@ func newSpecialCaseSetEvaluator(set *CaseSet, verifier *workers.Worker, config *
 }
 
 func (e *specialCaseSetEvaluator) next(res *workers.ExecResult, testCase *TestCase) (JudgementStatus, int) {
-	l := e.submission.Language
-	const (
-		input      = "in"
-		output     = "out"
-		userOutput = "submission"
-	)
-	cmd := append(e.config.Language.GetExecCommandSlice(), input, output, userOutput, l.FileName)
-	w, err := workers.NewTimeoutWorker(imageNamePrefix+e.config.Language.ImageName, compileTimeLimit, compileMemoryLimit, cmd)
-	if err != nil {
-		logger.AppLog.Errorf("error: %+v", err)
-		return StatusUnknownError, 0
-	}
-	defer w.Remove()
+	st, pt := func() (JudgementStatus, int) {
+		if res.Status != workers.StatusFinished {
+			return toJudgementStatus(res.Status), 0
+		}
 
-	e.verifier.CopyTo(workers.Workspace+e.config.Language.ExeFileName, w)
+		l := e.submission.Language
+		const (
+			input      = "in"
+			output     = "out"
+			userOutput = "submission"
+		)
+		cmd := append(e.config.Language.GetExecCommandSlice(), input, output, userOutput, l.FileName)
+		w, err := workers.NewTimeoutWorker(imageNamePrefix+e.config.Language.ImageName, compileTimeLimit, compileMemoryLimit, cmd)
+		if err != nil {
+			logger.AppLog.Errorf("error: %+v", err)
+			return StatusUnknownError, 0
+		}
+		defer w.Remove()
 
-	w.CopyContentToContainer([]byte(testCase.Input), workers.Workspace+input)
-	w.CopyContentToContainer([]byte(testCase.Output), workers.Workspace+output)
-	w.CopyContentToContainer([]byte(res.Stdout), workers.Workspace+userOutput)
-	w.CopyContentToContainer([]byte(e.submission.SourceCode), workers.Workspace+l.FileName)
+		e.verifier.CopyTo(workers.Workspace+e.config.Language.ExeFileName, w)
 
-	judged, err := w.Run("", true)
-	if err != nil {
-		logger.AppLog.Errorf("error: %+v", err)
-		return StatusUnknownError, 0
-	}
+		w.CopyContentToContainer([]byte(testCase.Input), workers.Workspace+input)
+		w.CopyContentToContainer([]byte(testCase.Output), workers.Workspace+output)
+		w.CopyContentToContainer([]byte(res.Stdout), workers.Workspace+userOutput)
+		w.CopyContentToContainer([]byte(e.submission.SourceCode), workers.Workspace+l.FileName)
 
-	point, _ := strconv.Atoi(judged.Stdout)
-	if judged.Status == workers.StatusFinished {
-		e.point += point
-		return StatusAccepted, e.point
-	}
-	return StatusWrongAnswer, 0
+		judged, err := w.Run("", true)
+		if err != nil {
+			logger.AppLog.Errorf("error: %+v", err)
+			return StatusUnknownError, 0
+		}
+
+		point, _ := strconv.Atoi(judged.Stdout)
+		if judged.Status == workers.StatusFinished {
+			e.point += point
+			return StatusAccepted, e.point
+		}
+		return StatusWrongAnswer, 0
+	}()
+
+	e.statuses[st]++
+	return st, pt
 }
 
 func (e *specialCaseSetEvaluator) evaluate() (JudgementStatus, int) {

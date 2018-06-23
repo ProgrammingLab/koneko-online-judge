@@ -55,25 +55,34 @@ func newPrecisionCaseSetEvaluator(set *CaseSet, config *JudgementConfig) *precis
 }
 
 func (e *precisionCaseSetEvaluator) next(res *workers.ExecResult, testCase *TestCase) (JudgementStatus, int) {
-	submission := bufio.NewScanner(strings.NewReader(res.Stdout))
-	submission.Split(bufio.ScanWords)
-	ans := bufio.NewScanner(strings.NewReader(testCase.Output))
-	ans.Split(bufio.ScanWords)
-
-	for submission.Scan() && ans.Scan() {
-		s := submission.Text()
-		a := ans.Text()
-		if e.equals(s, a) {
-			continue
+	st := func() JudgementStatus {
+		if res.Status != workers.StatusFinished {
+			return toJudgementStatus(res.Status)
 		}
 
-		return StatusWrongAnswer, 0
-	}
+		submission := bufio.NewScanner(strings.NewReader(res.Stdout))
+		submission.Split(bufio.ScanWords)
+		ans := bufio.NewScanner(strings.NewReader(testCase.Output))
+		ans.Split(bufio.ScanWords)
 
-	if submission.Scan() != ans.Scan() {
-		return StatusWrongAnswer, 0
-	}
-	return StatusAccepted, 0
+		for submission.Scan() && ans.Scan() {
+			s := submission.Text()
+			a := ans.Text()
+			if e.equals(s, a) {
+				continue
+			}
+
+			return StatusWrongAnswer
+		}
+
+		if submission.Scan() != ans.Scan() {
+			return StatusWrongAnswer
+		}
+		return StatusAccepted
+	}()
+
+	e.statuses[st]++
+	return st, 0
 }
 
 func (e *precisionCaseSetEvaluator) equals(a, b string) bool {
