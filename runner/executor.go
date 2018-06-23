@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -80,7 +81,17 @@ func (e Executor) ExecMonitored() error {
 
 	start := time.Now()
 	go func() {
-		wait <- c.Run()
+		err := c.Start()
+		if err != nil {
+			wait <- err
+			return
+		}
+		err = setOOMScoreAdj(c.Process, 1000)
+		if err != nil {
+			wait <- err
+			return
+		}
+		wait <- c.Wait()
 	}()
 
 	done := false
@@ -134,7 +145,7 @@ func (e Executor) saveExecResult(cmd *exec.Cmd, writeRes outputWriteResult, dura
 
 	status := workers.StatusFinished
 	switch {
-	case e.MemoryLimit < memory:
+	case e.MemoryLimit < memory || exitStatus == 137:
 		status = workers.StatusMemoryLimitExceeded
 	case e.TimeLimit < duration:
 		status = workers.StatusTimeLimitExceeded
@@ -165,4 +176,24 @@ func killProcessGroup(process *os.Process) error {
 		return err
 	}
 	return syscall.Kill(-pgid, syscall.SIGKILL)
+}
+
+func setOOMScoreAdj(process *os.Process, scoreAdj int) error {
+	name := "/proc/" + strconv.Itoa(process.Pid) + "/oom_score_adj"
+	f, err := os.OpenFile(name, syscall.O_RDWR, 0644)
+	if err != nil {
+		if _, ok := err.(*os.PathError); ok {
+			return nil
+		}
+		log.Error(err)
+		return err
+	}
+	defer f.Close()
+
+	_, err = f.WriteString(strconv.Itoa(scoreAdj))
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	return nil
 }
