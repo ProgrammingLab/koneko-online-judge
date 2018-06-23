@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
 )
@@ -23,6 +24,15 @@ type ExecResultParser struct {
 var ErrExecResultParse = errors.New("exec result parse error")
 
 func NewExecResultParser(w *Worker) (ExecResultParser, error) {
+	runErr, err := getRunnerError(w)
+	if err != nil {
+		return ExecResultParser{}, err
+	}
+	if len(strings.TrimSpace(runErr)) != 0 {
+		logger.AppLog.Error(runErr)
+		return ExecResultParser{}, errors.New(runErr)
+	}
+
 	outputDir := w.HostJudgeDataDir + "/output"
 	outputs, err := ioutil.ReadDir(outputDir)
 	if err != nil {
@@ -75,6 +85,18 @@ func toFileInfoMap(files []os.FileInfo) (map[int]os.FileInfo, error) {
 	}
 
 	return res, nil
+}
+
+func getRunnerError(worker *Worker) (string, error) {
+	errFile := worker.HostJudgeDataDir + "/err"
+
+	res, err := ioutil.ReadFile(errFile)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return "", err
+	}
+
+	return string(res), nil
 }
 
 func (p *ExecResultParser) Next() (bool, *ExecResult, error) {
