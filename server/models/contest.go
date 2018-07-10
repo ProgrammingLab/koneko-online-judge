@@ -23,6 +23,12 @@ type Contest struct {
 	Problems     []Problem  `json:"problems"`
 }
 
+type ContestsParticipant struct {
+	CreatedAt time.Time `gorm:"default:'1971-01-01 00:00:00'" json:"createdAt"`
+	ContestID uint      `gorm:"not null"`
+	UserID    uint      `gorm:"not null"`
+}
+
 func NewContest(out *Contest) error {
 	writers := out.Writers
 	out.Writers = nil

@@ -89,6 +89,7 @@ func createTables() {
 	db.Table("contests_writers").AddForeignKey("contest_id", "contests(id)", "RESTRICT", "RESTRICT")
 	db.Table("contests_participants").AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
 	db.Table("contests_participants").AddForeignKey("contest_id", "contests(id)", "RESTRICT", "RESTRICT")
+	utf8mb4().AutoMigrate(&ContestsParticipant{})
 
 	utf8mb4().AutoMigrate(&Score{})
 	db.Model(&Score{}).AddForeignKey("user_id", "users(id)", "RESTRICT", "RESTRICT")
