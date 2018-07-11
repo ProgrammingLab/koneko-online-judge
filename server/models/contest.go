@@ -10,17 +10,18 @@ import (
 )
 
 type Contest struct {
-	ID           uint       `gorm:"primary_key" json:"id"`
-	CreatedAt    time.Time  `json:"createdAt"`
-	UpdatedAt    time.Time  `json:"updatedAt"`
-	DeletedAt    *time.Time `sql:"index" json:"-"`
-	Title        string     `json:"title"`
-	Description  string     `gorm:"type:text" json:"description"`
-	StartAt      time.Time  `json:"startAt"`
-	EndAt        time.Time  `json:"endAt"`
-	Writers      []User     `gorm:"many2many:contests_writers;" json:"writers"`
-	Participants []User     `gorm:"many2many:contests_participants;" json:"participants"`
-	Problems     []Problem  `json:"problems"`
+	ID           uint           `gorm:"primary_key" json:"id"`
+	CreatedAt    time.Time      `json:"createdAt"`
+	UpdatedAt    time.Time      `json:"updatedAt"`
+	DeletedAt    *time.Time     `sql:"index" json:"-"`
+	Title        string         `json:"title"`
+	Description  string         `gorm:"type:text" json:"description"`
+	StartAt      time.Time      `json:"startAt"`
+	EndAt        time.Time      `json:"endAt"`
+	Writers      []User         `gorm:"many2many:contests_writers;" json:"writers"`
+	Participants []User         `gorm:"many2many:contests_participants;" json:"participants"`
+	Problems     []Problem      `json:"problems"`
+	Duration     *time.Duration `json:"duration"`
 }
 
 type ContestsParticipant struct {
@@ -333,8 +334,8 @@ func (c *Contest) AddParticipant(userID uint) error {
 }
 
 func (c *Contest) addParticipantTransaction(tx *gorm.DB, userID uint) error {
-	const query = "INSERT INTO contests_participants (contest_id, user_id) VALUES (?, ?)"
-	if err := tx.Exec(query, c.ID, userID).Error; err != nil {
+	const query = "INSERT INTO contests_participants (contest_id, user_id, created_at) VALUES (?, ?, ?)"
+	if err := tx.Exec(query, c.ID, userID, time.Now()).Error; err != nil {
 		return err
 	}
 
