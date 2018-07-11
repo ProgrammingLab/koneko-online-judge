@@ -167,7 +167,12 @@ func (s *Submission) FetchJudgeSetResultsDeeplyForContest(session *UserSession) 
 		return err
 	}
 
-	if c.Ended() || isWriter {
+	ended, err := c.Ended(time.Now(), session)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return err
+	}
+	if ended || isWriter {
 		return nil
 	}
 
@@ -185,7 +190,12 @@ func (s *Submission) CanView(session *UserSession) bool {
 	}
 
 	s.Problem.FetchContest()
-	return s.Problem.CanView(session) && s.Problem.Contest.Started() && !s.Problem.Contest.IsOpen(time.Now())
+	ended, err := s.Problem.Contest.Ended(time.Now(), session)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return false
+	}
+	return s.Problem.CanView(session) && ended
 }
 
 func (s *Submission) rejudge() error {

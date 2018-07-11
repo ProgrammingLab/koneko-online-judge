@@ -144,7 +144,12 @@ func GetContestSubmissions(c echo.Context) error {
 		return echo.ErrUnauthorized
 	}
 	contest := getContestFromContext(c)
-	if contest == nil || !contest.CanViewProblems(s) {
+	can, err := contest.CanViewProblems(s)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return ErrInternalServer
+	}
+	if contest == nil || !can {
 		return echo.ErrNotFound
 	}
 
@@ -206,7 +211,12 @@ func GetStandings(c echo.Context) error {
 	}
 
 	contest := getContestFromContext(c)
-	if contest == nil || !contest.CanViewProblems(s) {
+	can, err := contest.CanViewProblems(s)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return ErrInternalServer
+	}
+	if contest == nil || !can {
 		return echo.ErrNotFound
 	}
 
@@ -219,7 +229,12 @@ func GetContestJudgeStatuses(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, responseUnauthorized)
 	}
 	contest := getContestFromContext(c)
-	if contest == nil || !contest.CanViewProblems(s) {
+	can, err := contest.CanViewProblems(s)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return ErrInternalServer
+	}
+	if contest == nil || !can {
 		return echo.ErrNotFound
 	}
 

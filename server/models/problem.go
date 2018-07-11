@@ -182,7 +182,12 @@ func (p *Problem) CanView(s *UserSession) bool {
 	}
 
 	p.FetchContest()
-	return p.Contest.CanViewProblems(s)
+	can, err := p.Contest.CanViewProblems(s)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return false
+	}
+	return can
 }
 
 func (p *Problem) CanEdit(s *UserSession) bool {

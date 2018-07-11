@@ -166,7 +166,12 @@ func (j *judgementJob) Run() {
 			logger.AppLog.Errorf("error %+v", err)
 			return
 		}
-		if p.Contest.IsOpen(j.submission.CreatedAt) && !writer {
+		open, err := p.Contest.IsOpen(j.submission.CreatedAt, &UserSession{UserID: j.submission.UserID})
+		if err != nil {
+			logger.AppLog.Error(err)
+			return
+		}
+		if open && !writer {
 			updateScore(j.submission, *j.submission.Problem.ContestID)
 		}
 	}

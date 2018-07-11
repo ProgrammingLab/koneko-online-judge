@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 
+	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"github.com/gedorinku/koneko-online-judge/server/models"
 	"github.com/labstack/echo"
 )
@@ -31,7 +32,12 @@ func GetContestProblems(c echo.Context) error {
 	}
 
 	contest := getContestFromContext(c)
-	if contest == nil || !contest.CanViewProblems(s) {
+	can, err := contest.CanViewProblems(s)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return ErrInternalServer
+	}
+	if contest == nil || !can {
 		return echo.ErrNotFound
 	}
 

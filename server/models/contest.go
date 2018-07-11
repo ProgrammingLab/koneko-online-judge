@@ -96,7 +96,9 @@ func GetContestDeeply(id uint, session *UserSession) *Contest {
 	}
 	contest.FetchWriters()
 	contest.FetchParticipants()
-	if contest.CanViewProblems(session) {
+	if can, err := contest.CanViewProblems(session); err != nil {
+		return nil
+	} else if can {
 		contest.FetchProblems()
 	}
 	return contest
@@ -207,7 +209,11 @@ func (c *Contest) GetSubmissions(session *UserSession, limit, page int, userID, 
 		return nil, 0, err
 	}
 
-	if !isWriter && !c.Ended() {
+	ended, err := c.Ended(time.Now(), session)
+	if err != nil {
+		return nil, 0, err
+	}
+	if !isWriter && !ended {
 		if userID != nil && *userID != session.UserID {
 			return []Submission{}, 0, nil
 		}
@@ -287,17 +293,56 @@ func (c *Contest) FetchProblems() {
 	}
 }
 
-func (c *Contest) Started() bool {
-	return c.StartAt.Before(time.Now())
+func (c *Contest) Started(t time.Time, s *UserSession) (bool, error) {
+	if c.Duration == nil {
+		return c.StartAt.Before(t), nil
+	}
+	if s == nil {
+		return false, nil
+	}
+	flg, err := c.IsParticipant(s.UserID)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return false, err
+	}
+	return flg, nil
 }
 
-func (c *Contest) Ended() bool {
-	return c.EndAt.Before(time.Now())
+func (c *Contest) Ended(t time.Time, s *UserSession) (bool, error) {
+	if c.Duration == nil {
+		return c.EndAt.Before(t), nil
+	}
+	if s == nil {
+		return false, nil
+	}
+
+	rel := ContestsParticipant{}
+	res := db.Model(ContestsParticipant{}).Where("contest_id = ? AND user_id = ?", c.ID, s.UserID).Scan(&rel)
+	if err := res.Error; err != nil {
+		logger.AppLog.Error(err)
+		return false, err
+	}
+
+	// コンテストに参加してない
+	if res.RecordNotFound() {
+		return false, nil
+	}
+	return rel.CreatedAt.Add(*c.Duration).Before(t), nil
 }
 
 // コンテストが時刻tのとき開催中であればtrueを返します。
-func (c *Contest) IsOpen(t time.Time) bool {
-	return c.StartAt.Before(t) && c.EndAt.After(t)
+func (c *Contest) IsOpen(t time.Time, s *UserSession) (bool, error) {
+	now := time.Now()
+	started, err := c.Started(now, s)
+	if err != nil {
+		return false, err
+	}
+	ended, err := c.Ended(now, s)
+	if err != nil {
+		return false, err
+	}
+
+	return started && !ended, nil
 }
 
 func (c *Contest) CanEdit(s *UserSession) bool {
@@ -307,18 +352,27 @@ func (c *Contest) CanEdit(s *UserSession) bool {
 	return CanEditContest(c.ID, s.UserID)
 }
 
-func (c *Contest) CanViewProblems(s *UserSession) bool {
+func (c *Contest) CanViewProblems(s *UserSession) (bool, error) {
+	t := time.Now()
 	if s == nil {
-		return c.Ended()
+		return c.Ended(t, s)
 	}
 
 	isWriter, _ := c.IsWriter(s.UserID)
 	if isWriter {
-		return true
+		return true, nil
 	}
 
 	isParticipant, _ := c.IsParticipant(s.UserID)
-	return c.Started() && isParticipant || c.Ended()
+	started, err := c.Started(t, s)
+	if err != nil {
+		return false, err
+	}
+	ended, err := c.Ended(t, s)
+	if err != nil {
+		return false, err
+	}
+	return started && isParticipant || ended, nil
 }
 
 func (c *Contest) IsWriter(userID uint) (bool, error) {
