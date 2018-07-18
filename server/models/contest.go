@@ -179,12 +179,29 @@ func (c *Contest) UpdateWriters() error {
 	return tx.Commit().Error
 }
 
-func (c *Contest) GetStandings() []Score {
+func (c *Contest) GetStandings() ([]Score, error) {
+	// TODO ユーザーごとに違うコンテスト開始時間を考慮する
 	s := make([]Score, 0, 0)
-	db.Model(c).Related(&s)
+	err := db.Model(c).Related(&s).Error
+	if err != nil {
+		logger.AppLog.Error(err)
+		return nil, err
+	}
+
+	entered, err := c.getParticipantsEnteredTimeMap()
+	if err != nil {
+		return nil, err
+	}
+
 	sort.Slice(s, func(i, j int) bool {
+		// TODO WA数の考慮
 		if s[i].Point == s[j].Point {
-			return s[i].UpdatedAt.Before(s[j].UpdatedAt)
+			if c.Duration == nil {
+				return s[i].UpdatedAt.Before(s[j].UpdatedAt)
+			}
+			pastI := s[i].UpdatedAt.Sub(entered[s[i].UserID])
+			pastJ := s[j].UpdatedAt.Sub(entered[s[j].UserID])
+			return pastI < pastJ
 		}
 
 		return s[i].Point > s[j].Point
@@ -198,7 +215,23 @@ func (c *Contest) GetStandings() []Score {
 		})
 	}
 
-	return s
+	return s, nil
+}
+
+func (c *Contest) getParticipantsEnteredTimeMap() (map[uint]time.Time, error) {
+	tmp := make([]ContestsParticipant, 0, 0)
+	err := db.Model(ContestsParticipant{}).Where("contest_id = ?", c.ID).Scan(&tmp).Error
+	if err != nil {
+		logger.AppLog.Error(err)
+		return nil, err
+	}
+
+	res := make(map[uint]time.Time, len(tmp))
+	for _, p := range tmp {
+		res[p.UserID] = p.CreatedAt
+	}
+
+	return res, nil
 }
 
 func (c *Contest) GetSubmissions(session *UserSession, limit, page int, userID, problemID *uint) ([]Submission, int, error) {
@@ -318,15 +351,16 @@ func (c *Contest) Ended(t time.Time, s *UserSession) (bool, error) {
 
 	rel := ContestsParticipant{}
 	res := db.Model(ContestsParticipant{}).Where("contest_id = ? AND user_id = ?", c.ID, s.UserID).Scan(&rel)
+	// コンテストに参加してない
+	if res.RecordNotFound() {
+		return false, nil
+	}
+
 	if err := res.Error; err != nil {
 		logger.AppLog.Error(err)
 		return false, err
 	}
 
-	// コンテストに参加してない
-	if res.RecordNotFound() {
-		return false, nil
-	}
 	return rel.CreatedAt.Add(*c.Duration).Before(t), nil
 }
 

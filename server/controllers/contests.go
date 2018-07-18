@@ -220,7 +220,13 @@ func GetStandings(c echo.Context) error {
 		return echo.ErrNotFound
 	}
 
-	return c.JSON(http.StatusOK, contest.GetStandings())
+	res, err := contest.GetStandings()
+	if err != nil {
+		logger.AppLog.Error(err)
+		return ErrInternalServer
+	}
+
+	return c.JSON(http.StatusOK, res)
 }
 
 func GetContestJudgeStatuses(c echo.Context) error {

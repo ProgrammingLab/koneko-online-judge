@@ -28,6 +28,7 @@ func newScore(userID, contestID uint, tx *gorm.DB) *Score {
 }
 
 func updateScore(submission *Submission, contestID uint) {
+	// TODO コンテスト開始時間を変更したあとにリジャッジすると、合計点がバグる
 	s := &Score{}
 	db.Where("user_id = ? AND contest_id = ?", submission.UserID, contestID).First(s)
 
