@@ -11,12 +11,13 @@ import (
 )
 
 type contestRequest struct {
-	Title        string      `json:"title" validate:"required,max=128"`
-	Description  string      `json:"description" validate:"max=65535"`
-	StartAt      time.Time   `json:"startAt"`
-	EndAt        time.Time   `json:"endAt"`
-	Writers      []idRequest `json:"writers"`
-	Participants []idRequest `json:"participants"`
+	Title        string         `json:"title" validate:"required,max=128"`
+	Description  string         `json:"description" validate:"max=65535"`
+	StartAt      time.Time      `json:"startAt"`
+	EndAt        time.Time      `json:"endAt"`
+	Writers      []idRequest    `json:"writers"`
+	Participants []idRequest    `json:"participants"`
+	Duration     *time.Duration `json:"duration"`
 }
 
 func NewContest(c echo.Context) error {
@@ -257,6 +258,7 @@ func toContest(request *contestRequest) *models.Contest {
 		Description: request.Description,
 		StartAt:     request.StartAt,
 		EndAt:       request.EndAt,
+		Duration:    request.Duration,
 	}
 
 	for _, w := range request.Writers {

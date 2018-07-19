@@ -145,6 +145,7 @@ func (c *Contest) Update() error {
 		"description": c.Description,
 		"startAt":     c.StartAt,
 		"endAt":       c.EndAt,
+		"duration":    c.Duration,
 	}
 	return db.Model(&Contest{ID: c.ID}).Updates(query).Error
 }
