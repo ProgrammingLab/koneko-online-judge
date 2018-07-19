@@ -115,6 +115,10 @@ func EnterContest(c echo.Context) error {
 		return echo.ErrNotFound
 	}
 
+	if contest.Duration != nil && contest.StartAt.After(time.Now()) {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{"開始時間まで参加できません。"})
+	}
+
 	res, err := contest.IsParticipant(s.UserID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{"internal server error"})
