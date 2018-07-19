@@ -10,24 +10,30 @@ import (
 )
 
 type Contest struct {
-	ID           uint           `gorm:"primary_key" json:"id"`
-	CreatedAt    time.Time      `json:"createdAt"`
-	UpdatedAt    time.Time      `json:"updatedAt"`
-	DeletedAt    *time.Time     `sql:"index" json:"-"`
-	Title        string         `json:"title"`
-	Description  string         `gorm:"type:text" json:"description"`
-	StartAt      time.Time      `json:"startAt"`
-	EndAt        time.Time      `json:"endAt"`
-	Writers      []User         `gorm:"many2many:contests_writers;" json:"writers"`
-	Participants []User         `gorm:"many2many:contests_participants;" json:"participants"`
-	Problems     []Problem      `json:"problems"`
-	Duration     *time.Duration `json:"duration"`
+	ID                   uint                  `gorm:"primary_key" json:"id"`
+	CreatedAt            time.Time             `json:"createdAt"`
+	UpdatedAt            time.Time             `json:"updatedAt"`
+	DeletedAt            *time.Time            `sql:"index" json:"-"`
+	Title                string                `json:"title"`
+	Description          string                `gorm:"type:text" json:"description"`
+	StartAt              time.Time             `json:"startAt"`
+	EndAt                time.Time             `json:"endAt"`
+	Writers              []User                `gorm:"many2many:contests_writers;" json:"writers"`
+	Participants         []User                `gorm:"many2many:contests_participants;" json:"-"`
+	ContestsParticipants []ContestsParticipant `json:"participants"`
+	Problems             []Problem             `json:"problems"`
+	Duration             *time.Duration        `json:"duration"`
 }
 
 type ContestsParticipant struct {
 	CreatedAt time.Time `gorm:"default:'1971-01-01 00:00:00'" json:"createdAt"`
-	ContestID uint      `gorm:"not null"`
-	UserID    uint      `gorm:"not null"`
+	ContestID uint      `gorm:"not null" json:"contestID"`
+	UserID    uint      `gorm:"not null" json:"userID"`
+	User      User      `json:"user" json:"user"`
+}
+
+func (p *ContestsParticipant) FetchUser() {
+	db.Model(p).Related(&p.User)
 }
 
 func NewContest(out *Contest) error {
@@ -308,9 +314,12 @@ func (c *Contest) FetchParticipants() {
 	}
 
 	c.Participants = make([]User, 0)
-	db.Model(c).Related(&c.Participants, "Participants")
-	for i := range c.Participants {
-		c.Participants[i].Email = ""
+	c.ContestsParticipants = make([]ContestsParticipant, 0)
+	db.Model(ContestsParticipant{}).Where("contest_id = ?", c.ID).Order("user_id").Scan(&c.ContestsParticipants)
+	for i := range c.ContestsParticipants {
+		c.ContestsParticipants[i].FetchUser()
+		c.ContestsParticipants[i].User.Email = ""
+		c.Participants = append(c.Participants, c.ContestsParticipants[i].User)
 	}
 }
 
