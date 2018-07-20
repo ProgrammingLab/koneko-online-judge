@@ -14,6 +14,7 @@ type Score struct {
 	UserID       uint          `gorm:"not null" json:"userID"`
 	ContestID    uint          `gorm:"not null" json:"-"`
 	ScoreDetails []ScoreDetail `json:"details"`
+	ScoreTime    time.Duration `gorm:"-" json:"scoreTime"`
 }
 
 func newScore(userID, contestID uint, tx *gorm.DB) *Score {

@@ -7,14 +7,15 @@ import (
 )
 
 type ScoreDetail struct {
-	ID         uint      `gorm:"primary_key" json:"id"`
-	CreatedAt  time.Time `json:"createdAt"`
-	UpdatedAt  time.Time `json:"updatedAt"`
-	Point      int       `json:"point"`
-	WrongCount int       `gorm:"not null" json:"wrongCount"`
-	Accepted   bool      `gorm:"not null" json:"accepted"`
-	ScoreID    uint      `gorm:"not null" json:"-"`
-	ProblemID  uint      `gorm:"not null" json:"problemID"`
+	ID         uint          `gorm:"primary_key" json:"id"`
+	CreatedAt  time.Time     `json:"createdAt"`
+	UpdatedAt  time.Time     `json:"updatedAt"`
+	Point      int           `json:"point"`
+	WrongCount int           `gorm:"not null" json:"wrongCount"`
+	Accepted   bool          `gorm:"not null" json:"accepted"`
+	ScoreID    uint          `gorm:"not null" json:"-"`
+	ProblemID  uint          `gorm:"not null" json:"problemID"`
+	ScoreTime  time.Duration `gorm:"-" json:"scoreTime"`
 }
 
 func newScoreDetail(score *Score, submission *Submission, wrongCount int, tx *gorm.DB) *ScoreDetail {
