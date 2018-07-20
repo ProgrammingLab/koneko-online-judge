@@ -194,6 +194,7 @@ func (c *Contest) GetStandings() ([]Score, error) {
 		return nil, err
 	}
 
+	c.FetchParticipants()
 	participants, err := c.getParticipantsMap()
 	if err != nil {
 		return nil, err
@@ -212,8 +213,6 @@ func (c *Contest) GetStandings() ([]Score, error) {
 
 		return s[i].Point > s[j].Point
 	})
-
-	c.FetchParticipants()
 
 	for i := range s {
 		score := &s[i]
@@ -240,15 +239,8 @@ func (c *Contest) GetStandings() ([]Score, error) {
 }
 
 func (c *Contest) getParticipantsMap() (map[uint]ContestsParticipant, error) {
-	tmp := make([]ContestsParticipant, 0, 0)
-	err := db.Model(ContestsParticipant{}).Where("contest_id = ?", c.ID).Scan(&tmp).Error
-	if err != nil {
-		logger.AppLog.Error(err)
-		return nil, err
-	}
-
-	res := make(map[uint]ContestsParticipant, len(tmp))
-	for _, p := range tmp {
+	res := make(map[uint]ContestsParticipant, len(c.ContestsParticipants))
+	for _, p := range c.ContestsParticipants {
 		res[p.UserID] = p
 	}
 
