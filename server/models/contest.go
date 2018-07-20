@@ -186,12 +186,32 @@ func (c *Contest) UpdateWriters() error {
 	return tx.Commit().Error
 }
 
-func (c *Contest) GetStandings() ([]Score, error) {
+func (c *Contest) GetStandings(session *UserSession) ([]Score, error) {
 	s := make([]Score, 0, 0)
 	err := db.Model(c).Related(&s).Error
 	if err != nil {
 		logger.AppLog.Error(err)
 		return nil, err
+	}
+
+	ended, err := c.Ended(time.Now(), session)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return nil, err
+	}
+	isWriter, err := c.IsWriter(session.UserID)
+	if err != nil {
+		logger.AppLog.Error(err)
+		return nil, err
+	}
+	if c.Duration != nil && !ended && !isWriter {
+		for i := range s {
+			if s[i].UserID != session.UserID {
+				continue
+			}
+			s = []Score{s[i]}
+			break
+		}
 	}
 
 	c.FetchParticipants()

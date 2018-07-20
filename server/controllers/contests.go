@@ -225,7 +225,7 @@ func GetStandings(c echo.Context) error {
 		return echo.ErrNotFound
 	}
 
-	res, err := contest.GetStandings()
+	res, err := contest.GetStandings(s)
 	if err != nil {
 		logger.AppLog.Error(err)
 		return ErrInternalServer
