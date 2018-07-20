@@ -382,12 +382,11 @@ func (c *Contest) Ended(t time.Time, s *UserSession) (bool, error) {
 
 // コンテストが時刻tのとき開催中であればtrueを返します。
 func (c *Contest) IsOpen(t time.Time, s *UserSession) (bool, error) {
-	now := time.Now()
-	started, err := c.Started(now, s)
+	started, err := c.Started(t, s)
 	if err != nil {
 		return false, err
 	}
-	ended, err := c.Ended(now, s)
+	ended, err := c.Ended(t, s)
 	if err != nil {
 		return false, err
 	}
