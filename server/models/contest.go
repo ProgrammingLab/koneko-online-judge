@@ -187,7 +187,6 @@ func (c *Contest) UpdateWriters() error {
 }
 
 func (c *Contest) GetStandings() ([]Score, error) {
-	// TODO ユーザーごとに違うコンテスト開始時間を考慮する
 	s := make([]Score, 0, 0)
 	err := db.Model(c).Related(&s).Error
 	if err != nil {
@@ -195,7 +194,7 @@ func (c *Contest) GetStandings() ([]Score, error) {
 		return nil, err
 	}
 
-	entered, err := c.getParticipantsEnteredTimeMap()
+	participants, err := c.getParticipantsMap()
 	if err != nil {
 		return nil, err
 	}
@@ -206,26 +205,41 @@ func (c *Contest) GetStandings() ([]Score, error) {
 			if c.Duration == nil {
 				return s[i].UpdatedAt.Before(s[j].UpdatedAt)
 			}
-			pastI := s[i].UpdatedAt.Sub(entered[s[i].UserID])
-			pastJ := s[j].UpdatedAt.Sub(entered[s[j].UserID])
+			pastI := s[i].UpdatedAt.Sub(participants[s[i].UserID].CreatedAt)
+			pastJ := s[j].UpdatedAt.Sub(participants[s[j].UserID].CreatedAt)
 			return pastI < pastJ
 		}
 
 		return s[i].Point > s[j].Point
 	})
+
+	c.FetchParticipants()
+
 	for i := range s {
 		score := &s[i]
+		var start time.Time
+		if c.Duration == nil {
+			start = c.StartAt
+		} else {
+			start = participants[score.UserID].CreatedAt
+		}
+		score.ScoreTime = score.UpdatedAt.Sub(start)
+
 		score.FetchDetails()
 		sort.Slice(score.ScoreDetails, func(i, j int) bool {
 			// TODO コンテスト中の問題の順番とか
 			return score.ScoreDetails[i].ProblemID < score.ScoreDetails[j].ProblemID
 		})
+		for j := range score.ScoreDetails {
+			d := &score.ScoreDetails[j]
+			d.ScoreTime = d.UpdatedAt.Sub(start)
+		}
 	}
 
 	return s, nil
 }
 
-func (c *Contest) getParticipantsEnteredTimeMap() (map[uint]time.Time, error) {
+func (c *Contest) getParticipantsMap() (map[uint]ContestsParticipant, error) {
 	tmp := make([]ContestsParticipant, 0, 0)
 	err := db.Model(ContestsParticipant{}).Where("contest_id = ?", c.ID).Scan(&tmp).Error
 	if err != nil {
@@ -233,9 +247,9 @@ func (c *Contest) getParticipantsEnteredTimeMap() (map[uint]time.Time, error) {
 		return nil, err
 	}
 
-	res := make(map[uint]time.Time, len(tmp))
+	res := make(map[uint]ContestsParticipant, len(tmp))
 	for _, p := range tmp {
-		res[p.UserID] = p.CreatedAt
+		res[p.UserID] = p
 	}
 
 	return res, nil
