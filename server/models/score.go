@@ -60,7 +60,12 @@ func updateScore(submission *Submission, contestID uint) {
 	for i := range s.ScoreDetails {
 		s.Point += s.ScoreDetails[i].Point
 	}
-	db.Model(s).UpdateColumns(map[string]interface{}{"point": s.Point, "updated_at": submission.CreatedAt})
+
+	if submission.IsWrong() {
+		db.Model(s).UpdateColumns(map[string]interface{}{"point": s.Point})
+	} else {
+		db.Model(s).UpdateColumns(map[string]interface{}{"point": s.Point, "updated_at": submission.CreatedAt})
+	}
 }
 
 func (s *Score) FetchDetails() {
