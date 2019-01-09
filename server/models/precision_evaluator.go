@@ -15,6 +15,7 @@ type precisionEvaluator struct {
 }
 
 func newPrecisionEvaluator(config *JudgementConfig) precisionEvaluator {
+	config.FetchLanguage()
 	return precisionEvaluator{
 		simple: newSimpleEvaluator(),
 		config: config,
