@@ -23,6 +23,7 @@ type specialEvaluator struct {
 }
 
 func newSpecialEvaluator(config *JudgementConfig, submission *Submission) (specialEvaluator, error) {
+	config.FetchLanguage()
 	compiled, compileRes := compile(*config.JudgeSourceCode, config.Language)
 	if compiled == nil || compileRes == nil {
 		return specialEvaluator{}, ErrJudgeSourceCodeCompile{"unknown (｡>﹏<｡)"}
