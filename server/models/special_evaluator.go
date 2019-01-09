@@ -2,6 +2,7 @@ package models
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/gedorinku/koneko-online-judge/server/logger"
 	"github.com/gedorinku/koneko-online-judge/server/modules/workers"
@@ -114,7 +115,7 @@ func (e *specialCaseSetEvaluator) next(res *workers.ExecResult, testCase *TestCa
 			return StatusUnknownError, 0
 		}
 
-		point, _ := strconv.Atoi(judged.Stdout)
+		point, _ := strconv.Atoi(strings.TrimSpace(judged.Stdout))
 		if judged.Status == workers.StatusFinished {
 			e.point += point
 			return StatusAccepted, e.point
@@ -129,7 +130,7 @@ func (e *specialCaseSetEvaluator) next(res *workers.ExecResult, testCase *TestCa
 func (e *specialCaseSetEvaluator) evaluate() (JudgementStatus, int) {
 	st := evaluateStatuses(e.statuses)
 	if st == StatusAccepted {
-		return st, MaxInt(e.point, e.setPoint)
+		return st, MinInt(e.point, e.setPoint)
 	}
 	return st, 0
 }
