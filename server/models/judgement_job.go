@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"math/rand"
 	"os"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -64,7 +65,10 @@ func compile(sourceCode string, language *Language) (*workers.Worker, *workers.E
 func (j *judgementJob) Run() {
 	defer func() {
 		if err := recover(); err != nil {
-			logger.AppLog.Errorf("%+v", err)
+			stackSize := 4 << 10 // 4 KB
+			stack := make([]byte, stackSize)
+			length := runtime.Stack(stack, true)
+			logger.AppLog.Errorf("%+v, %s", err, stack[:length])
 		}
 	}()
 
