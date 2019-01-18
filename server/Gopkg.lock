@@ -99,12 +99,12 @@
   version = "v0.3.2"
 
 [[projects]]
-  digest = "1:d2c62efe1c1814929e4016d9fd4c566051ece9e4f03aa3245311449ccf931cc0"
+  digest = "1:850884b1b8513e0a9495860edfb8a7cd5d06f6cc3f48e388f0775087f6526d4e"
   name = "github.com/go-mail/mail"
   packages = ["."]
   pruneopts = ""
-  revision = "63235f23494bf20d713a585bce40b2a0675c2f77"
-  version = "2.2.0"
+  revision = "f59b9b83a4e522098e3d3eb94e6f81850ad6e973"
+  version = "v2.3.1"
 
 [[projects]]
   digest = "1:68d892747cfa2f0638a70b8193bc12c83d9474d93c78f41e4b45a305b2f21e24"
