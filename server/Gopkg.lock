@@ -270,15 +270,16 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:4870f8f94d93a08d7fbe4b8dcdfaad5838b2d2d905ce09ddc4c8ea392c9bd70c"
+  digest = "1:7ec13687f85b25087fe05f6ea8dd116013a8263f8eb7e057da7664bc7599d2d4"
   name = "golang.org/x/net"
   packages = [
     "context",
     "context/ctxhttp",
+    "internal/socks",
     "proxy",
   ]
   pruneopts = ""
-  revision = "42fe2e1c20de1054d3d30f82cc9fb5b41e2e3767"
+  revision = "915654e7eabcea33ae277abbecf52f0d8b7a9fdc"
 
 [[projects]]
   branch = "master"
