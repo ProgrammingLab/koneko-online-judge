@@ -172,15 +172,15 @@
   revision = "1c35d901db3da928c72a72d8458480cc9ade058f"
 
 [[projects]]
-  digest = "1:d361d4bbe18725f5c804e7bfbec1184dbe38a3f7e31e5c7e30d845f7386f1396"
+  digest = "1:93ccea591e2831353980e9217eb5ec60052565c6fab3c497db8f74602af3fc86"
   name = "github.com/labstack/echo"
   packages = [
     ".",
     "middleware",
   ]
   pruneopts = ""
-  revision = "b338075a0fc6e1a0683dbf03d09b4957a289e26f"
-  version = "3.2.6"
+  revision = "c7eb8da9ec73e78c4f38413f3f835e0cd52c7d72"
+  version = "v3.3.8"
 
 [[projects]]
   digest = "1:8b892c6273cbc58834d83016abbc942bfec885b01e1a26db0955d7bec885f628"
