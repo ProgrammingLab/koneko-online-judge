@@ -135,11 +135,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b975e0fbc2b4d61a11dd33e2fec0179db756ebcf83e9d5447891b0fc47fcedfa"
+  digest = "1:be30e94b1a472002b2a94319748adb7faf5262a9ad45136aebb2c38b9a641327"
   name = "github.com/gocraft/work"
   packages = ["."]
   pruneopts = ""
-  revision = "1d4117a214abff263b472043871c8666aedb716b"
+  revision = "c85b71e20062f3ab71d4749604faf956d364614f"
 
 [[projects]]
   digest = "1:dcf8316121302735c0ac84e05f4686e3b34e284444435e9a206da48d8be18cb1"
