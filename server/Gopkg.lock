@@ -172,15 +172,15 @@
   revision = "1c35d901db3da928c72a72d8458480cc9ade058f"
 
 [[projects]]
-  digest = "1:93ccea591e2831353980e9217eb5ec60052565c6fab3c497db8f74602af3fc86"
+  digest = "1:4beb546223497fdc767dd15f2f48e271598817cecda2beaf2ad7bf43282d5bf7"
   name = "github.com/labstack/echo"
   packages = [
     ".",
     "middleware",
   ]
   pruneopts = ""
-  revision = "c7eb8da9ec73e78c4f38413f3f835e0cd52c7d72"
-  version = "v3.3.8"
+  revision = "38772c686c76b501f94bd6cd5b77f5842e93b559"
+  version = "v3.3.10"
 
 [[projects]]
   digest = "1:8b892c6273cbc58834d83016abbc942bfec885b01e1a26db0955d7bec885f628"
@@ -256,7 +256,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:278d561dd1f1743e1b8995f202f56314e33364b395b95514d7df91df48b267da"
+  digest = "1:237f78dc98975fe36424378555dd59d7b974759b5396ea315502d1837f1c1eda"
   name = "golang.org/x/crypto"
   packages = [
     "acme",
@@ -266,7 +266,7 @@
     "ssh/terminal",
   ]
   pruneopts = ""
-  revision = "057139ce5d2bdbe6fe73c53679e24e9cf007f637"
+  revision = "c7b33c32a30bae9ba07d37eb4d86f1f8b0f644fb"
 
 [[projects]]
   branch = "master"
