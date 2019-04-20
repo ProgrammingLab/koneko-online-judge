@@ -1,6 +1,8 @@
 # Koneko Online Judge (=^ - ^=)
 [![Build Status](https://travis-ci.org/gedorinku/koneko-online-judge.svg?branch=master)](https://travis-ci.org/gedorinku/koneko-online-judge)
 
+[gedorinku/koneko-client](https://github.com/gedorinku/koneko-client)
+
 ## Requirements
 - Docker
 
