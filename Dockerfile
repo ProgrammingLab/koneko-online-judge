@@ -1,5 +1,5 @@
 FROM docker:stable-dind
-LABEL maintainer="gedorinku <gedorinku@yahoo.co.jp>"
+LABEL maintainer="Ryota Egusa <egusa.ryota@gmail.com>"
 
 # Install Go
 RUN apk --no-cache add musl-dev go
