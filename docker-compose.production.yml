@@ -2,7 +2,7 @@ version: "3"
 
 services:
   koneko:
-    image: gedorinku/koneko-online-judge:latest
+    image: programminglab/koneko-online-judge:latest
     command: ["./run.sh"]
     environment:
       DOCKER_API_VERSION: "1.35"
