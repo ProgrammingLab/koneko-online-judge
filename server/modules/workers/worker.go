@@ -20,8 +20,8 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/stdcopy"
-	"github.com/gedorinku/koneko-online-judge/server/logger"
-	"github.com/gedorinku/koneko-online-judge/server/modules/unique"
+	"github.com/ProgrammingLab/koneko-online-judge/server/logger"
+	"github.com/ProgrammingLab/koneko-online-judge/server/modules/unique"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )

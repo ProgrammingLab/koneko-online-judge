@@ -2,7 +2,7 @@ version: "3"
 
 services:
   koneko:
-    image: gedorinku/koneko-online-judge:latest
+    image: programminglab/koneko-online-judge:latest
     command: ["./wait-for-it.sh", "mysql:3306", "--", "./run.sh"]
     environment:
       KOJ_DB_DRIVER: "mysql"
@@ -15,7 +15,7 @@ services:
     restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./server/koneko.toml:/go/src/github.com/gedorinku/koneko-online-judge/server/koneko.toml
+      - ./server/koneko.toml:/go/src/github.com/ProgrammingLab/koneko-online-judge/server/koneko.toml
       - /tmp/koj-workspace:/tmp/koj-workspace
       - /tmp/judge_data:/tmp/judge_data
     logging:

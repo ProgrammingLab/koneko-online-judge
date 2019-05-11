@@ -3,10 +3,10 @@ package main
 import (
 	"os"
 
-	"github.com/gedorinku/koneko-online-judge/server/conf"
-	"github.com/gedorinku/koneko-online-judge/server/controllers"
-	"github.com/gedorinku/koneko-online-judge/server/logger"
-	"github.com/gedorinku/koneko-online-judge/server/models"
+	"github.com/ProgrammingLab/koneko-online-judge/server/conf"
+	"github.com/ProgrammingLab/koneko-online-judge/server/controllers"
+	"github.com/ProgrammingLab/koneko-online-judge/server/logger"
+	"github.com/ProgrammingLab/koneko-online-judge/server/models"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"

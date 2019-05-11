@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/gedorinku/koneko-online-judge/server/logger"
+	"github.com/ProgrammingLab/koneko-online-judge/server/logger"
 	"github.com/labstack/gommon/log"
 )
 

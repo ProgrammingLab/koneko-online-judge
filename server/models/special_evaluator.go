@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gedorinku/koneko-online-judge/server/logger"
-	"github.com/gedorinku/koneko-online-judge/server/modules/workers"
+	"github.com/ProgrammingLab/koneko-online-judge/server/logger"
+	"github.com/ProgrammingLab/koneko-online-judge/server/modules/workers"
 )
 
 type ErrJudgeSourceCodeCompile struct {

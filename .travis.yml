@@ -22,8 +22,8 @@ jobs:
       install: skip
       script:
       - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-      - docker build -t gedorinku/koneko-online-judge .
-      - docker push gedorinku/koneko-online-judge
+      - docker build -t programminglab/koneko-online-judge .
+      - docker push programminglab/koneko-online-judge
 
 notifications:
   email:

@@ -3,12 +3,13 @@ package models
 import (
 	"fmt"
 
-	"github.com/gedorinku/koneko-online-judge/server/conf"
-	"github.com/gedorinku/koneko-online-judge/server/logger"
-	"github.com/gedorinku/koneko-online-judge/server/modules/unique"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/ProgrammingLab/koneko-online-judge/server/conf"
+	"github.com/ProgrammingLab/koneko-online-judge/server/logger"
+	"github.com/ProgrammingLab/koneko-online-judge/server/modules/unique"
 )
 
 var db *gorm.DB

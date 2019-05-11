@@ -7,7 +7,7 @@
 - Docker
 
 ## Documents
-[GitHub Wiki](https://github.com/gedorinku/koneko-online-judge/wiki)
+[GitHub Wiki](https://github.com/ProgrammingLab/koneko-online-judge/wiki)
 
 ## Config
 こねこの設定ファイルは、`./server/koneko.toml`です。
@@ -22,8 +22,8 @@ export KOJ_DB_PASSWORD="password"
 
 ### Start the backend server
 ```
-go get github.com/gedorinku/koneko-online-judge/...
-cd $GOPATH/src/github.com/gedorinku/koneko-online-judge/
+go get github.com/ProgrammingLab/koneko-online-judge/...
+cd $GOPATH/src/github.com/ProgrammingLab/koneko-online-judge/
 docker-compose up
 ```
 
@@ -31,8 +31,8 @@ docker-compose up
 
 ### Setup
 ```
-go get github.com/gedorinku/koneko-online-judge/...
-cd $GOPATH/src/github.com/gedorinku/koneko-online-judge/server/
+go get github.com/ProgrammingLab/koneko-online-judge/...
+cd $GOPATH/src/github.com/ProgrammingLab/koneko-online-judge/server/
 docker build -t koneko-online-judge-image-cpp container/cpp/
 dep ensure
 ```

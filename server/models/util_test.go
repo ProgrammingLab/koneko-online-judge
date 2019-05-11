@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gedorinku/koneko-online-judge/server/modules/unique"
+	"github.com/ProgrammingLab/koneko-online-judge/server/modules/unique"
 	"golang.org/x/crypto/bcrypt"
 )
 

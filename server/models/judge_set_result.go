@@ -4,7 +4,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/gedorinku/koneko-online-judge/server/logger"
+	"github.com/ProgrammingLab/koneko-online-judge/server/logger"
 )
 
 type JudgeSetResult struct {

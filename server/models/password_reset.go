@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gedorinku/koneko-online-judge/server/logger"
-	"github.com/gedorinku/koneko-online-judge/server/modules/nekomail"
-	"github.com/gedorinku/koneko-online-judge/server/modules/unique"
+	"github.com/ProgrammingLab/koneko-online-judge/server/logger"
+	"github.com/ProgrammingLab/koneko-online-judge/server/modules/nekomail"
+	"github.com/ProgrammingLab/koneko-online-judge/server/modules/unique"
 	"github.com/pkg/errors"
 )
 
