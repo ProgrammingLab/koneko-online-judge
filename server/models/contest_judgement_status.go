@@ -3,7 +3,7 @@ package models
 import (
 	"time"
 
-	"github.com/gedorinku/koneko-online-judge/server/logger"
+	"github.com/ProgrammingLab/koneko-online-judge/server/logger"
 )
 
 type ContestJudgementStatus struct {

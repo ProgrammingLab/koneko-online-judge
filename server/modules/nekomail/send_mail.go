@@ -3,8 +3,8 @@ package nekomail
 import (
 	"time"
 
-	"github.com/gedorinku/koneko-online-judge/server/conf"
-	"github.com/gedorinku/koneko-online-judge/server/logger"
+	"github.com/ProgrammingLab/koneko-online-judge/server/conf"
+	"github.com/ProgrammingLab/koneko-online-judge/server/logger"
 	"github.com/go-mail/mail"
 )
 

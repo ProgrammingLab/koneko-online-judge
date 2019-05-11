@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gedorinku/koneko-online-judge/server/logger"
-	"github.com/gedorinku/koneko-online-judge/server/models"
+	"github.com/ProgrammingLab/koneko-online-judge/server/logger"
+	"github.com/ProgrammingLab/koneko-online-judge/server/models"
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 )

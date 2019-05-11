@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gedorinku/koneko-online-judge/server/models"
+	"github.com/ProgrammingLab/koneko-online-judge/server/models"
 	"github.com/labstack/echo"
 )
 

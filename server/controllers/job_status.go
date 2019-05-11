@@ -3,7 +3,7 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/gedorinku/koneko-online-judge/server/models"
+	"github.com/ProgrammingLab/koneko-online-judge/server/models"
 	"github.com/gocraft/work"
 	"github.com/labstack/echo"
 )

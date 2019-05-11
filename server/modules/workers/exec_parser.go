@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gedorinku/koneko-online-judge/server/logger"
+	"github.com/ProgrammingLab/koneko-online-judge/server/logger"
 )
 
 type ExecResultParser struct {

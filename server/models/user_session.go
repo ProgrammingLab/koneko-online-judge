@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gedorinku/koneko-online-judge/server/logger"
-	"github.com/gedorinku/koneko-online-judge/server/modules/unique"
+	"github.com/ProgrammingLab/koneko-online-judge/server/logger"
+	"github.com/ProgrammingLab/koneko-online-judge/server/modules/unique"
 	"golang.org/x/crypto/bcrypt"
 )
 

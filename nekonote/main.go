@@ -4,10 +4,9 @@ import (
 	"crypto/rand"
 	"flag"
 	"fmt"
+	"math/big"
 	"os"
 	"syscall"
-
-	"math/big"
 
 	"github.com/labstack/gommon/log"
 	"golang.org/x/crypto/bcrypt"

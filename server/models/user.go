@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gedorinku/koneko-online-judge/server/logger"
-	"github.com/gedorinku/koneko-online-judge/server/modules/nekomail"
+	"github.com/ProgrammingLab/koneko-online-judge/server/logger"
+	"github.com/ProgrammingLab/koneko-online-judge/server/modules/nekomail"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"

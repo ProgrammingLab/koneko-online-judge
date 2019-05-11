@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"math/big"
 
-	"github.com/gedorinku/koneko-online-judge/server/logger"
+	"github.com/ProgrammingLab/koneko-online-judge/server/logger"
 )
 
 // length bytesのランダムなBase64エンコードされた文字列を返す
