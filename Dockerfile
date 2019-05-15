@@ -1,5 +1,5 @@
 FROM docker:stable-dind
-LABEL maintainer="gedorinku <gedorinku@yahoo.co.jp>"
+LABEL maintainer="Ryota Egusa <egusa.ryota@gmail.com>"
 
 # Install Go
 RUN apk --no-cache add musl-dev go
@@ -13,7 +13,7 @@ ENV DOCKER_VERSION 1.35
 # Setup Koneko
 RUN apk --no-cache add bash git mercurial
 RUN go get github.com/golang/dep/cmd/dep
-COPY . /go/src/github.com/gedorinku/koneko-online-judge
+COPY . /go/src/github.com/ProgrammingLab/koneko-online-judge
 RUN cd /go/src/github.com/ProgrammingLab/koneko-online-judge/server/ \
     && dep ensure -vendor-only \
     && go build main.go
