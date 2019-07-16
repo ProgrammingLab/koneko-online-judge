@@ -52,6 +52,7 @@ const (
 	JudgeDataDir                         = Workspace + "judge_data"
 	errorString                          = "runtime_error"
 	exitCodeFile                         = "exit.txt"
+	removeTimeout = 10 * time.Second
 )
 
 var (
@@ -397,10 +398,13 @@ func (w *Worker) Remove() error {
 		w.stderr = nil
 	}
 
-	ctx := context.Background()
+	ctx, _ := context.WithTimeout(context.Background(), removeTimeout)
 	err := w.cli.ContainerRemove(ctx, w.ID, types.ContainerRemoveOptions{
 		Force: true,
 	})
+	if err != nil {
+		logger.AppLog.Errorf("worker: remove error %+v", err)
+	}
 	w.cli.Close()
 
 	if w.HostJudgeDataDir != "" {
