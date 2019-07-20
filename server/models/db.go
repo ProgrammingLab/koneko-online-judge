@@ -157,6 +157,14 @@ func seedLanguages() {
 			CompileCommand: "cp tmp.py main.py",
 			ExecCommand:    "python3 main.py",
 		},
+		{
+			ImageName:      "openjdk",
+			DisplayName:    "Java11 (OpenJDK 11)",
+			FileName:       "Main.java",
+			ExeFileName:    "Main.class",
+			CompileCommand: "/usr/local/openjdk-11/bin/javac Main.java",
+			ExecCommand:    "/usr/local/openjdk-11/bin/java -XX:+UseContainerSupport Main",
+		},
 	}
 
 	for _, l := range languages {
