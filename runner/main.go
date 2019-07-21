@@ -15,6 +15,7 @@ const (
 	outputDir   = dataDir + "output/"
 	statusDir   = dataDir + "status/"
 	outputLimit = 10 * 1024 * 1024
+	stderrLimit = 256
 )
 
 func main() {

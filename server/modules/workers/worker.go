@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ProgrammingLab/koneko-online-judge/server/logger"
+	"github.com/ProgrammingLab/koneko-online-judge/server/modules/unique"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -20,8 +22,6 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/stdcopy"
-	"github.com/ProgrammingLab/koneko-online-judge/server/logger"
-	"github.com/ProgrammingLab/koneko-online-judge/server/modules/unique"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
@@ -52,7 +52,7 @@ const (
 	JudgeDataDir                         = Workspace + "judge_data"
 	errorString                          = "runtime_error"
 	exitCodeFile                         = "exit.txt"
-	removeTimeout = 10 * time.Second
+	removeTimeout                        = 10 * time.Second
 )
 
 var (
@@ -66,6 +66,7 @@ type ExecResult struct {
 	MemoryUsage int64         `json:"memoryUsage"`
 	Stdout      string        `json:"stdout"`
 	Stderr      string        `json:"stderr"`
+	ExitStatus  int           `json:"exitStatus"`
 }
 
 func NewTimeoutWorker(img string, timeLimit time.Duration, memoryLimit int64, cmd []string) (*Worker, error) {
