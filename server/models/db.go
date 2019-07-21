@@ -161,9 +161,9 @@ func seedLanguages() {
 			ImageName:      "openjdk",
 			DisplayName:    "Java11 (OpenJDK 11)",
 			FileName:       "Main.java",
-			ExeFileName:    "Main.class",
-			CompileCommand: "/usr/local/openjdk-11/bin/javac Main.java",
-			ExecCommand:    "/usr/local/openjdk-11/bin/java -XX:+UseContainerSupport Main",
+			ExeFileName:    "main.jar",
+			CompileCommand: "/usr/local/openjdk-11/bin/javac -d classes Main.java && /usr/local/openjdk-11/bin/jar --create --file main.jar --main-class Main -C classes .",
+			ExecCommand:    "/usr/local/openjdk-11/bin/java -XX:+UseContainerSupport -jar main.jar",
 		},
 	}
 
