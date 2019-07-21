@@ -77,6 +77,30 @@ func (e Executor) ExecMonitored() error {
 	c.Stdout = pw
 	c.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
+	stderrCh := make(chan string, 1)
+	epr, err := c.StderrPipe()
+	if err != nil {
+		return err
+	}
+	defer epr.Close()
+	go func() {
+		var b strings.Builder
+
+		buf := make([]byte, stderrLimit)
+		var err error
+		for err == nil {
+			var n int
+			n, err = epr.Read(buf)
+			if stderrLimit < b.Len() {
+				// discard
+				continue
+			}
+			_, _ = b.WriteString(string(buf[:n]))
+		}
+
+		stderrCh <- b.String()
+	}()
+
 	wait := make(chan error, 1)
 
 	start := time.Now()
@@ -114,6 +138,8 @@ func (e Executor) ExecMonitored() error {
 		err = <-wait
 	}
 
+	stderr := <-stderrCh
+
 	if err != nil && err != io.ErrClosedPipe {
 		_, ok := err.(*exec.ExitError)
 		if !ok {
@@ -126,10 +152,10 @@ func (e Executor) ExecMonitored() error {
 		return writeRes.err
 	}
 
-	return e.saveExecResult(c, writeRes, dur)
+	return e.saveExecResult(c, writeRes, stderr, dur)
 }
 
-func (e Executor) saveExecResult(cmd *exec.Cmd, writeRes outputWriteResult, duration time.Duration) error {
+func (e Executor) saveExecResult(cmd *exec.Cmd, writeRes outputWriteResult, stderr string, duration time.Duration) error {
 	usage, ok := cmd.ProcessState.SysUsage().(*syscall.Rusage)
 	if !ok {
 		return errNotSupportedOS
@@ -159,6 +185,8 @@ func (e Executor) saveExecResult(cmd *exec.Cmd, writeRes outputWriteResult, dura
 		Status:      status,
 		ExecTime:    duration,
 		MemoryUsage: memory,
+		ExitStatus:  exitStatus,
+		Stderr:      stderr,
 	}
 
 	st, err := os.Create(statusDir + e.Input.Name())
