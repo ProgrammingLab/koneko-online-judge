@@ -165,6 +165,14 @@ func seedLanguages() {
 			CompileCommand: "/usr/local/openjdk-11/bin/javac -d classes Main.java && /usr/local/openjdk-11/bin/jar --create --file main.jar --main-class Main -C classes .",
 			ExecCommand:    "/usr/local/openjdk-11/bin/java -XX:+UseContainerSupport -jar main.jar",
 		},
+		{
+			ImageName:      "openjdk",
+			DisplayName:    "Kotlin (1.3.41)",
+			FileName:       "Main.kt",
+			ExeFileName:    "main.jar",
+			CompileCommand: "JAVACMD=/usr/local/openjdk-11/bin/java /usr/lib/kotlinc/bin/kotlinc Main.kt -include-runtime -jdk-home /usr/local/openjdk-11 -d main.jar",
+			ExecCommand:    "/usr/local/openjdk-11/bin/java -XX:+UseContainerSupport -cp main.jar MainKt",
+		},
 	}
 
 	for _, l := range languages {
