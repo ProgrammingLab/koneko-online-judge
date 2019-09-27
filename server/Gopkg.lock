@@ -153,15 +153,15 @@
   version = "v2.0.0"
 
 [[projects]]
-  digest = "1:7d4958827c8f2d9d31e24d9a3a52194eb179f77d854692e57954c516ecf76748"
+  digest = "1:9e6061d60fb018cec58795a2e645c6012312f8e7db1efaf7db25df5cbf3f7a2e"
   name = "github.com/jinzhu/gorm"
   packages = [
     ".",
     "dialects/mysql",
   ]
   pruneopts = ""
-  revision = "472c70caa40267cb89fd8facb07fe6454b578626"
-  version = "v1.9.2"
+  revision = "81c17a7e2529c59efc4e74c5b32c1fb71fb12fa2"
+  version = "v1.9.11"
 
 [[projects]]
   branch = "master"
