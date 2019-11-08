@@ -270,7 +270,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:2b08539d056d6b2da4233648f5014d84cb70a9c278523374c75776a75a32d03e"
+  digest = "1:33526766aa20ed49a9da8ac36f46f5d4de90267ff0abc46d0947a54686ccf125"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -279,7 +279,7 @@
     "proxy",
   ]
   pruneopts = ""
-  revision = "92fc7df08ae7536330f5a21328292abfa70520a8"
+  revision = "6f6bbb1828be2e191ff93546b938a7bb564fe5c7"
 
 [[projects]]
   branch = "master"
