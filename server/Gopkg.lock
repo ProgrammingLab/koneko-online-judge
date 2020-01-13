@@ -223,12 +223,12 @@
   version = "v0.1.1"
 
 [[projects]]
-  digest = "1:1d7e1867c49a6dd9856598ef7c3123604ea3daabf5b83f303ff457bcbc410b1d"
+  digest = "1:abc18400dc34c1d52960a2b0551578f3c35f295be167ad64dbe80b6cd30249e7"
   name = "github.com/pkg/errors"
   packages = ["."]
   pruneopts = ""
-  revision = "ba968bfe8b2f7e042a574c888954fccecfa385b4"
-  version = "v0.8.1"
+  revision = "49f8f617296114c890ae0b7ac18c5953d2b1ca0f"
+  version = "v0.9.0"
 
 [[projects]]
   digest = "1:909284b41aa9331dc7500b145128d403e1c5bba1006dfaab7ab62f91e40d31b3"
