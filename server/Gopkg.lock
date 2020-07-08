@@ -256,7 +256,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:36ef1d8645934b1744cc7d8726e00d3dd9d8d84c18617bf7367a3a6d532f3370"
+  digest = "1:2b1ff27f17455187b412669f2aa359be51dc79661bd34cf8f54fa67e1ea106d0"
   name = "golang.org/x/crypto"
   packages = [
     "acme",
@@ -266,7 +266,7 @@
     "ssh/terminal",
   ]
   pruneopts = ""
-  revision = "a5d413f7728c81fb97d96a2b722368945f651e78"
+  revision = "ab33eee955e00ff7c973405b2780aca48d293014"
 
 [[projects]]
   branch = "master"
@@ -275,6 +275,7 @@
   packages = [
     "context",
     "context/ctxhttp",
+    "idna",
     "internal/socks",
     "proxy",
   ]
@@ -291,6 +292,31 @@
   ]
   pruneopts = ""
   revision = "dd9ec17814d5b1de388ebe438ec013d57d8b3779"
+
+[[projects]]
+  digest = "1:fccda34e4c58111b1908d8d69bf8d57c41c8e2542bc18ec8cd38c4fa21057f71"
+  name = "golang.org/x/text"
+  packages = [
+    "collate",
+    "collate/build",
+    "internal/colltab",
+    "internal/gen",
+    "internal/language",
+    "internal/language/compact",
+    "internal/tag",
+    "internal/triegen",
+    "internal/ucd",
+    "language",
+    "secure/bidirule",
+    "transform",
+    "unicode/bidi",
+    "unicode/cldr",
+    "unicode/norm",
+    "unicode/rangetable",
+  ]
+  pruneopts = ""
+  revision = "23ae387dee1f90d29a23c0e87ee0b46038fbed0e"
+  version = "v0.3.3"
 
 [[projects]]
   branch = "v3"
