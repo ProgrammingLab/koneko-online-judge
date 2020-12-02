@@ -18,12 +18,32 @@
   version = "v0.4.5"
 
 [[projects]]
-  digest = "1:42a42c4bc67bed17f40fddf0f24d4403e25e7b96488456cf4248e6d16659d370"
-  name = "github.com/Sirupsen/logrus"
-  packages = ["."]
+  digest = "1:1e0eee2c06d067e5934f2e9c020542dd4b925b4d2920fbf146942650baf46a43"
+  name = "github.com/Microsoft/hcsshim"
+  packages = ["osversion"]
   pruneopts = ""
-  revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
-  version = "v1.0.4"
+  revision = "380508768ed2619a4777f268c6443017bb76b04e"
+  version = "v0.8.10"
+
+[[projects]]
+  digest = "1:665e34fb4d5fbad26e7baba46429d1d0b6f10e1552df1c7626ec8ad1a3db9479"
+  name = "github.com/containerd/containerd"
+  packages = ["errdefs"]
+  pruneopts = ""
+  revision = "269548fa27e0089a8b8278fc4fc781d7f65a939b"
+  version = "v1.4.3"
+
+[[projects]]
+  branch = "master"
+  digest = "1:757449b66442021032825debe05b9c056f10e35ef6ee5db7aaa3afe0fc627d6e"
+  name = "github.com/containerd/continuity"
+  packages = [
+    "fs",
+    "pathdriver",
+    "sysx",
+  ]
+  pruneopts = ""
+  revision = "62ef0fffa6a1bed97d4b034c146bc323b2447b72"
 
 [[projects]]
   digest = "1:3e93e899f8457138a891b3ccedcacf8fe9074865c848f7028e1892bdae280676"
@@ -39,44 +59,47 @@
   packages = [
     "digest",
     "reference",
+    "registry/api/errcode",
   ]
   pruneopts = ""
   revision = "48294d928ced5dd9b378f7fd7c6f5da3ff3f2c89"
   version = "v2.6.2"
 
 [[projects]]
-  digest = "1:a60acfb78bd12ce7b2101f0cc0bca8cd83db6aa60bf1e6ddfd33e83013083ddf"
+  digest = "1:7ac2cb4791487750f90902e0a0e78cd3747af5da511c81406d1577413d2c79ef"
   name = "github.com/docker/docker"
   packages = [
+    "api",
     "api/types",
     "api/types/blkiodev",
     "api/types/container",
     "api/types/events",
     "api/types/filters",
+    "api/types/image",
     "api/types/mount",
     "api/types/network",
-    "api/types/reference",
     "api/types/registry",
     "api/types/strslice",
     "api/types/swarm",
+    "api/types/swarm/runtime",
     "api/types/time",
     "api/types/versions",
     "api/types/volume",
     "client",
+    "errdefs",
     "pkg/archive",
     "pkg/fileutils",
     "pkg/idtools",
     "pkg/ioutils",
     "pkg/longpath",
+    "pkg/mount",
     "pkg/pools",
-    "pkg/promise",
     "pkg/stdcopy",
     "pkg/system",
-    "pkg/tlsconfig",
   ]
   pruneopts = ""
-  revision = "092cba3727bb9b4a2f0e922cd6c0f93ea270e363"
-  version = "v1.13.1"
+  revision = "7d75c1d40d88ddef08653dbd611f41df42bdf087"
+  version = "v19.03.14"
 
 [[projects]]
   digest = "1:a5ecc2e70260a87aa263811281465a5effcfae8a54bac319cee87c4625f04d63"
@@ -140,6 +163,28 @@
   packages = ["."]
   pruneopts = ""
   revision = "c85b71e20062f3ab71d4749604faf956d364614f"
+
+[[projects]]
+  digest = "1:d69d2ba23955582a64e367ff2b0808cdbd048458c178cea48f11ab8c40bd7aea"
+  name = "github.com/gogo/protobuf"
+  packages = ["proto"]
+  pruneopts = ""
+  revision = "5628607bb4c51c3157aacc3a50f0ab707582b805"
+  version = "v1.3.1"
+
+[[projects]]
+  digest = "1:6532affeeaaccdc6919d5773516176b77de02b4af8cf9a7fac16bae77aa319c5"
+  name = "github.com/golang/protobuf"
+  packages = [
+    "proto",
+    "ptypes",
+    "ptypes/any",
+    "ptypes/duration",
+    "ptypes/timestamp",
+  ]
+  pruneopts = ""
+  revision = "4846b58453b3708320bdb524f25cc5a1d9cda4d4"
+  version = "v1.4.3"
 
 [[projects]]
   digest = "1:dcf8316121302735c0ac84e05f4686e3b34e284444435e9a206da48d8be18cb1"
@@ -212,6 +257,25 @@
   version = "v0.0.3"
 
 [[projects]]
+  digest = "1:fa086b0213b63e748dd33b2481ceacdd463c9355f323a64036e2ba17d9c19ea2"
+  name = "github.com/opencontainers/go-digest"
+  packages = ["."]
+  pruneopts = ""
+  revision = "ea51bea511f75cfa3ef6098cc253c5c3609b037a"
+  version = "v1.0.0"
+
+[[projects]]
+  digest = "1:f26c8670b11e29a49c8e45f7ec7f2d5bac62e8fd4e3c0ae1662baa4a697f984a"
+  name = "github.com/opencontainers/image-spec"
+  packages = [
+    "specs-go",
+    "specs-go/v1",
+  ]
+  pruneopts = ""
+  revision = "d60099175f88c47cd379c4738d158884749ed235"
+  version = "v1.0.1"
+
+[[projects]]
   digest = "1:fa19ddee0e5ee5951a6a450a4b6ec635a42957f86bfc87d9d778eeee04ad2036"
   name = "github.com/opencontainers/runc"
   packages = [
@@ -239,6 +303,14 @@
   version = "v1"
 
 [[projects]]
+  digest = "1:2f8f9b60ebe029a83f92a7549926145eb6014c01d256946058a5a8768efd4522"
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  pruneopts = ""
+  revision = "6699a89a232f3db797f2e280639854bbc4b89725"
+  version = "v1.7.0"
+
+[[projects]]
   branch = "master"
   digest = "1:857a9ecd5cb13379ecc8f798f6e6b6b574c98b9355657d91e068275f1120aaf7"
   name = "github.com/valyala/bytebufferpool"
@@ -263,7 +335,6 @@
     "acme/autocert",
     "bcrypt",
     "blowfish",
-    "ssh/terminal",
   ]
   pruneopts = ""
   revision = "a5d413f7728c81fb97d96a2b722368945f651e78"
@@ -274,12 +345,19 @@
   name = "golang.org/x/net"
   packages = [
     "context",
-    "context/ctxhttp",
     "internal/socks",
     "proxy",
   ]
   pruneopts = ""
   revision = "92fc7df08ae7536330f5a21328292abfa70520a8"
+
+[[projects]]
+  branch = "master"
+  digest = "1:10d47e7094ce8dd202cca920e4c58a68ba1d113908c30fb0cc8590b7d333a348"
+  name = "golang.org/x/sync"
+  packages = ["errgroup"]
+  pruneopts = ""
+  revision = "67f06af15bc961c363a7260195bcd53487529a21"
 
 [[projects]]
   branch = "master"
@@ -291,6 +369,64 @@
   ]
   pruneopts = ""
   revision = "dd9ec17814d5b1de388ebe438ec013d57d8b3779"
+
+[[projects]]
+  branch = "master"
+  digest = "1:c34ac8f6aa3e251e8ae5f2a40985dd5bf660e4e336e3d69893ead82afe90a946"
+  name = "google.golang.org/genproto"
+  packages = ["googleapis/rpc/status"]
+  pruneopts = ""
+  revision = "b05cb90ed32e1a9be2dd5dd980595168d433ab26"
+
+[[projects]]
+  digest = "1:26b6615e44644b4da0c4083c38d6348acaf7d2e21c555a65f11ffd27118b2d17"
+  name = "google.golang.org/grpc"
+  packages = [
+    "codes",
+    "internal/status",
+    "status",
+  ]
+  pruneopts = ""
+  revision = "56d63285d528c0d33f9bf8c355139d91edc047de"
+  version = "v1.33.2"
+
+[[projects]]
+  digest = "1:0d049ff01749ce1d6092c85cb90a02dfdb3b401939b13415b7e608f36bc8ecee"
+  name = "google.golang.org/protobuf"
+  packages = [
+    "encoding/prototext",
+    "encoding/protowire",
+    "internal/descfmt",
+    "internal/descopts",
+    "internal/detrand",
+    "internal/encoding/defval",
+    "internal/encoding/messageset",
+    "internal/encoding/tag",
+    "internal/encoding/text",
+    "internal/errors",
+    "internal/fieldsort",
+    "internal/filedesc",
+    "internal/filetype",
+    "internal/flags",
+    "internal/genid",
+    "internal/impl",
+    "internal/mapsort",
+    "internal/pragma",
+    "internal/set",
+    "internal/strs",
+    "internal/version",
+    "proto",
+    "reflect/protoreflect",
+    "reflect/protoregistry",
+    "runtime/protoiface",
+    "runtime/protoimpl",
+    "types/known/anypb",
+    "types/known/durationpb",
+    "types/known/timestamppb",
+  ]
+  pruneopts = ""
+  revision = "3f7a61f89bb6813f89d981d1870ed68da0b3c3f1"
+  version = "v1.25.0"
 
 [[projects]]
   branch = "v3"
